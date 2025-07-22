@@ -45,6 +45,11 @@ const appData = {
 
 const processData = data => {
     
+    // Clear previous data
+    for( const key in appData ) {
+        appData[ key ].list = [];
+    }
+
     for( const row of data )
     {
         const ref = row["REFERENCIA"][ 0 ];
@@ -164,19 +169,19 @@ const showMessages = ( compName, rowOffset = 0 ) => {
     header.addEventListener("dragover", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        header.classList.add("dragover");
+        header.classList.add("bg-secondary");
     });
 
     header.addEventListener("dragleave", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        header.classList.remove("dragover");
+        header.classList.remove("bg-secondary");
     });
 
     header.addEventListener("drop", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        header.classList.remove("dragover");
+        header.classList.remove("bg-secondary");
 
         // Check if a file was dropped
         if (event.dataTransfer.files.length > 0) {
