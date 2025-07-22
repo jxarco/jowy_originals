@@ -33,9 +33,9 @@ const starterTheme = LX.getTheme();
 }
 
 const appData = {
+    "amazon": { list: [], dom: null },
     "jowy": { list: [], dom: null },
     "hxg": { list: [], dom: null },
-    "amazon": { list: [], dom: null },
     "bathby": { list: [], dom: null },
 };
 
@@ -53,16 +53,16 @@ const processData = data => {
         const ref = row["REFERENCIA"][ 0 ];
         switch( ref )
         {
-            case '1': appData["jowy"].list.push( row ); break;
-            case '2': appData["hxg"].list.push( row ); break;
-            case '3': appData["amazon"].list.push( row ); break;
+            case '1': appData["amazon"].list.push( row ); break;
+            case '2': appData["jowy"].list.push( row ); break;
+            case '3': appData["hxg"].list.push( row ); break;
             case '4': appData["bathby"].list.push( row ); break;
         }
     }
 
+    showList( "amazon" );
     showList( "jowy" );
     showList( "hxg" );
-    showList( "amazon" );
     showList( "bathby" );
 };
 
@@ -89,13 +89,13 @@ const showList = ( compName ) => {
                 { name: "CLAVE", options: ["Documentada", "En tránsito", "En reparto", "En destino"] },
                 // { name: "ID", type: "range", min: 0, max: 9, step: 1, units: "hr" },
             ],
-            rowActions: [
+            rowActions: compName != "amazon" ? [
                 { icon: "Eye", title: "Ver mensaje", callback: (rowData) => {
                     const rowIndex = tableData.indexOf(rowData);
                     showMessages( compName, rowIndex );
                 }},
                 // "menu"
-            ],
+            ] : [],
             // onMenuAction: (index, tableData) => {
             //     return [
             //         { name: "Export" },
@@ -129,7 +129,8 @@ const showMessages = ( compName, rowOffset = 0 ) => {
 
     const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6", `
         <h2>${ row["NOMCONS"] }</h2>
-        <p class="font-light" style="max-width:32rem">${ row["POBLACION"] } / ${ row["CLAVE"] } / ${ row["NENVIO"] }</p>
+        <p class="font-light" style="max-width:32rem"><strong>${ row["POBLACION"] }</strong> / <strong>${ row["CLAVE"] }</strong></p>
+        <p class="font-light" style="max-width:32rem">Número de envío: <strong>${ row["NENVIO"] }</strong> / Referencia: <strong>${ row["REFERENCIA"] }</strong></p>
     `, dom );
 
     const template = appData[ compName ].template;
@@ -217,10 +218,20 @@ window.clearData = () => {
 {
     const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-6 pt-0" } );
 
+    // Amazon
+    {
+        const amazonContainer = LX.makeContainer( [ null, "800px" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+        tabs.add( "Amazon", amazonContainer, { selected: true, onSelect: (event, name) => showList( name.toLowerCase() ) } );
+
+        const amazonArea = new LX.Area({ className: "rounded-lg" });
+        amazonContainer.appendChild( amazonArea.root );
+        appData["amazon"].dom = amazonContainer;
+    }
+
     // Jowy
     {
         const jowyContainer = LX.makeContainer( [ null, "800px" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
-        tabs.add( "Jowy", jowyContainer, { selected: true, onSelect: (event, name) => showList( name.toLowerCase() ) } );
+        tabs.add( "Jowy", jowyContainer, { xselected: true, onSelect: (event, name) => showList( name.toLowerCase() ) } );
 
         const jowyArea = new LX.Area({ className: "rounded-lg" });
         jowyContainer.appendChild( jowyArea.root );
@@ -235,16 +246,6 @@ window.clearData = () => {
         const hxgArea = new LX.Area({ className: "rounded-lg" });
         hxgContainer.appendChild( hxgArea.root );
         appData["hxg"].dom = hxgContainer;
-    }
-
-    // Amazon
-    {
-        const amazonContainer = LX.makeContainer( [ null, "800px" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
-        tabs.add( "Amazon", amazonContainer, { xselected: true, onSelect: (event, name) => showList( name.toLowerCase() ) } );
-
-        const amazonArea = new LX.Area({ className: "rounded-lg" });
-        amazonContainer.appendChild( amazonArea.root );
-        appData["amazon"].dom = amazonContainer;
     }
 
     // Bathby
