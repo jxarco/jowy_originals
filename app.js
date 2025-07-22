@@ -1,6 +1,7 @@
 import { LX } from 'lexgui';
 
 window.LX = LX;
+window.__transport = "CBL"; // Default transport
 
 const area = await LX.init( { layoutMode: "document", rootClass: "wrapper" } );
 const starterTheme = LX.getTheme();
@@ -8,13 +9,13 @@ const starterTheme = LX.getTheme();
 // Menubar
 {
     const menubar = area.addMenubar( [
-        { name: "Seguimiento", callback: () => { } }
+        // { name: "Seguimiento", callback: () => { } }
     ] );
 
-    menubar.setButtonImage("lexgui.js", `data/icon_${ starterTheme }.png`, () => {window.open("https://www.jowyoriginals.com/")}, {float: "left"})
+    menubar.setButtonImage("lexgui.js", `data/icon_${ starterTheme }.png`, () => { window.open("https://www.jowyoriginals.com/") }, { float: "left" })
 
-    const commandButton = new LX.Button(null, `Search command...<span class="ml-auto">${ LX.makeKbd( ["Ctrl", "Space"], false, "bg-tertiary border px-1 rounded" ).innerHTML }</span>`, () => { LX.setCommandbarState( true ) }, {
-        width: "256px", className: "right", buttonClass: "border fg-tertiary bg-secondary" }
+    const commandButton = new LX.Select("Transporte", ["CBL", "SEUR", "GLS"], `CBL`, (v) => { updateTransport( v ) }, {
+        width: "256px", nameWidth: "45%", className: "right", overflowContainer: null, skipReset: true }
     );
     menubar.root.appendChild( commandButton.root );
 
@@ -26,7 +27,7 @@ const starterTheme = LX.getTheme();
             callback:  (value, event) => {
                 const newTheme = value ? "light" : "dark";
                 LX.switchTheme();
-                menubar.setButtonImage("lexgui.js", `data/icon_${ newTheme }.png`, () => {window.open("https://www.jowyoriginals.com/")}, {float: "left"})
+                menubar.setButtonImage("lexgui.js", `data/icon_${ newTheme }.png`, () => { window.open("https://www.jowyoriginals.com/") }, { float: "left" })
             }
         }
     ], { float: "right" });
@@ -81,32 +82,35 @@ const showList = ( compName ) => {
             head: [ "DIA", "F_DOC", "NENVIO", "CLAVE", "F_SITUACION", "NOMCONS", "POBLACION", "DETALLE", "LOCALIZADOR" ],
             body: tableData
         }, {
-            selectable: false,
-            sortable: false,
-            toggleColumns: true,
-            filter: "NOMCONS",
-            customFilters: [
-                { name: "CLAVE", options: ["Documentada", "En tránsito", "En reparto", "En destino"] },
-                // { name: "ID", type: "range", min: 0, max: 9, step: 1, units: "hr" },
-            ],
-            rowActions: compName != "amazon" ? [
-                { icon: "Eye", title: "Ver mensaje", callback: (rowData) => {
-                    const rowIndex = tableData.indexOf(rowData);
-                    showMessages( compName, rowIndex );
-                }},
-                // "menu"
-            ] : [],
-            // onMenuAction: (index, tableData) => {
-            //     return [
-            //         { name: "Export" },
-            //         { name: "Make a copy" },
-            //         { name: "Favourite" },
-            //         null,
-            //         { name: "Delete", icon: "Trash2", className: "fg-error" },
-            //     ]
-            // }
-        });
-        dom.appendChild( tableWidget.root );
+        selectable: false,
+        sortable: false,
+        toggleColumns: true,
+        filter: "NOMCONS",
+        customFilters: [
+            { name: "CLAVE", options: ["Documentada", "En tránsito", "En reparto", "En destino"] },
+            // { name: "ID", type: "range", min: 0, max: 9, step: 1, units: "hr" },
+        ],
+        rowActions: compName != "amazon" ? [
+            { icon: "Eye", title: "Ver mensaje", callback: (rowData) => {
+                const rowIndex = tableData.indexOf(rowData);
+                showMessages( compName, rowIndex );
+            }},
+            // "menu"
+        ] : [],
+        // onMenuAction: (index, tableData) => {
+        //     return [
+        //         { name: "Export" },
+        //         { name: "Make a copy" },
+        //         { name: "Favourite" },
+        //         null,
+        //         { name: "Delete", icon: "Trash2", className: "fg-error" },
+        //     ]
+        // }
+    });
+    dom.appendChild( tableWidget.root );
+
+    window.__compName = compName;
+    window.__rowOffset = undefined;
 }
 
 const showMessages = ( compName, rowOffset = 0 ) => {
@@ -124,6 +128,7 @@ const showMessages = ( compName, rowOffset = 0 ) => {
         const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6", `
             <h1>No hay más mensajes</h1>
         `, dom );
+        window.__rowOffset = undefined;
         return;
     }
 
@@ -133,21 +138,38 @@ const showMessages = ( compName, rowOffset = 0 ) => {
         <p class="font-light" style="max-width:32rem">Número de envío: <strong>${ row["NENVIO"] }</strong> / Referencia: <strong>${ row["REFERENCIA"] }</strong></p>
     `, dom );
 
+    let url = cblTrackingUrl;
+    switch( window.__transport )
+    {
+        case 'SEUR': url = seurTrackingUrl; break;
+        case "GLS": url = glsTrackingUrl; break;
+    }
+
     const template = appData[ compName ].template;
-    const body = LX.makeContainer( [ null, "auto" ], "p-6", template( row["LOCALIZADOR"] ), dom );
+    const templateString = template( row["LOCALIZADOR"], url );
+    const body = LX.makeContainer( [ null, "auto" ], "p-8", templateString, dom );
 
     const footerPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
     footerPanel.sameLine(2, "justify-between");
-    const copyButton = footerPanel.addButton(null, "CopyButton", () => {
-        const messageText = template( row["LOCALIZADOR"] );
-        navigator.clipboard.writeText( messageText ).then(() => {
+
+    const copyButtonWidget = footerPanel.addButton(null, "CopyButton",  async () => {
+        navigator.clipboard.writeText( templateString ).then(() => {
             LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000 } );
         }).catch(err => {
             console.error('Error copying text: ', err);
             LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1 } );
         });
-    }, { icon: "Copy", title: "Copiar", tooltip: true });
-    const nextButton = footerPanel.addButton(null, "NextButton", () => {
+        copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "none";
+
+        LX.doAsync( () => {
+            copyButtonWidget.swap( true );
+            copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "auto";
+        }, 3000 );
+
+    }, { swap: "Check", icon: "Copy", title: "Copiar", tooltip: true } );
+    copyButtonWidget.root.querySelector( ".swap-on svg" ).addClass( "fg-success" );
+
+    const nextButtonWidget = footerPanel.addButton(null, "NextButton", () => {
         showMessages( compName, rowOffset + 1 );
     }, { icon: "ArrowRight", title: "Siguiente", tooltip: true });
     Object.assign( footerPanel.root.style, {
@@ -155,6 +177,18 @@ const showMessages = ( compName, rowOffset = 0 ) => {
         bottom: "0"
     });
     dom.appendChild( footerPanel.root );
+
+    window.__compName = compName;
+    window.__rowOffset = rowOffset;
+}
+
+const updateTransport = ( value ) => {
+    window.__transport = value;
+
+    if( window.__rowOffset != undefined )
+    {
+        showMessages( window.__compName, window.__rowOffset );
+    }
 }
 
 window.clearData = () => {
@@ -273,29 +307,45 @@ window.clearData = () => {
 
 // Message templates
 
-appData["jowy"].template = ( id ) => {
-    return `<p><strong>Tu pedido ha sido enviado a trav&eacute;s de CBL:</strong></p>
+appData["jowy"].template = ( id, url ) => {
+    return `<p><strong>Tu pedido ha sido enviado a trav&eacute;s de ${ window.__transport }:</strong></p>
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="border-radius: 25px; font-size: 15px; font-family: Helvetica,Arial,sans-serif; font-weight: 700!important; padding: 15px; max-width: 300px; background-color: #5aa5f3; text-align: center;"><a style="text-decoration: none; color: #ffffff;" href="https://clientes.cbl-logistica.com/public/consultaenvio.aspx"><strong>HAZ CLIC PARA SEGUIR TU PEDIDO</strong></a></p>`;
+<a href="${ url }" style="text-decoration: none; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 15px; max-width: 350px; background-color: #FDC645; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<p style="color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
+<div style="border-bottom:1px solid #927124; margin-block: 0.4rem;"></div>
+<p style="color: #927124;">jowyoriginals.com</p>
+</a>`;
 }
 
-appData["hxg"].template = ( id ) => {
-    return `<p><strong>Tu pedido ha sido enviado a trav&eacute;s de CBL:</strong></p>
+appData["hxg"].template = ( id, url ) => {
+    return `<p><strong>Tu pedido ha sido enviado a trav&eacute;s de ${ window.__transport }:</strong></p>
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="font-size: 15px; font-family: Helvetica,Arial,sans-serif; font-weight: 700!important; padding: 15px; max-width: 300px; background-color: #ffc844; text-align: center;"><a style="text-decoration: none; color: #222222;" href="https://clientes.cbl-logistica.com/public/consultaenvio.aspx"><strong>HAZ CLIC PARA SEGUIR TU PEDIDO</strong></a></p>`;
+<a href="${ url }" style="text-decoration: none; border-radius: 16px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 15px; max-width: 350px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<p style="text-decoration: none; color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
+<div style="border-bottom:1px solid #927124; margin-block: 0.4rem;"></div>
+<p style="text-decoration: none; color: #927124;">homexgym.com</p>
+</a>`;
 }
 
-appData["bathby"].template = ( id ) => {
-    return `<p><strong>Tu pedido ha sido enviado a trav&eacute;s de CBL:</strong></p>
+appData["bathby"].template = ( id, url ) => {
+    return `<p><strong>Tu pedido ha sido enviado a trav&eacute;s de ${ window.__transport }:</strong></p>
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="font-size: 15px; font-family: Helvetica,Arial,sans-serif; font-weight: 700!important; padding: 15px; max-width: 300px; background-color: #f2d1d1; text-align: center;"><a style="text-decoration: none; color: #000000;" href="https://clientes.cbl-logistica.com/public/consultaenvio.aspx"><strong>HAZ CLIC PARA SEGUIR TU PEDIDO</strong></a></p>`;
+<a href="${ url }" style="text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 15px; max-width: 350px; background-color: #F2D1D1; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<p style="text-decoration: none; color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
+<div style="border-bottom:1px solid #736060; margin-block: 0.4rem;"></div>
+<p style="text-decoration: none; color: #736060;">bathby.com</p>
+</a>`;
 }
+
+const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.aspx`;
+const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
+const glsTrackingUrl = `https://gls-group.com/ES/es/seguimiento-envio/`;
 
 // Load last data if available
 const lastData = localStorage.getItem( "lastData" );
