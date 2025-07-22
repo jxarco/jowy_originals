@@ -11,27 +11,23 @@ const starterTheme = LX.getTheme();
         { name: "Seguimiento", callback: () => { } }
     ] );
 
-    menubar.setButtonImage("lexgui.js", `data/icon_${ starterTheme }.png`, () => {window.open("https://jxarco.github.io/lexgui.js/")}, {float: "left"})
+    menubar.setButtonImage("lexgui.js", `data/icon_${ starterTheme }.png`, () => {window.open("https://www.jowyoriginals.com/")}, {float: "left"})
 
     const commandButton = new LX.Button(null, `Search command...<span class="ml-auto">${ LX.makeKbd( ["Ctrl", "Space"], false, "bg-tertiary border px-1 rounded" ).innerHTML }</span>`, () => { LX.setCommandbarState( true ) }, {
         width: "256px", className: "right", buttonClass: "border fg-tertiary bg-secondary" }
     );
     menubar.root.appendChild( commandButton.root );
 
-
     menubar.addButtons( [
-        // {
-        //     title: "Github",
-        //     icon: "Github@solid",
-        //     callback:  (event) => {
-        //         window.open( "https://github.com/jxarco/lexgui.js/", "_blank" );
-        //     }
-        // },
         {
             title: "Switch Theme",
             icon: starterTheme == "dark" ? "Moon" : "Sun",
             swap: starterTheme == "dark" ? "Sun" : "Moon",
-            callback:  (value, event) => { LX.switchTheme() }
+            callback:  (value, event) => {
+                const newTheme = value ? "light" : "dark";
+                LX.switchTheme();
+                menubar.setButtonImage("lexgui.js", `data/icon_${ newTheme }.png`, () => {window.open("https://www.jowyoriginals.com/")}, {float: "left"})
+            }
         }
     ], { float: "right" });
 }
@@ -45,6 +41,8 @@ const appData = {
 
 const processData = data => {
     
+    localStorage.setItem( "lastData", JSON.stringify( data ) );
+
     // Clear previous data
     for( const key in appData ) {
         appData[ key ].list = [];
@@ -158,11 +156,18 @@ const showMessages = ( compName, rowOffset = 0 ) => {
     dom.appendChild( footerPanel.root );
 }
 
+window.clearData = () => {
+    console.log("Clearing data...");
+    localStorage.removeItem( "lastData" );
+    window.location.reload();
+}
+
 // Header
 {
     const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-6 py-12", `
         <h1>Mensajes de seguimiento</h1>
         <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un nuevo listado de envíos.</p>
+        <button class="lexbutton contrast" style="max-width:12rem" onClick="window.clearData()">Limpiar datos anteriores</button>
     `, area );
 
     // add file drag and drop event to header
@@ -289,6 +294,19 @@ appData["bathby"].template = ( id ) => {
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
 <p style="font-size: 15px; font-family: Helvetica,Arial,sans-serif; font-weight: 700!important; padding: 15px; max-width: 300px; background-color: #f2d1d1; text-align: center;"><a style="text-decoration: none; color: #000000;" href="https://clientes.cbl-logistica.com/public/consultaenvio.aspx"><strong>HAZ CLIC PARA SEGUIR TU PEDIDO</strong></a></p>`;
+}
+
+// Load last data if available
+const lastData = localStorage.getItem( "lastData" );
+if( lastData ) {
+    try {
+        const data = JSON.parse( lastData );
+        processData( data );
+        LX.toast( "Listado cargado!", "✅ Se han cargado los datos anteriores.", { timeout: 3000 } );
+    } catch (error) {
+        console.error("Error parsing last data:", error);
+        LX.toast( "Error", "❌ No se pudo cargar los datos anteriores.", { timeout: -1 } );
+    }
 }
 
 showList( "jowy" );
