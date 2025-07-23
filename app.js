@@ -30,9 +30,8 @@ const companyOptions = ["Jowy", "HxG", "Bathby"];
             icon: starterTheme == "dark" ? "Moon" : "Sun",
             swap: starterTheme == "dark" ? "Sun" : "Moon",
             callback:  (value, event) => {
-                const newTheme = value ? "light" : "dark";
                 LX.switchTheme();
-                menubar.setButtonImage("lexgui.js", `data/icon_${ newTheme }.png`, () => { window.open("https://www.jowyoriginals.com/") }, { float: "left" })
+                menubar.setButtonImage("lexgui.js", `data/icon_${ LX.getTheme() }.png`, () => { window.open("https://www.jowyoriginals.com/") }, { float: "left" })
             }
         }
     ], { float: "right" });
