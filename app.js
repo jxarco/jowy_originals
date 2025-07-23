@@ -8,7 +8,7 @@ const starterTheme = LX.getTheme();
 const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.aspx`;
 const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
 const glsTrackingUrl = `https://gls-group.com/ES/es/seguimiento-envio/`;
-const transportOptions = ["CBL", "SEUR", "GLS"];
+const transportOptions = ["CBL", "SEUR"];//, "GLS"];
 const companyOptions = ["Jowy", "HxG", "Bathby"];
 
 // Menubar
@@ -17,7 +17,9 @@ const companyOptions = ["Jowy", "HxG", "Bathby"];
         // { name: "Seguimiento", callback: () => { } }
     ] );
 
-    menubar.setButtonImage("lexgui.js", `data/icon_${ starterTheme }.png`, () => { window.open("https://www.jowyoriginals.com/") }, { float: "left" })
+    menubar.setButtonImage("bathby", `data/bathby_${ starterTheme }.png`, () => { window.open("https://bathby.com/wp-admin/") }, { float: "left" });
+    menubar.setButtonImage("hxg", `data/hxg_${ starterTheme }.png`, () => { window.open("https://homexgym.com/wp-admin/") }, { float: "left" });
+    menubar.setButtonImage("jowy", `data/jowy_${ starterTheme }.png`, () => { window.open("https://www.jowyoriginals.com/wp-admin/") }, { float: "left" });
 
     const commandButton = new LX.Select("Transporte", transportOptions, `CBL`, (v) => { app.updateTransport( v ) }, {
         width: "256px", nameWidth: "45%", className: "right", overflowContainer: null, skipReset: true }
@@ -31,7 +33,10 @@ const companyOptions = ["Jowy", "HxG", "Bathby"];
             swap: starterTheme == "dark" ? "Sun" : "Moon",
             callback:  (value, event) => {
                 LX.switchTheme();
-                menubar.setButtonImage("lexgui.js", `data/icon_${ LX.getTheme() }.png`, () => { window.open("https://www.jowyoriginals.com/") }, { float: "left" })
+                const newTheme = LX.getTheme();
+                menubar.setButtonImage("bathby", `data/bathby_${ newTheme }.png`);
+                menubar.setButtonImage("hxg", `data/hxg_${ newTheme }.png`);
+                menubar.setButtonImage("jowy", `data/jowy_${ newTheme }.png`);
             }
         }
     ], { float: "right" });
@@ -283,9 +288,11 @@ const app = {
 // Header
 {
     const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-6 py-12", `
-        <h1>Mensajes de seguimiento</h1>
-        <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un nuevo listado de envíos.</p>
+        <div style="display:flex;flex-direction:row;gap:0.5rem;align-items:center;">${ LX.makeIcon("MessageSquarePlus", { svgClass: "xxl" }).innerHTML }<h1>Mensajes de seguimiento</h1></div>
+        <p class="font-light" style="max-width:32rem">Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.</p>
     `, area );
+
+    window.__header = header;
 
     // add file drag and drop event to header
     header.addEventListener("dragover", (event) => {
@@ -335,7 +342,7 @@ const app = {
     // Create utility buttons
     {
         const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
-        utilButtonsPanel.sameLine(2);
+        utilButtonsPanel.sameLine(3);
 
         const messageFromTrackIdButton = utilButtonsPanel.addButton(null, "CopyButton",  async () => {
             app.openMessageDialog();
@@ -345,14 +352,41 @@ const app = {
             app.clearData();
         }, { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
 
-        // const helpButtonWidget = utilButtonsPanel.addButton(null, "HelpButton", () => {
+        const helpButtonWidget = utilButtonsPanel.addButton(null, "HelpButton", () => {
 
-        // }, { icon: "CircleQuestionMark", title: "Ayuda", tooltip: true });
+            const exampleTour = new LX.Tour([
+                {
+                    title: "Listado de envíos",
+                    content: "Primero sube el listado de envíos arrastrándolo aquí.",
+                    reference: window.__header,
+                    side: "bottom",
+                    align: "center"
+                },
+                {
+                    title: "Elige la empresa",
+                    content: "El listado se divide por empresa, elige la que quieras ver.",
+                    reference: window.__tabs,
+                    side: "bottom",
+                    align: "center"
+                },
+                {
+                    title: "Copiar mensajes",
+                    content: "En la tabla, haz clic en el icono de ojo para ver el mensaje de seguimiento.",
+                    reference: document.querySelector(".lextable"),
+                    side: "top",
+                    align: "start"
+                }
+            ], { offset: 4, xradius: 12 });
+
+            exampleTour.begin();
+
+        }, { icon: "CircleQuestionMark", title: "Ayuda", tooltip: true });
 
         area.attach( utilButtonsPanel.root );
     }
 
     const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-6 pt-0" } );
+    window.__tabs = tabs.root;
 
     // Jowy
     {
@@ -414,7 +448,7 @@ app.data["jowy"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<a href="${ url }" style="text-decoration: none; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 15px; max-width: 350px; background-color: #FDC645; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<a href="${ url }" style="text-decoration: none; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FDC645; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
 <p style="color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
 <div style="border-bottom:1px solid #927124; margin-block: 0.4rem;"></div>
 <p style="color: #927124;">jowyoriginals.com</p>
@@ -426,7 +460,7 @@ app.data["hxg"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<a href="${ url }" style="text-decoration: none; border-radius: 16px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 15px; max-width: 350px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<a href="${ url }" style="text-decoration: none; border-radius: 16px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
 <p style="text-decoration: none; color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
 <div style="border-bottom:1px solid #927124; margin-block: 0.4rem;"></div>
 <p style="text-decoration: none; color: #927124;">homexgym.com</p>
@@ -438,7 +472,7 @@ app.data["bathby"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<a href="${ url }" style="text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 15px; max-width: 350px; background-color: #F2D1D1; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<a href="${ url }" style="text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #F2D1D1; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
 <p style="text-decoration: none; color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
 <div style="border-bottom:1px solid #736060; margin-block: 0.4rem;"></div>
 <p style="text-decoration: none; color: #736060;">bathby.com</p>
