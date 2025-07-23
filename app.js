@@ -70,36 +70,13 @@ const app = {
             }
         }
 
-        this.showList( "bathby" );
-        this.showList( "hxg" );
-        this.showList( "jowy" );
-        this.showList( "amazon" );
+        this.updateLists();
     },
 
     showList: function( compName ) {
         const dom = this.data[ compName ].dom;
         const list = this.data[ compName ].list;
         dom.innerHTML = "";
-
-        // // Create utility buttons
-        // {
-        //     const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
-        //     utilButtonsPanel.sameLine(2);
-
-        //     const messageFromTrackIdButton = utilButtonsPanel.addButton(null, "CopyButton",  async () => {
-        //         app.openMessageDialog();
-        //     }, { icon: "Plus", title: "Nuevo mensaje", tooltip: true } );
-
-        //     const clearButtonWidget = utilButtonsPanel.addButton(null, "ClearButton", () => {
-        //         this.clearData();
-        //     }, { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
-
-        //     // const helpButtonWidget = utilButtonsPanel.addButton(null, "HelpButton", () => {
-
-        //     // }, { icon: "CircleQuestionMark", title: "Ayuda", tooltip: true });
-
-        //     dom.appendChild( utilButtonsPanel.root );
-        // }
 
         // Create table data from the list
         const tableData = list.map( row => {
@@ -115,7 +92,7 @@ const app = {
             toggleColumns: true,
             filter: "NOMCONS",
             customFilters: [
-                { name: "CLAVE", options: ["Documentada", "En tránsito", "En reparto", "En destino"] },
+                { name: "CLAVE", options: ["Documentada", "En tránsito", "En destino", "En reparto", "Entregada"] },
                 // { name: "ID", type: "range", min: 0, max: 9, step: 1, units: "hr" },
             ],
             rowActions: compName != "amazon" ? [
@@ -292,10 +269,14 @@ const app = {
         this.data["hxg"].list = [];
         this.data["bathby"].list = [];
 
+        this.updateLists();
+    },
+
+    updateLists: function() {
+        this.showList( "amazon" );
         this.showList( "bathby" );
         this.showList( "hxg" );
         this.showList( "jowy" );
-        this.showList( "amazon" );
     }
 };
 
@@ -374,20 +355,10 @@ const app = {
 
     const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-6 pt-0" } );
 
-    // Amazon
-    {
-        const amazonContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
-        tabs.add( "Amazon", amazonContainer, { selected: true, onSelect: (event, name) => app.showList( name.toLowerCase() ) } );
-
-        const amazonArea = new LX.Area({ className: "rounded-lg" });
-        amazonContainer.appendChild( amazonArea.root );
-        app.data["amazon"].dom = amazonContainer;
-    }
-
     // Jowy
     {
         const jowyContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
-        tabs.add( "Jowy", jowyContainer, { xselected: true, onSelect: (event, name) => app.showList( name.toLowerCase() ) } );
+        tabs.add( "Jowy", jowyContainer, { selected: true, onSelect: (event, name) => app.showList( name.toLowerCase() ) } );
 
         const jowyArea = new LX.Area({ className: "rounded-lg" });
         jowyContainer.appendChild( jowyArea.root );
@@ -412,6 +383,16 @@ const app = {
         const bathbyArea = new LX.Area({ className: "rounded-lg" });
         bathbyContainer.appendChild( bathbyArea.root );
         app.data["bathby"].dom = bathbyContainer;
+    }
+
+    // Amazon
+    {
+        const amazonContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+        tabs.add( "Amazon", amazonContainer, { xselected: true, onSelect: (event, name) => app.showList( name.toLowerCase() ) } );
+
+        const amazonArea = new LX.Area({ className: "rounded-lg" });
+        amazonContainer.appendChild( amazonArea.root );
+        app.data["amazon"].dom = amazonContainer;
     }
 }
 
@@ -478,9 +459,6 @@ if( lastData ) {
     }
 }
 
-app.showList( "bathby" );
-app.showList( "hxg" );
-app.showList( "jowy" );
-app.showList( "amazon" );
+app.updateLists();
 
 window.app = app;
