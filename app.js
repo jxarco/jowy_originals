@@ -110,11 +110,15 @@ const app = {
         // Create utility buttons
         {
             const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
-            utilButtonsPanel.sameLine(2);
+            utilButtonsPanel.sameLine(3);
 
             const messageFromTrackIdButton = utilButtonsPanel.addButton(null, "CopyButton",  async () => {
                 this.openMessageDialog();
             }, { icon: "Plus", title: "Nuevo mensaje", tooltip: true } );
+
+            const seeMessagesButton = utilButtonsPanel.addButton(null, "SeeMessagesButton", () => {
+                if( this.compName !== "amazon" ) this.showMessages( this.compName, 0 );
+            }, { icon: "Eye", title: "Ver mensajes", tooltip: true });
 
             const clearButtonWidget = utilButtonsPanel.addButton(null, "ClearButton", () => {
                 this.clearData();
@@ -344,22 +348,43 @@ const app = {
         const list = this.data[ compName ].list;
         dom.innerHTML = "";
 
+        const columnData = [
+            [ "DIA", null ],
+            [ "F_DOC", null ],
+            [ "NENVIO", null ],
+            [ "CLAVE", null ],
+            [ "F_SITUACION", null ],
+            [ "NOMCONS", "NOMBRE" ],
+            [ "POBLACION", null ],
+            [ "DETALLE", null ],
+            [ "LOCALIZADOR", null ]
+        ];
+
         // Create table data from the list
         const tableData = list.map( row => {
-            return [ row["DIA"], row["F_DOC"], row["NENVIO"], row["CLAVE"], row["F_SITUACION"], row["NOMCONS"], row["POBLACION"], row["DETALLE"], row["LOCALIZADOR"] ];
+            const lRow = [];
+            for( let c of columnData )
+            {
+                const ogColName = c[ 0 ];
+                lRow.push( row[ ogColName ] ?? "?" );
+            }
+            return lRow;
         });
 
         const tableWidget = new LX.Table(null, {
-                head: [ "DIA", "F_DOC", "NENVIO", "CLAVE", "F_SITUACION", "NOMCONS", "POBLACION", "DETALLE", "LOCALIZADOR" ],
+                head: columnData.map( c => {
+                    return c[ 1 ] ?? c[ 0 ];
+                }),
                 body: tableData
             }, {
             selectable: false,
             sortable: false,
             toggleColumns: true,
-            filter: "NOMCONS",
+            filter: "NOMBRE",
             customFilters: [
                 { name: "CLAVE", options: ["Documentada", "En tránsito", "En destino", "En reparto", "Entregada"] },
-                // { name: "ID", type: "range", min: 0, max: 9, step: 1, units: "hr" },
+                { name: "F_DOC", type: "date" },
+                { name: "F_SITUACION", type: "date" }
             ],
             rowActions: compName != "amazon" ? [
                 { icon: "Eye", title: "Ver mensaje", callback: (rowData) => {
@@ -367,16 +392,7 @@ const app = {
                     this.showMessages( compName, rowIndex );
                 }},
                 // "menu"
-            ] : [],
-            // onMenuAction: (index, tableData) => {
-            //     return [
-            //         { name: "Export" },
-            //         { name: "Make a copy" },
-            //         { name: "Favourite" },
-            //         null,
-            //         { name: "Delete", icon: "Trash2", className: "fg-error" },
-            //     ]
-            // }
+            ] : []
         });
 
         dom.appendChild( tableWidget.root );
@@ -388,7 +404,6 @@ const app = {
     showMessages: function( compName, rowOffset = 0 ) {
         const dom = this.data[ compName ].dom;
         const list = this.data[ compName ].list;
-        console.log(list)
         dom.innerHTML = "";
 
         // hack to remove all tooltips
@@ -404,10 +419,33 @@ const app = {
         }
 
         const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6", `
-            <h2>${ row["NOMCONS"] }</h2>
-            <p class="font-light" style="max-width:32rem"><strong>${ row["POBLACION"] }</strong> / <strong>${ row["CLAVE"] }</strong></p>
-            <p class="font-light" style="max-width:32rem">Número de envío: <strong>${ row["NENVIO"] }</strong> / Referencia: <strong>${ row["REFERENCIA"] }</strong></p>
+            <h2 class="flex flex-row items-center gap-1">${ row["NOMCONS"] }</h2>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Población</p><p class="flex flex-row items-center font-medium">${ row["POBLACION"] }</p></div>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Clave</p><p class="flex flex-row items-center font-medium">${ row["CLAVE"] }</p></div>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de envío</p><p class="flex flex-row items-center font-medium">${ row["NENVIO"] }</p></div>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Referencia</p><p class="flex flex-row items-center font-medium">${ row["REFERENCIA"] ?? "Vacío" }</p></div>
         `, dom );
+
+        // Add button to copy NOMBRE USUARIO
+        {
+            const nPedidoH2 = header.querySelector( "h2" );
+            const copyButtonWidget = new LX.Button(null, "CopyButton",  async function() {
+                navigator.clipboard.writeText( nPedidoH2.innerText ).then(() => {
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000 } );
+                }).catch(err => {
+                    console.error('Error copying text: ', err);
+                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1 } );
+                });
+                copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "none";
+
+                LX.doAsync( () => {
+                    copyButtonWidget.swap( true );
+                    copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "auto";
+                }, 3000 );
+            }, { swap: "Check", icon: "Copy", title: "Copiar", tooltip: true } );
+            copyButtonWidget.root.querySelector( ".swap-on svg" ).addClass( "fg-success" );
+            nPedidoH2.appendChild( copyButtonWidget.root );
+        }
 
         let url = cblTrackingUrl;
         switch( this.transport )
@@ -418,10 +456,10 @@ const app = {
 
         const template = this.data[ compName ].template;
         const templateString = template( row["LOCALIZADOR"], url );
-        const body = LX.makeContainer( [ null, "auto" ], "p-8", templateString + "<br><br>", dom );
+        const body = LX.makeContainer( [ null, "auto" ], "p-6", templateString, dom );
 
         const footerPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
-        footerPanel.sameLine(2, "justify-between");
+        footerPanel.sameLine(2);
 
         const copyButtonWidget = footerPanel.addButton(null, "CopyButton",  async () => {
             navigator.clipboard.writeText( templateString ).then(() => {
@@ -437,16 +475,12 @@ const app = {
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "auto";
             }, 3000 );
 
-        }, { swap: "Check", icon: "Copy", title: "Copiar", tooltip: true } );
+        }, { width: "100px", swap: "Check", icon: "Copy", title: "Copiar", tooltip: true } );
         copyButtonWidget.root.querySelector( ".swap-on svg" ).addClass( "fg-success" );
 
         const nextButtonWidget = footerPanel.addButton(null, "NextButton", () => {
             this.showMessages( compName, rowOffset + 1 );
-        }, { icon: "ArrowRight", title: "Siguiente", tooltip: true });
-        Object.assign( footerPanel.root.style, {
-            position: "absolute",
-            bottom: "0"
-        });
+        }, { width: "100px", icon: "ArrowRight", title: "Siguiente", tooltip: true });
         dom.appendChild( footerPanel.root );
 
         this.compName = compName;
@@ -577,16 +611,8 @@ const app = {
             toggleColumns: true,
             filter: "Producto",
             customFilters: [
-                // { name: "CLAVE", options: ["Documentada", "En tránsito", "En destino", "En reparto", "Entregada"] },
-                // { name: "ID", type: "range", min: 0, max: 9, step: 1, units: "hr" },
+                { name: "Precio", type: "range", min: 0, max: 200, step: 1, units: "€" }
             ],
-            // rowActions: compName != "amazon" ? [
-            //     { icon: "Eye", title: "Ver mensaje", callback: (rowData) => {
-            //         const rowIndex = tableData.indexOf(rowData);
-            //         this.showMessages( compName, rowIndex );
-            //     }},
-            //     // "menu"
-            // ] : []
         });
 
         dom.appendChild( tableWidget.root );
@@ -639,13 +665,13 @@ const app = {
         }
 
         const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6", `
-            <h2 class="num-pedido flex flex-row items-center gap-1">Número del pedido: ${ row["Número del pedido"] }</h2>
+            <h2 class="flex flex-row items-center gap-1">Número del pedido: ${ row["Número del pedido"] }</h2>
             <p class="font-light fg-tertiary" style="height:42px"><strong>${ row["Nombre del producto"] ?? "Vacío" }</strong></p>
             <p class="font-light"><strong>SKU: ${ row["SKU del vendedor"] ?? "Vacío" }</strong> / <strong>${ row["Especificación"] }</strong></p>
             <p class="font-light">Precio: <strong>${ row["precio de los productos básicos"] }</strong></p>
         `, dom );
 
-        const body = LX.makeContainer( [ null, "auto" ], "flex flex-col p-8 gap-1", `
+        const body = LX.makeContainer( [ null, "auto" ], "flex flex-col p-8 gap-0.5", `
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Nombre Usuario</p><p class="flex flex-row items-center font-medium">${ row["Nombre de usuario completo"] ?? "Vacío" }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Dirección</p><p class="flex flex-row items-center font-medium">${ row["dirección de usuario 1"] + ( row["dirección de usuario 2"] ? " " + row["dirección de usuario 2"] : "" ) }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">CP</p><p class="flex flex-row items-center font-medium">${ row["Código Postal"] ?? "Vacío" }</p></div>
@@ -679,7 +705,7 @@ const app = {
 
         // Add button to copy NUMERO PEDIDO
         {
-            const nPedidoH2 = dom.querySelector( ".num-pedido" );
+            const nPedidoH2 = header.querySelector( "h2" );
             const copyButtonWidget = new LX.Button(null, "CopyButton",  async function() {
                 const textToCopy = nPedidoH2.innerText.substring( nPedidoH2.innerText.indexOf( ": " ) + 2 );
                 navigator.clipboard.writeText( textToCopy ).then(() => {
@@ -754,11 +780,11 @@ app.data["jowy"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<a href="${ url }" style="text-decoration: none; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FDC645; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
-<p style="color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
-<div style="border-bottom:1px solid #927124; margin-block: 0.4rem;"></div>
-<p style="color: #927124;">jowyoriginals.com</p>
-</a>`;
+<p style="text-decoration: none; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FDC645; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
+<a style="border-bottom:1px solid #736060; margin-block: 0.5rem;"></a>
+<a href="https://www.jowyoriginals.com/" style="background: none;text-decoration: none;color: #927124;">jowyoriginals.com</a>
+</p>`;
 }
 
 app.data["hxg"].template = ( id, url, transport ) => {
@@ -766,11 +792,11 @@ app.data["hxg"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<a href="${ url }" style="text-decoration: none; border-radius: 16px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
-<p style="background: none; text-decoration: none; color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
-<div style="border-bottom:1px solid #927124; margin-block: 0.4rem;"></div>
-<p style="background: none; text-decoration: none; color: #927124;">homexgym.com</p>
-</a>`;
+<p style="text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
+<a style="border-bottom:1px solid #927124; margin-block: 0.5rem;"></a>
+<a href="https://homexgym.com/" style="background: none;text-decoration: none;color: #927124;">homexgym.com</a>
+</p>`;
 }
 
 app.data["bathby"].template = ( id, url, transport ) => {
@@ -778,11 +804,11 @@ app.data["bathby"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<a href="${ url }" style="text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #F2D1D1; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
-<p style="background: none; text-decoration: none; color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></p>
-<div style="border-bottom:1px solid #736060; margin-block: 0.4rem;"></div>
-<p style="background: none; text-decoration: none; color: #736060;">bathby.com</p>
-</a>`;
+<p style="text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #F2D1D1; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
+<a style="border-bottom:1px solid #736060; margin-block: 0.5rem;"></a>
+<a href="https://bathby.com/" style="background: none;text-decoration: none;color: #736060;">bathby.com</a>
+</p>`;
 }
 
 // Create common UI
