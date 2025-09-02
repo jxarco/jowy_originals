@@ -7,9 +7,11 @@ const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
 const glsTrackingUrl = `https://gls-group.com/ES/es/seguimiento-envio/`;
 const transportOptions = ["CBL", "SEUR"];//, "GLS"];
 const companyOptions = ["Jowy", "HxG", "Bathby"];
+
 const app = {
 
     transport: "CBL", // Default transport
+    sheetName: "",
 
     data: {
         "amazon": { list: [], dom: null },
@@ -26,14 +28,24 @@ const app = {
         this.createContentHtml();
         this.createFooterHtml();
 
-        // Start last tool
-        const lastTool = localStorage.getItem( "lastTool" ) ?? "tracking-messages";
-        if( lastTool === "tracking-messages" ) {
-            this.openTrackingMessagesApp();
+        const hash = window.location.hash.substr(1); // remove leading #
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get("access_token");
+
+        if( accessToken )
+        {
+            this.getGoogleDriveFile( accessToken );
         }
-        else if( lastTool === "shein-data" ) {
-            
-            this.openSHEINData();
+        else
+        {
+            // Start last tool
+            const lastTool = localStorage.getItem( "lastTool" ) ?? "tracking-messages";
+            if( lastTool === "tracking-messages" ) {
+                this.openTrackingMessagesApp();
+            }
+            else if( lastTool === "shein-data" ) {
+                this.openSHEINData();
+            }
         }
     },
 
@@ -69,7 +81,8 @@ const app = {
                     reader.onload = function(e) {
                         const data = e.target.result;
                         const workbook = XLSX.read(data, {type: "binary"});
-                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        app.sheetName = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[ app.sheetName ];
                         if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
                         {
                             LX.toast( file.name, "✅ Datos cargados correctamente!", { timeout: 3000 } );
@@ -212,7 +225,7 @@ const app = {
          // Create utility buttons
         {
             const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
-            utilButtonsPanel.sameLine(2);
+            utilButtonsPanel.sameLine(3);
 
             const startButton = utilButtonsPanel.addButton(null, "StartButton", () => {
                 this.showSingleSheinData();
@@ -221,6 +234,110 @@ const app = {
             const clearButtonWidget = utilButtonsPanel.addButton(null, "ClearButton", () => {
                 this.clearData();
             }, { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
+
+            const exportButtonWidget = utilButtonsPanel.addButton(null, "ExportButton", () => {
+
+                const columnData = [
+                    [ "Número del pedido", null ],
+                    [ "ID del artículo", null ],
+                    [ "SKU del vendedor", null ],
+                    [ "Código Postal", null ],
+                    [ "País", null ],
+                    [ "Provincia", null ],
+                    [ "Ciudad", null ],
+                    [ "Distrito", null ],
+                    [ "dirección de usuario 1+dirección de usuario 2", "Dirección" ],
+                    [ "Nombre de usuario completo", null ],
+                    [ "Número de Teléfono", null ],
+                    [ "Correo electrónico de usuario", null ],
+                ];
+
+                const date = new Date();
+                const day = `${ date.getDate() }`;
+                const month = `${ date.getMonth() + 1 }`;
+                const year = `${ date.getFullYear() }`;
+                const todayStringDate = `${ "0".repeat( 2 - day.length ) }${ day }_${ "0".repeat( 2 - month.length ) }${ month }_${ year }`;
+                const filename = `SEUR_SHEIN_${ todayStringDate }.xlsx`;
+
+                let err = 0;
+                let data = columnData.map( (c, index) => {
+                    return c[ 1 ] ?? c[ 0 ];
+                });
+
+                let errorFn = () => {
+                    LX.toast( "Error", `❌ No se pudo exportar el archivo "${ filename }".`, { timeout: -1 } );
+                };
+
+                if( !this.lastSheinData?.length )
+                {
+                    errorFn();
+                    return;
+                }
+
+                const orderNumbers = new Map();
+
+                let rows = this.lastSheinData.map( ( row, index ) => {
+                    const lRow = [];
+                    for( let c of columnData )
+                    {
+                        const ogColName = c[ 0 ];
+
+                        if( ogColName === "Número del pedido" )
+                        {
+                            const orderNumber = row[ ogColName ];
+
+                            if( orderNumbers.has( orderNumber ) )
+                            {
+                                const val = orderNumbers.get( orderNumber );
+                                orderNumbers.set( orderNumber, [ ...val, index ] );
+                            }
+                            else
+                            {
+                                orderNumbers.set( orderNumber, [ index ] );
+                            }
+                        }
+
+                        if( ogColName.includes( '+' ) )
+                        {
+                            const tks = ogColName.split( '+' );
+
+                            if( !row[ tks[ 0 ] ] )
+                            {
+                                err = 1;
+                                return;
+                            }
+
+                            lRow.push( `${ row[ tks[ 0 ] ] }${ row[ tks[ 1 ] ] ? ` ${ row[ tks[ 1 ] ] }` : "" }` );
+                        }
+                        else
+                        {
+                            lRow.push( row[ ogColName ] ?? "" );
+                        }
+                    }
+                    return lRow;
+                })
+
+                if( err === 1 )
+                {
+                    errorFn();
+                    return;
+                }
+
+                const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( v => v.length > 1 );
+
+                for( const repeats of multipleItemsOrderNames )
+                {
+                    const rest = repeats.slice( 1 );
+                    const trail = rest.reduce( (p, c) => p + ` + ${ rows[ c ][ 2 ] }`, "" );
+                    rest.forEach( r => { rows[ r ] = undefined } );
+                    rows[ repeats[ 0 ] ][ 2 ] += trail;
+                }
+
+                rows = rows.filter( r => r !== undefined );
+
+                this.exportXLSXData( [ data, ...rows ], filename );
+
+            }, { icon: "Download", title: "Exportar datos SEUR", tooltip: true });
 
             // const helpButtonWidget = utilButtonsPanel.addButton(null, "HelpButton", () => {
 
@@ -566,19 +683,21 @@ const app = {
         }
 
         const columnData = [
-            [ "Número del pedido", "N. Pedido" ],
-            [ "SKU del vendedor", "SKU vendedor" ],
-            [ "Nombre del producto", "Producto" ],
-            [ "Especificación", null ],
-            [ "precio de los productos básicos", "Precio" ],
-            [ "Código Postal", "CP" ],
+            [ "Número del pedido", null ],
+            [ "ID del artículo", null ],
+            [ "SKU del vendedor", null ],
+            // [ "Nombre del producto", null ],
+            // [ "Especificación", null ],
+            // [ "precio de los productos básicos", null ],
+            [ "Código Postal", null ],
             [ "País", null ],
             [ "Provincia", null ],
             [ "Ciudad", null ],
+            // [ "Distrito", null ],
             [ "dirección de usuario 1+dirección de usuario 2", "Dirección" ],
-            [ "Nombre de usuario completo", "Nombre usuario" ],
-            [ "Número de Teléfono", "Teléfono" ],
-            [ "Correo electrónico de usuario", "Correo" ],
+            [ "Nombre de usuario completo", null ],
+            [ "Número de Teléfono", null ],
+            [ "Correo electrónico de usuario", null ],
         ];
 
         // Create table data from the list
@@ -609,10 +728,10 @@ const app = {
             selectable: false,
             sortable: false,
             toggleColumns: true,
-            filter: "Producto",
-            customFilters: [
-                { name: "Precio", type: "range", min: 0, max: 200, step: 1, units: "€" }
-            ],
+            filter: "ID del artículo",
+            // customFilters: [
+            //     { name: "Precio", type: "range", min: 0, max: 200, step: 1, units: "€" }
+            // ],
         });
 
         dom.appendChild( tableWidget.root );
@@ -770,6 +889,149 @@ const app = {
         this.showList( "bathby" );
         this.showList( "hxg" );
         this.showList( "jowy" );
+    },
+
+    redirectToOAuth: function() {
+
+        // For now is read only
+
+        const clientId = "851633355284-ecd2lk1f1v771sv18rkmrjvvup6752iq.apps.googleusercontent.com";
+        const redirectUri = encodeURIComponent( window.location.origin + window.location.pathname );
+        const scope = encodeURIComponent( "https://www.googleapis.com/auth/drive.readonly" );
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${ clientId }&redirect_uri=${ redirectUri }&scope=${ scope }`;
+        window.location.href = authUrl;
+    },
+
+    exportXLSXData: function( data, filename ) {
+
+        if( !(data?.length) )
+        {
+            LX.toast( "Error", `❌ No se pudo exportar el archivo "${ filename }".`, { timeout: -1 } );
+            return;
+        }
+
+        const worksheet = XLSX.utils.aoa_to_sheet( data );
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet( workbook, worksheet, app.sheetName ?? "Sheet1" );
+        XLSX.writeFile( workbook, filename );
+    },
+
+    getGoogleDriveFile: function( accessToken ) {
+
+        if( !accessToken )
+        {
+            console.error("No access token provided");
+            return;
+        }
+
+        const fileId = "1arBumQH2vuhLv8lQZnBdTj-h64BmUdjt";
+        const fileUrl = `https://docs.google.com/spreadsheets/d/${ fileId }/export?format=xlsx`;
+
+        this._request({
+            url: fileUrl,
+            dataType: "binary",  // get ArrayBuffer
+            success: function(response) {
+                // response = ArrayBuffer
+
+                const workbook = XLSX.read(response, {type: "binary"});
+                console.log("Sheet names:", workbook.SheetNames);
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const file = XLSX.utils.sheet_to_json(sheet, { raw: false });
+                console.log(file);
+            },
+            error: function(err) {
+                console.error("Download failed:", err);
+            },
+            headers: {
+                "Authorization": `Bearer ${ accessToken }`
+            }
+        });
+    },
+
+    _request: function( request ) {
+
+        var dataType = request.dataType || "text";
+        if(dataType == "json") //parse it locally
+            dataType = "text";
+        else if(dataType == "xml") //parse it locally
+            dataType = "text";
+        else if (dataType == "binary")
+        {
+            //request.mimeType = "text/plain; charset=x-user-defined";
+            dataType = "arraybuffer";
+            request.mimeType = "application/octet-stream";
+        }
+
+        //regular case, use AJAX call
+        var xhr = new XMLHttpRequest();
+        xhr.open( request.data ? 'POST' : 'GET', request.url, true);
+        if(dataType)
+            xhr.responseType = dataType;
+        if (request.mimeType)
+            xhr.overrideMimeType( request.mimeType );
+        if( request.nocache )
+            xhr.setRequestHeader('Cache-Control', 'no-cache');
+        if( request.headers )
+            for( var i in request.headers )
+                xhr.setRequestHeader( i, request.headers[ i ] );
+
+        xhr.onload = function(load)
+        {
+            var response = this.response;
+            if( this.status != 200)
+            {
+                var err = "Error " + this.status;
+                if(request.error)
+                    request.error(err);
+                return;
+            }
+
+            if(request.dataType == "json") //chrome doesnt support json format
+            {
+                try
+                {
+                    response = JSON.parse(response);
+                }
+                catch (err)
+                {
+                    if(request.error)
+                        request.error(err);
+                    else
+                        throw err;
+                }
+            }
+            else if(request.dataType == "xml")
+            {
+                try
+                {
+                    var xmlparser = new DOMParser();
+                    response = xmlparser.parseFromString(response,"text/xml");
+                }
+                catch (err)
+                {
+                    if(request.error)
+                        request.error(err);
+                    else
+                        throw err;
+                }
+            }
+            if(request.success)
+                request.success.call(this, response, this);
+        };
+        xhr.onerror = function(err) {
+            if(request.error)
+                request.error(err);
+        }
+
+        var data = new FormData();
+        if( request.data )
+        {
+            for( var i in request.data)
+                data.append(i,request.data[ i ]);
+        }
+
+        xhr.send( data );
+        return xhr;
     }
 };
 
@@ -818,7 +1080,8 @@ app.data["bathby"].template = ( id, url, transport ) => {
 
     const menubar = area.addMenubar( [
         { name: "Seguimiento", callback: app.openTrackingMessagesApp.bind( app ) },
-        { name: "SHEIN", callback: app.openSHEINData.bind( app ) }
+        { name: "SHEIN", callback: app.openSHEINData.bind( app ) },
+        { name: "Calculadora", callback: app.redirectToOAuth.bind( app ) }
     ] );
 
     menubar.setButtonImage("bathby", `data/bathby_${ starterTheme }.png`, () => { window.open("https://bathby.com/wp-admin/") }, { float: "left" });
