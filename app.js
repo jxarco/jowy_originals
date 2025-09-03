@@ -245,7 +245,6 @@ const app = {
                     [ "País", null ],
                     [ "Provincia", null ],
                     [ "Ciudad", null ],
-                    [ "Distrito", null ],
                     [ "dirección de usuario 1+dirección de usuario 2", "Dirección" ],
                     [ "Nombre de usuario completo", null ],
                     [ "Número de Teléfono", null ],
@@ -311,7 +310,13 @@ const app = {
                         }
                         else
                         {
-                            lRow.push( row[ ogColName ] ?? "" );
+                            if( !row[ ogColName ] )
+                            {
+                                err = 1;
+                                return;
+                            }
+
+                            lRow.push( row[ ogColName ] );
                         }
                     }
                     return lRow;
@@ -693,7 +698,6 @@ const app = {
             [ "País", null ],
             [ "Provincia", null ],
             [ "Ciudad", null ],
-            // [ "Distrito", null ],
             [ "dirección de usuario 1+dirección de usuario 2", "Dirección" ],
             [ "Nombre de usuario completo", null ],
             [ "Número de Teléfono", null ],
