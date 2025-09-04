@@ -241,7 +241,7 @@ const app = {
                     [ "Número del pedido", null ],
                     [ "ID del artículo", null ],
                     [ "SKU del vendedor", null ],
-                    [ "Código Postal", null ],
+                    [ "Código Postal", null, ( str ) => str.replaceAll(/[ -]/g, "") ],
                     [ "País", null ],
                     [ "Provincia", null ],
                     [ "Ciudad", null ],
@@ -316,7 +316,8 @@ const app = {
                                 return;
                             }
 
-                            lRow.push( row[ ogColName ] );
+                            const fn = c[ 2 ] ?? ( (str) => str );
+                            lRow.push( fn( row[ ogColName ] ) );
                         }
                     }
                     return lRow;
@@ -754,22 +755,6 @@ const app = {
 
         // hack to remove all tooltips
         document.querySelectorAll(".lextooltip").forEach( el => { el.remove(); });
-
-        // const columnData = [
-        //     [ "Número del pedido", "N. Pedido" ],
-        //     [ "SKU del vendedor", "SKU vendedor" ],
-        //     [ "Nombre del producto", "Producto" ],
-        //     [ "Especificación", null ],
-        //     [ "precio de los productos básicos", "Precio" ],
-        //     [ "Código Postal", "CP" ],
-        //     [ "País", null ],
-        //     [ "Provincia", null ],
-        //     [ "Ciudad", null ],
-        //     [ "dirección de usuario 1+dirección de usuario 2", "Dirección" ],
-        //     [ "Nombre de usuario completo", "Nombre usuario" ],
-        //     [ "Número de Teléfono", "Teléfono" ],
-        //     [ "Correo electrónico de usuario", "Correo" ],
-        // ];
 
         if( !this.lastSheinData || !this.lastSheinData.length ) {
             const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6", `
