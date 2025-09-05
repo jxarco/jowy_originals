@@ -282,7 +282,7 @@ const app = {
 
     openTrackingMessagesApp: function() {
 
-        this.setHeaderTitle( "Mensajes de seguimiento", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "MessageSquarePlus" );
+        this.setHeaderTitle( "Mensajes de seguimiento", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "Truck" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", false );
         this.sheinDataArea.root.classList.toggle( "hidden", true );
@@ -293,7 +293,7 @@ const app = {
 
     openSHEINData: function() {
 
-        this.setHeaderTitle( "Envíos SHEIN", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "MessageSquarePlus" );
+        this.setHeaderTitle( "Envíos SHEIN", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "Truck" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", true );
         this.sheinDataArea.root.classList.toggle( "hidden", false );
