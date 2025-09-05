@@ -948,10 +948,10 @@ const app = {
 
         rows = rows.filter( r => r !== undefined );
 
-        this.exportXLSXData( [ data, ...rows ], filename );
+        this.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
     },
 
-    exportXLSXData: function( data, filename ) {
+    exportXLSXData: function( data, filename, ignoreErrors ) {
 
         if( !(data?.length) )
         {
@@ -963,6 +963,11 @@ const app = {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet( workbook, worksheet, app.sheetName ?? "Sheet1" );
         XLSX.writeFile( workbook, filename );
+
+        if( !ignoreErrors )
+        {
+            LX.toast( filename, "✅ Datos exportados correctamente!", { timeout: 3000, position: "top-left" } );
+        }
     },
 
     getGoogleDriveFile: function( accessToken ) {
