@@ -222,128 +222,14 @@ const app = {
         const area = new LX.Area( { skipAppend: true } );
         this.area.attach( area );
 
-         // Create utility buttons
+        // Create utility buttons
         {
             const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
             utilButtonsPanel.sameLine(3);
 
-            const startButton = utilButtonsPanel.addButton(null, "StartButton", () => {
-                this.showSingleSheinData();
-            }, { icon: "Eye", title: "Ver información detallada", tooltip: true } );
-
-            const clearButtonWidget = utilButtonsPanel.addButton(null, "ClearButton", () => {
-                this.clearData();
-            }, { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
-
-            const exportButtonWidget = utilButtonsPanel.addButton(null, "ExportButton", () => {
-
-                const columnData = [
-                    [ "Número del pedido", null ],
-                    [ "ID del artículo", null ],
-                    [ "SKU del vendedor", null ],
-                    [ "Código Postal", null, ( str ) => str.replaceAll(/[ -]/g, "") ],
-                    [ "País", null ],
-                    [ "Provincia", null ],
-                    [ "Ciudad", null ],
-                    [ "dirección de usuario 1+dirección de usuario 2", "Dirección" ],
-                    [ "Nombre de usuario completo", null ],
-                    [ "Número de Teléfono", null ],
-                    [ "Correo electrónico de usuario", null ],
-                ];
-
-                const date = new Date();
-                const day = `${ date.getDate() }`;
-                const month = `${ date.getMonth() + 1 }`;
-                const year = `${ date.getFullYear() }`;
-                const todayStringDate = `${ "0".repeat( 2 - day.length ) }${ day }_${ "0".repeat( 2 - month.length ) }${ month }_${ year }`;
-                const filename = `SEUR_SHEIN_${ todayStringDate }.xlsx`;
-
-                let err = 0;
-                let data = columnData.map( (c, index) => {
-                    return c[ 1 ] ?? c[ 0 ];
-                });
-
-                let errorFn = () => {
-                    LX.toast( "Error", `❌ No se pudo exportar el archivo "${ filename }".`, { timeout: -1 } );
-                };
-
-                if( !this.lastSheinData?.length )
-                {
-                    errorFn();
-                    return;
-                }
-
-                const orderNumbers = new Map();
-
-                let rows = this.lastSheinData.map( ( row, index ) => {
-                    const lRow = [];
-                    for( let c of columnData )
-                    {
-                        const ogColName = c[ 0 ];
-
-                        if( ogColName === "Número del pedido" )
-                        {
-                            const orderNumber = row[ ogColName ];
-
-                            if( orderNumbers.has( orderNumber ) )
-                            {
-                                const val = orderNumbers.get( orderNumber );
-                                orderNumbers.set( orderNumber, [ ...val, index ] );
-                            }
-                            else
-                            {
-                                orderNumbers.set( orderNumber, [ index ] );
-                            }
-                        }
-
-                        if( ogColName.includes( '+' ) )
-                        {
-                            const tks = ogColName.split( '+' );
-
-                            if( !row[ tks[ 0 ] ] )
-                            {
-                                err = 1;
-                                return;
-                            }
-
-                            lRow.push( `${ row[ tks[ 0 ] ] }${ row[ tks[ 1 ] ] ? ` ${ row[ tks[ 1 ] ] }` : "" }` );
-                        }
-                        else
-                        {
-                            if( !row[ ogColName ] )
-                            {
-                                err = 1;
-                                return;
-                            }
-
-                            const fn = c[ 2 ] ?? ( (str) => str );
-                            lRow.push( fn( row[ ogColName ] ) );
-                        }
-                    }
-                    return lRow;
-                })
-
-                if( err === 1 )
-                {
-                    errorFn();
-                    return;
-                }
-
-                const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( v => v.length > 1 );
-
-                for( const repeats of multipleItemsOrderNames )
-                {
-                    const rest = repeats.slice( 1 );
-                    const trail = rest.reduce( (p, c) => p + ` + ${ rows[ c ][ 2 ] }`, "" );
-                    rest.forEach( r => { rows[ r ] = undefined } );
-                    rows[ repeats[ 0 ] ][ 2 ] += trail;
-                }
-
-                rows = rows.filter( r => r !== undefined );
-
-                this.exportXLSXData( [ data, ...rows ], filename );
-
-            }, { icon: "Download", title: "Exportar datos SEUR", tooltip: true });
+            utilButtonsPanel.addButton(null, "StartButton", this.showSingleSheinData.bind( this ), { icon: "Eye", title: "Ver información detallada", tooltip: true } );
+            utilButtonsPanel.addButton(null, "ClearButton", this.clearData.bind( this ), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
+            utilButtonsPanel.addButton(null, "ExportButton", this.exportSEUR.bind( this, false, this.lastSheinData ), { icon: "Download", title: "Exportar datos SEUR", tooltip: true });
 
             // const helpButtonWidget = utilButtonsPanel.addButton(null, "HelpButton", () => {
 
@@ -883,7 +769,6 @@ const app = {
     redirectToOAuth: function() {
 
         // For now is read only
-
         const clientId = "851633355284-ecd2lk1f1v771sv18rkmrjvvup6752iq.apps.googleusercontent.com";
         const redirectUri = encodeURIComponent( window.location.origin + window.location.pathname );
         const scope = encodeURIComponent( "https://www.googleapis.com/auth/drive.readonly" );
@@ -891,11 +776,186 @@ const app = {
         window.location.href = authUrl;
     },
 
+    exportSEUR: function( ignoreErrors = false, sheinData ) {
+
+        const columnData = [
+            [ "Número del pedido", null ],
+            [ "ID del artículo", null ],
+            [ "SKU del vendedor", null ],
+            [ "Código Postal", null, ( str ) => str.replaceAll(/[ -]/g, "") ],
+            [ "País", null ],
+            [ "Provincia", null ],
+            [ "Ciudad", null ],
+            [ "dirección de usuario 1+dirección de usuario 2", "Dirección" ],
+            [ "Nombre de usuario completo", null ],
+            [ "Número de Teléfono", null ],
+            [ "Correo electrónico de usuario", null ],
+        ];
+
+        const currentSheinData = sheinData ?? this.lastSheinData;
+
+        // Process the xlsx first to detect empty fields
+        if( !ignoreErrors )
+        {
+            const errorFields = [];
+            currentSheinData.forEach( ( row, index ) => {
+                for( let c of columnData )
+                {
+                    const ogColName = c[ 0 ];
+                    if( ogColName.includes( '+' ) )
+                    {
+                        const tks = ogColName.split( '+' );
+
+                        if( !row[ tks[ 0 ] ] )
+                        {
+                            errorFields.push( [ index, tks[ 0 ] ] );
+                        }
+                    }
+                    else if( !row[ ogColName ] )
+                    {
+                        errorFields.push( [ index, ogColName ] );
+                    }
+                }
+            });
+
+            if( errorFields.length )
+            {
+                const dialog = new LX.Dialog( "❌ Solucionar errores", (p) => {
+                    p.root.classList.add( "p-2" );
+
+                    let columns = columnData.map( (c) => {
+                        return c[ 0 ].split( "+" )[ 0 ];
+                    });
+
+                    const fixedData = LX.deepCopy( currentSheinData );
+
+                    for( const [ errIndex, errName ] of errorFields )
+                    {
+                        p.addLabel( `No existe ${ errName } (${ fixedData[ errIndex ][ "Número del pedido" ] })` );
+                        const possibleIndex = columns.indexOf( errName );
+                        p.addSelect( errName, columns, columns[ possibleIndex ], (v) => {
+                            fixedData[ errIndex ][ errName ] = fixedData[ errIndex ][ v ];
+                        } );
+                    }
+
+                    p.addSeparator();
+                    p.sameLine( 2 );
+                    p.addButton( null, "Ignorar", () => {
+                        dialog.close();
+                        this.exportSEUR( true );
+                    }, { width: "50%", buttonClass: "bg-error fg-white" } );
+                    p.addButton( null, "Exportar", () => {
+                        dialog.close();
+                        this.exportSEUR( false, fixedData );
+                    }, { width: "50%", buttonClass: "contrast" } );
+                }, { modal: true } );
+
+                return;
+            }
+        }
+
+        const date = new Date();
+        const day = `${ date.getDate() }`;
+        const month = `${ date.getMonth() + 1 }`;
+        const year = `${ date.getFullYear() }`;
+        const todayStringDate = `${ "0".repeat( 2 - day.length ) }${ day }_${ "0".repeat( 2 - month.length ) }${ month }_${ year }`;
+        const filename = `SEUR_SHEIN_${ todayStringDate }.xlsx`;
+
+        let err = 0;
+        let errMsg = "";
+        let data = columnData.map( (c, index) => {
+            return c[ 1 ] ?? c[ 0 ];
+        });
+
+        let errorFn = () => {
+            LX.toast( "Error de exportación", `❌ No se pudo exportar el archivo "${ filename }. ${ errMsg }`, { timeout: -1 } );
+        };
+
+        if( !currentSheinData?.length )
+        {
+            errMsg = `No existen datos.`;
+            errorFn();
+            return;
+        }
+
+        const orderNumbers = new Map();
+
+        let rows = currentSheinData.map( ( row, index ) => {
+            const lRow = [];
+            for( let c of columnData )
+            {
+                const ogColName = c[ 0 ];
+
+                if( ogColName === "Número del pedido" )
+                {
+                    const orderNumber = row[ ogColName ];
+
+                    if( orderNumbers.has( orderNumber ) )
+                    {
+                        const val = orderNumbers.get( orderNumber );
+                        orderNumbers.set( orderNumber, [ ...val, index ] );
+                    }
+                    else
+                    {
+                        orderNumbers.set( orderNumber, [ index ] );
+                    }
+                }
+
+                if( ogColName.includes( '+' ) )
+                {
+                    const tks = ogColName.split( '+' );
+
+                    if( !ignoreErrors && !row[ tks[ 0 ] ] )
+                    {
+                        err = 1;
+                        errMsg = `No existen direcciones válidas (${ row[ "Número del pedido" ] }).`;
+                        return;
+                    }
+
+                    lRow.push( `${ row[ tks[ 0 ] ] ?? "" }${ row[ tks[ 1 ] ] ? ` ${ row[ tks[ 1 ] ] }` : "" }` );
+                }
+                else
+                {
+                    if( !ignoreErrors && !row[ ogColName ] )
+                    {
+                        err = 1;
+                        errMsg = `No existen datos de "${ ogColName } (${ row[ "Número del pedido" ] })".`;
+                        return;
+                    }
+
+                    const fn = c[ 2 ] ?? ( (str) => str );
+                    lRow.push( fn( row[ ogColName ] ?? "" ) );
+                }
+            }
+            return lRow;
+        });
+
+        if( err === 1 )
+        {
+            errorFn();
+            return;
+        }
+
+        const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( v => v.length > 1 );
+
+        for( const repeats of multipleItemsOrderNames )
+        {
+            const rest = repeats.slice( 1 );
+            const trail = rest.reduce( (p, c) => p + ` + ${ rows[ c ][ 2 ] }`, "" );
+            rest.forEach( r => { rows[ r ] = undefined } );
+            rows[ repeats[ 0 ] ][ 2 ] += trail;
+        }
+
+        rows = rows.filter( r => r !== undefined );
+
+        this.exportXLSXData( [ data, ...rows ], filename );
+    },
+
     exportXLSXData: function( data, filename ) {
 
         if( !(data?.length) )
         {
-            LX.toast( "Error", `❌ No se pudo exportar el archivo "${ filename }".`, { timeout: -1 } );
+            LX.toast( "Error", `❌ No se pudo exportar el archivo "${ filename }". No existen datos.`, { timeout: -1 } );
             return;
         }
 
