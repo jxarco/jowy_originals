@@ -85,7 +85,7 @@ const app = {
                         const sheet = workbook.Sheets[ app.sheetName ];
                         if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
                         {
-                            LX.toast( file.name, "✅ Datos cargados correctamente!", { timeout: 3000 } );
+                            LX.toast( file.name, "✅ Datos cargados correctamente!", { timeout: 3000, position: "top-left" } );
                         }
                     };
 
@@ -345,7 +345,7 @@ const app = {
         
         if( err !== null )
         {
-            LX.toast( "❌ Error", err );
+            LX.toast( "❌ Error", err, { position: "top-left" } );
             return false;
         }
 
@@ -440,10 +440,10 @@ const app = {
             const nPedidoH2 = header.querySelector( "h2" );
             const copyButtonWidget = new LX.Button(null, "CopyButton",  async function() {
                 navigator.clipboard.writeText( nPedidoH2.innerText ).then(() => {
-                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000 } );
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
                 }).catch(err => {
                     console.error('Error copying text: ', err);
-                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1 } );
+                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
                 });
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "none";
 
@@ -472,10 +472,10 @@ const app = {
 
         const copyButtonWidget = footerPanel.addButton(null, "CopyButton",  async () => {
             navigator.clipboard.writeText( templateString ).then(() => {
-                LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000 } );
+                LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
             }).catch(err => {
                 console.error('Error copying text: ', err);
-                LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1 } );
+                LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
             });
             copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "none";
 
@@ -523,10 +523,10 @@ const app = {
 
             const copyButtonWidget = p.addButton(null, "CopyButton",  async () => {
                 navigator.clipboard.writeText( body.innerHTML ).then(() => {
-                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000 } );
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
                 }).catch(err => {
                     console.error('Error copying text: ', err);
-                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1 } );
+                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
                 });
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "none";
 
@@ -681,10 +681,10 @@ const app = {
             const copyButtonWidget = new LX.Button(null, "CopyButton",  async function() {
                 const textToCopy = this.root.parentElement.childNodes[ 1 ].innerText;
                 navigator.clipboard.writeText( textToCopy ).then(() => {
-                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000 } );
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
                 }).catch(err => {
                     console.error('Error copying text: ', err);
-                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1 } );
+                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
                 });
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "none";
 
@@ -703,10 +703,10 @@ const app = {
             const copyButtonWidget = new LX.Button(null, "CopyButton",  async function() {
                 const textToCopy = nPedidoH2.innerText.substring( nPedidoH2.innerText.indexOf( ": " ) + 2 );
                 navigator.clipboard.writeText( textToCopy ).then(() => {
-                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000 } );
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
                 }).catch(err => {
                     console.error('Error copying text: ', err);
-                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1 } );
+                    LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
                 });
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "none";
 
@@ -868,7 +868,7 @@ const app = {
         });
 
         let errorFn = () => {
-            LX.toast( "Error de exportación", `❌ No se pudo exportar el archivo "${ filename }. ${ errMsg }`, { timeout: -1 } );
+            LX.toast( "Error de exportación", `❌ No se pudo exportar el archivo "${ filename }. ${ errMsg }`, { timeout: -1, position: "top-left" } );
         };
 
         if( !currentSheinData?.length )
@@ -955,7 +955,7 @@ const app = {
 
         if( !(data?.length) )
         {
-            LX.toast( "Error", `❌ No se pudo exportar el archivo "${ filename }". No existen datos.`, { timeout: -1 } );
+            LX.toast( "Error", `❌ No se pudo exportar el archivo "${ filename }". No existen datos.`, { timeout: -1, position: "top-left" } );
             return;
         }
 
