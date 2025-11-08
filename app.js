@@ -60,24 +60,26 @@ const app = {
             <div style="display:flex;flex-direction:row;gap:0.5rem;align-items:center;">${ LX.makeIcon("Info", { svgClass: "xxl" }).innerHTML }<h1>Jowy Originals</h1></div>
             <p class="font-light" style="max-width:32rem">Elige una de las herramientas para empezar.</p>
         `, this.area );
+        header.style.background = `url('data/banner_${ LX.getTheme() }.png') no-repeat center center / cover`;
+        this.header = header;
 
         // add file drag and drop event to header
         header.addEventListener("dragover", (event) => {
             event.preventDefault();
             event.stopPropagation();
-            header.classList.add("bg-secondary");
+            header.classList.add("draggingover");
         });
 
         header.addEventListener("dragleave", (event) => {
             event.preventDefault();
             event.stopPropagation();
-            header.classList.remove("bg-secondary");
+            header.classList.remove("draggingover");
         });
 
         header.addEventListener("drop", (event) => {
             event.preventDefault();
             event.stopPropagation();
-            header.classList.remove("bg-secondary");
+            header.classList.remove("draggingover");
 
             // Check if a file was dropped
             if (event.dataTransfer.files.length > 0) {
@@ -1260,6 +1262,7 @@ app.data["bathby"].template = ( id, url, transport ) => {
                 menubar.setButtonImage("bathby", `data/bathby_${ newTheme }.png`);
                 menubar.setButtonImage("hxg", `data/hxg_${ newTheme }.png`);
                 menubar.setButtonImage("jowy", `data/jowy_${ newTheme }.png`);
+                app.header.style.background = `url('data/banner_${ newTheme }.png') no-repeat center center / cover`;
             }
         }
     ], { float: "center" });

@@ -9,18 +9,22 @@
     <link rel="icon" href="data/jowy_dark.png">
 
     <style>
+      :root {
+        --parallax-color: light-dark(rgba(255, 255, 255, 0.85), rgba(11,11,12,0.85));
+      }
+      body {
+        background: linear-gradient(var(--parallax-color), var(--parallax-color)), url("data/parallax.jpg") no-repeat center center / cover;
+      }
       .lextable th, .lextable td {
         max-width: 256px;
         text-overflow: ellipsis;
       }
-      .notifications ol .lextoast .lextoastcontent .desc {
-        transition: all 0.5s cubic-bezier(.42, .97, .52, 1.19);
-      }
-
+      .notifications ol .lextoast .lextoastcontent .desc { transition: all 0.5s cubic-bezier(.42, .97, .52, 1.19) }
       .notifications ol.list .lextoast .lextoastcontent .desc {
         word-wrap: break-word;
         white-space: normal;
       }
+      .draggingover{ filter: brightness(0.9) }
     </style>
 
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
