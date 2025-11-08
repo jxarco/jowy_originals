@@ -12,9 +12,15 @@ const app = {
 
     transport: "CBL", // Default transport
     sheetName: "",
+    countryFormat: {
+        "Spain": "ESPAÑA",
+        "Portugal": "PORTUGAL",
+        "Italy": "ITALIA",
+        "France": "FRANCIA",
+    },
 
     data: {
-        "amazon": { list: [], dom: null },
+        "misc": { list: [], dom: null },
         "jowy": { list: [], dom: null },
         "hxg": { list: [], dom: null },
         "bathby": { list: [], dom: null },
@@ -43,8 +49,8 @@ const app = {
             if( lastTool === "tracking-messages" ) {
                 this.openTrackingMessagesApp();
             }
-            else if( lastTool === "shein-data" ) {
-                this.openSHEINData();
+            else if( lastTool.includes( "-seur" ) ) {
+                this.openDataToSeurApp( lastTool.substring( 0, lastTool.indexOf( '-' ) ) );
             }
         }
     },
@@ -121,56 +127,24 @@ const app = {
         this.area.attach( area );
 
         // Create utility buttons
-        {
-            const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
-            utilButtonsPanel.sameLine(3);
+        const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2 flex flex-row gap-2" });
+        utilButtonsPanel.sameLine(3);
 
-            const messageFromTrackIdButton = utilButtonsPanel.addButton(null, "CopyButton",  async () => {
-                this.openMessageDialog();
-            }, { icon: "Plus", title: "Nuevo mensaje", tooltip: true } );
+        const seeMessagesButton = utilButtonsPanel.addButton(null, "SeeMessagesButton", () => {
+            if( this.compName !== "misc" ) this.showMessages( this.compName, 0 );
+        }, { icon: "Eye", title: "Ver mensajes", tooltip: true });
 
-            const seeMessagesButton = utilButtonsPanel.addButton(null, "SeeMessagesButton", () => {
-                if( this.compName !== "amazon" ) this.showMessages( this.compName, 0 );
-            }, { icon: "Eye", title: "Ver mensajes", tooltip: true });
+        const clearButtonWidget = utilButtonsPanel.addButton(null, "ClearButton", () => {
+            this.clearData();
+        }, { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
 
-            const clearButtonWidget = utilButtonsPanel.addButton(null, "ClearButton", () => {
-                this.clearData();
-            }, { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
+        const messageFromTrackIdButton = utilButtonsPanel.addButton(null, "CopyButton",  async () => {
+            this.openMessageDialog();
+        }, { icon: "Plus", title: "Nuevo mensaje", tooltip: true } );
 
-            // const helpButtonWidget = utilButtonsPanel.addButton(null, "HelpButton", () => {
+        area.attach( utilButtonsPanel.root );
 
-            //     const exampleTour = new LX.Tour([
-            //         {
-            //             title: "Listado de envíos",
-            //             content: "Primero sube el listado de envíos arrastrándolo aquí.",
-            //             reference: this.header,
-            //             side: "bottom",
-            //             align: "center"
-            //         },
-            //         {
-            //             title: "Elige la empresa",
-            //             content: "El listado se divide por empresa, elige la que quieras ver.",
-            //             reference: this.tabs,
-            //             side: "bottom",
-            //             align: "center"
-            //         },
-            //         {
-            //             title: "Copiar mensajes",
-            //             content: "En la tabla, haz clic en el icono de ojo para ver el mensaje de seguimiento.",
-            //             reference: document.querySelector(".lextable"),
-            //             side: "top",
-            //             align: "start"
-            //         }
-            //     ], { offset: 4, xradius: 12 });
-
-            //     exampleTour.begin();
-
-            // }, { icon: "CircleQuestionMark", title: "Ayuda", tooltip: true });
-
-            area.attach( utilButtonsPanel.root );
-        }
-
-        const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-6 pt-0" } );
+        const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-2 pt-0" } );
         this.tabs = tabs.root;
 
         // Jowy
@@ -203,15 +177,18 @@ const app = {
             this.data["bathby"].dom = bathbyContainer;
         }
 
-        // Amazon
+        // Otros
         {
-            const amazonContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
-            tabs.add( "Amazon", amazonContainer, { xselected: true, onSelect: (event, name) => this.showList( name.toLowerCase() ) } );
+            const miscContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+            tabs.add( "Otros", miscContainer, { xselected: true, onSelect: (event, name) => this.showList( name.toLowerCase() ) } );
 
-            const amazonArea = new LX.Area({ className: "rounded-lg" });
-            amazonContainer.appendChild( amazonArea.root );
-            this.data["amazon"].dom = amazonContainer;
+            const miscArea = new LX.Area({ className: "rounded-lg" });
+            miscContainer.appendChild( miscArea.root );
+            this.data["misc"].dom = miscContainer;
         }
+
+        // Move up into the panel section
+        utilButtonsPanel.attach(tabs.root);
 
         area.root.classList.add( "hidden" );
         this.trackingMessagesArea = area;
@@ -223,47 +200,38 @@ const app = {
         this.area.attach( area );
 
         // Create utility buttons
-        {
-            const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
-            utilButtonsPanel.sameLine(3);
-
-            utilButtonsPanel.addButton(null, "StartButton", this.showSingleSheinData.bind( this ), { icon: "Eye", title: "Ver información detallada", tooltip: true } );
-            utilButtonsPanel.addButton(null, "ClearButton", this.clearData.bind( this ), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
-            utilButtonsPanel.addButton(null, "ExportButton", this.exportSEUR.bind( this, false, this.lastSheinData ), { icon: "Download", title: "Exportar datos SEUR", tooltip: true });
-
-            // const helpButtonWidget = utilButtonsPanel.addButton(null, "HelpButton", () => {
-
-            //     const exampleTour = new LX.Tour([
-            //         {
-            //             title: "Listado de envíos",
-            //             content: "Primero sube el listado de envíos arrastrándolo aquí.",
-            //             reference: this.header,
-            //             side: "bottom",
-            //             align: "center"
-            //         },
-            //         {
-            //             title: "Elige la empresa",
-            //             content: "El listado se divide por empresa, elige la que quieras ver.",
-            //             reference: this.tabs,
-            //             side: "bottom",
-            //             align: "center"
-            //         },
-            //         {
-            //             title: "Copiar mensajes",
-            //             content: "En la tabla, haz clic en el icono de ojo para ver el mensaje de seguimiento.",
-            //             reference: document.querySelector(".lextable"),
-            //             side: "top",
-            //             align: "start"
-            //         }
-            //     ], { offset: 4, xradius: 12 });
-
-            //     exampleTour.begin();
-
-            // }, { icon: "CircleQuestionMark", title: "Ayuda", tooltip: true });
-
-            area.attach( utilButtonsPanel.root );
-        }
+        const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2 flex flex-row gap-2" });
+        utilButtonsPanel.sameLine(4);
+        utilButtonsPanel.addButton(null, "StartButton", this.showSingleSheinData.bind( this ), { icon: "Eye", title: "Ver información detallada", tooltip: true } );
+        utilButtonsPanel.addButton(null, "ClearButton", this.clearData.bind( this ), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
+        utilButtonsPanel.addButton(null, "ExportButton", this.exportSEUR.bind( this, false, this.lastSheinData ), { icon: "Download", title: "Exportar datos SEUR", tooltip: true });
+        utilButtonsPanel.addButton(null, "CopyColsButton", this.copySEURData.bind( this ), { icon: "Copy", title: "Copiar Columna", tooltip: true });
+        area.attach( utilButtonsPanel.root );
         
+        const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-2 pt-0" } );
+        this.sheinTabs = tabs.root;
+
+        // SEUR
+        const seurContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+        tabs.add("Todo", seurContainer, { selected: true, onSelect: (event, name) => this.showSheinList() } );
+
+        const seurArea = new LX.Area({ className: "rounded-lg" });
+        seurContainer.appendChild( seurArea.root );
+
+        // Groups List
+        const groupsListContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+        tabs.add( "Por cantidad", groupsListContainer, { xselected: true, onSelect: (event, name) => this.showGroupsByCountryList() } );
+
+        const groupsListArea = new LX.Area({ className: "rounded-lg" });
+        groupsListContainer.appendChild( groupsListArea.root );
+
+        // Move up into the panel section
+        utilButtonsPanel.attach(tabs.root);
+
+        area.root.classList.add( "hidden" );
+
+        this.seurDataArea = seurArea;
+        this.groupsListArea = groupsListArea;
         this.sheinDataArea = area;
     },
 
@@ -282,7 +250,7 @@ const app = {
 
     openTrackingMessagesApp: function() {
 
-        this.setHeaderTitle( "Mensajes de seguimiento", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "Truck" );
+        this.setHeaderTitle( "Mensajes de seguimiento", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "MessagesSquare" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", false );
         this.sheinDataArea.root.classList.toggle( "hidden", true );
@@ -291,14 +259,14 @@ const app = {
         localStorage.setItem( "lastTool", this.tool );
     },
 
-    openSHEINData: function() {
+    openDataToSeurApp: function( dataMarketplace ) {
 
-        this.setHeaderTitle( "Envíos SHEIN", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "Truck" );
+        this.setHeaderTitle( `Envíos por ${ dataMarketplace }`, "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "Truck" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", true );
         this.sheinDataArea.root.classList.toggle( "hidden", false );
 
-        this.tool = "shein-data";
+        this.tool = dataMarketplace + "-seur";
         localStorage.setItem( "lastTool", this.tool );
     },
 
@@ -326,7 +294,7 @@ const app = {
 
                 switch( ref[ 0 ] )
                 {
-                    case '1': this.data["amazon"].list.push( row ); break;
+                    case '1': this.data["misc"].list.push( row ); break;
                     case '2': this.data["jowy"].list.push( row ); break;
                     case '3': this.data["hxg"].list.push( row ); break;
                     case '4': this.data["bathby"].list.push( row ); break;
@@ -338,7 +306,7 @@ const app = {
                 this.updateLists();
             }
         }
-        else if( this.tool == "shein-data" )
+        else if( this.tool == "Shein-seur" )
         {
             this.showSheinList( fileData );
         }
@@ -395,7 +363,7 @@ const app = {
                 { name: "F_DOC", type: "date" },
                 { name: "F_SITUACION", type: "date" }
             ],
-            rowActions: compName != "amazon" ? [
+            rowActions: compName != "misc" ? [
                 { icon: "Eye", title: "Ver mensaje", callback: (rowData) => {
                     const rowIndex = tableData.indexOf(rowData);
                     this.showMessages( compName, rowIndex );
@@ -465,7 +433,7 @@ const app = {
 
         const template = this.data[ compName ].template;
         const templateString = template( row["LOCALIZADOR"], url );
-        const body = LX.makeContainer( [ null, "auto" ], "p-6", templateString, dom );
+        const body = LX.makeContainer( [ null, "auto" ], "p-2", templateString, dom );
 
         const footerPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
         footerPanel.sameLine(2);
@@ -542,7 +510,7 @@ const app = {
 
             const getTemplate = () => {
                 const comp = c.toLowerCase();
-                if( comp == "amazon" ) return "";
+                if( comp == "misc" ) return "";
                 let url = cblTrackingUrl;
                 switch( t )
                 {
@@ -562,9 +530,11 @@ const app = {
 
     showSheinList: function( data ) {
 
-        const dom = this.sheinDataArea.root;
-        while (dom.children.length > 1) {
-            dom.removeChild(dom.children[1]);
+        data = data ?? this.lastSheinData;
+
+        const dom = this.seurDataArea.root;
+        while (dom.children.length > 0) {
+            dom.removeChild(dom.children[0]);
         }
 
         // Sort by ref
@@ -619,24 +589,136 @@ const app = {
             selectable: false,
             sortable: false,
             toggleColumns: true,
-            filter: "ID del artículo",
-            // customFilters: [
-            //     { name: "Precio", type: "range", min: 0, max: 200, step: 1, units: "€" }
-            // ],
+            filter: "SKU del vendedor"
         });
 
         dom.appendChild( tableWidget.root );
-
+        
+        this.lastSeurColumnData = tableWidget.data.head;
+        this.lastShownSeurData = tableWidget.data.body;
         this.lastSheinData = data;
+    },
+
+    showGroupsByCountryList: function( ogData ) {
+
+        ogData = ogData ?? this.lastSheinData;
+
+        let data = LX.deepCopy( ogData );
+
+        const dom = this.groupsListArea.root;
+        while (dom.children.length > 0) {
+            dom.removeChild(dom.children[0]);
+        }
+
+        // Boton de copiar por columna (no por fila porque estan separadas en el Excel final)
+        // en caso de repetir "Número del pedido", se tiene que añadir fila por separado
+
+        // Sort by ref
+        {
+            data = data.sort( ( a, b ) => {
+                return ( a["SKU del vendedor"] ?? "?" ).localeCompare( b["SKU del vendedor"] ?? "?" );
+            } );
+        }
+
+        const columnData = [
+            [ "SKU del vendedor", null ],
+            [ "Cantidad", null ],
+            [ "País", null ],
+            [ "Observaciones", null ],
+            [ "Número del pedido", null ]
+        ];
+
+        const orderNumbers = new Map();
+
+        // Create table data from the list
+        let tableData = data.map( ( row, index ) => {
+            const lRow = [];
+            for( let c of columnData )
+            {
+                let colName = c[ 0 ];
+
+                if( colName === "Número del pedido" )
+                {
+                    const orderNumber = row[ colName ];
+
+                    if( orderNumbers.has( orderNumber ) )
+                    {
+                        const val = orderNumbers.get( orderNumber );
+                        orderNumbers.set( orderNumber, [ ...val, index ] );
+                    }
+                    else
+                    {
+                        orderNumbers.set( orderNumber, [ index ] );
+                    }
+                }
+
+                let value = colName == "País" ? this.countryFormat[ row[ colName ] ] : row[ colName ];
+                lRow.push( value ?? "" );
+            }
+            return lRow;
+        });
+
+        const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( v => v.length > 1 );
+
+        for( const repeats of multipleItemsOrderNames )
+        {
+            const rest = repeats.slice( 1 );
+            const trail = rest.reduce( (p, c) => p + ` + ${ tableData[ c ][ 0 ] }`, "" );
+            rest.forEach( r => { tableData[ r ] = undefined } );
+            tableData[ repeats[ 0 ] ][ 0 ] += trail;
+            tableData[ repeats[ 0 ] ][ 3 ] = "Mismo pedido";
+        }
+
+        tableData = tableData.filter( r => r !== undefined );
+
+        // Remove unnecessary
+        columnData.splice( 4, 1 );
+
+        const listSKU = [];
+        const skus = {};
+
+        for( let row of tableData )
+        {
+            const sku = `${ row[ 0 ] }_${ row[ 2 ] }`;
+            if( !skus[ sku ] )
+            {
+                skus[ sku ] = [ listSKU.length ];
+                row[ 1 ] = 1;
+                row.splice( 4, 1 );
+                listSKU.push( row );
+            }
+            else
+            {
+                const idx = skus[ sku ][ 0 ];
+                listSKU[ idx ][ 1 ] += 1;
+            }
+        }
+
+        const tableWidget = new LX.Table(null, {
+                head: columnData.map( c => {
+                    return c[ 1 ] ?? c[ 0 ];
+                }),
+                body: listSKU
+            }, {
+            selectable: false,
+            sortable: false,
+            toggleColumns: true,
+            filter: "SKU del vendedor",
+        });
+
+        this.lastSeurColumnData = tableWidget.data.head;
+        this.lastShownSeurData = tableWidget.data.body;
+
+        dom.appendChild( tableWidget.root );
     },
 
     showSingleSheinData( rowOffset ) {
 
-        rowOffset = rowOffset ?? 0;
+        rowOffset = ( rowOffset.constructor === String ? 0 : rowOffset) ?? 0;
 
-        const dom = this.sheinDataArea.root;
-        while (dom.children.length > 1) {
-            dom.removeChild(dom.children[1]);
+        const dom = this.seurDataArea.root;
+        while (dom.children.length > 0) {
+            dom.removeChild(dom.children[0]);
         }
 
         // hack to remove all tooltips
@@ -660,7 +742,7 @@ const app = {
 
         const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6", `
             <h2 class="flex flex-row items-center gap-1">Número del pedido: ${ row["Número del pedido"] }</h2>
-            <p class="font-light fg-tertiary" style="height:42px"><strong>${ row["Nombre del producto"] ?? "Vacío" }</strong></p>
+            <p class="font-light fg-tertiary" style="height:auto"><strong>${ row["Nombre del producto"] ?? "Vacío" }</strong></p>
             <p class="font-light"><strong>SKU: ${ row["SKU del vendedor"] ?? "Vacío" }</strong> / <strong>${ row["Especificación"] }</strong></p>
             <p class="font-light">Precio: <strong>${ row["precio de los productos básicos"] }</strong></p>
         `, dom );
@@ -745,7 +827,7 @@ const app = {
         console.log("Clearing data...");
         localStorage.removeItem( "lastTool" );
 
-        this.data["amazon"].list = [];
+        this.data["misc"].list = [];
         this.data["jowy"].list = [];
         this.data["hxg"].list = [];
         this.data["bathby"].list = [];
@@ -760,7 +842,7 @@ const app = {
     },
 
     updateLists: function() {
-        this.showList( "amazon" );
+        this.showList( "misc" );
         this.showList( "bathby" );
         this.showList( "hxg" );
         this.showList( "jowy" );
@@ -774,6 +856,43 @@ const app = {
         const scope = encodeURIComponent( "https://www.googleapis.com/auth/drive.readonly" );
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${ clientId }&redirect_uri=${ redirectUri }&scope=${ scope }`;
         window.location.href = authUrl;
+    },
+
+    copySEURData: function( name, event ) {
+
+        if( !this.lastShownSeurData )
+        {
+            return;
+        }
+
+        const items = this.lastSeurColumnData.map( ( row, index ) => {
+
+            const rowName = row;
+
+            return { name: rowName, callback: () => {
+
+                const copyRows = [];
+
+                for( let row of this.lastShownSeurData )
+                {
+                    copyRows.push( [ row[ index ] ] );
+                }
+
+                const tsv = copyRows.map(r => r.join('\t')).join('\n');
+                navigator.clipboard.writeText(tsv);
+
+                // const html = "";
+
+                // navigator.clipboard.writeText( html ).then(() => {
+                //     LX.toast( "Copiado", "✅ Columna copiada al portapapeles.", { timeout: 3000, position: "top-left" } );
+                // }).catch(err => {
+                //     console.error('Error copying text: ', err);
+                //     LX.toast( "Error", "❌ No se pudo copiar la columna.", { timeout: -1, position: "top-left" } );
+                // });
+            } };
+        } );
+
+        LX.addDropdownMenu( event.target, items, { side: "right", align: "start" } )
     },
 
     exportSEUR: function( ignoreErrors = false, sheinData ) {
@@ -1134,8 +1253,12 @@ app.data["bathby"].template = ( id, url, transport ) => {
 
     const menubar = area.addMenubar( [
         { name: "Seguimiento", callback: app.openTrackingMessagesApp.bind( app ) },
-        { name: "SHEIN", callback: app.openSHEINData.bind( app ) },
-        { name: "Calculadora", callback: app.redirectToOAuth.bind( app ) }
+        { name: "Seur", submenu: [
+            { name: "Shein", callback: app.openDataToSeurApp.bind( app ), icon: "Strikethrough" },
+            { name: "Decathlon", disabled: true, callback: app.openDataToSeurApp.bind( app ), icon: "Volleyball" }
+            
+        ] },
+        // { name: "Calculadora", callback: app.redirectToOAuth.bind( app ) }
     ] );
 
     menubar.setButtonImage("bathby", `data/bathby_${ starterTheme }.png`, () => { window.open("https://bathby.com/wp-admin/") }, { float: "left" });
