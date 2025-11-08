@@ -1229,6 +1229,8 @@ app.data["bathby"].template = ( id, url, transport ) => {
 
 // Create common UI
 {
+    const parallax = LX.makeElement( "div", "parallax-bg", "", document.body );
+
     const area = await LX.init( { layoutMode: "document", rootClass: "wrapper" } );
     const starterTheme = LX.getTheme();
 

@@ -9,11 +9,19 @@
     <link rel="icon" href="data/jowy_dark.png">
 
     <style>
-      :root {
-        --parallax-color: light-dark(rgba(255, 255, 255, 0.85), rgba(11,11,12,0.85));
+      .parallax-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(rgba(18,18,20,0.75), rgba(18,18,20,0.75)), url("data/parallax.png") no-repeat center center / cover;
+        object-fit: cover;
+        z-index: 0;
       }
-      body {
-        background: linear-gradient(var(--parallax-color), var(--parallax-color)), url("data/parallax.jpg") no-repeat center center / cover;
+      :root[data-theme="light"] .parallax-bg {
+        background: linear-gradient(rgba(256, 256, 256,0.4), rgba(256, 256, 256,0.4)), url("data/parallax.png") no-repeat center center / cover;
+        filter: brightness(1.5);
       }
       .lextable th, .lextable td {
         max-width: 256px;
