@@ -91,7 +91,7 @@ const app = {
                         const sheet = workbook.Sheets[ app.sheetName ];
                         if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
                         {
-                            LX.toast( file.name, "✅ Datos cargados correctamente!", { timeout: 3000, position: "top-left" } );
+                            LX.toast( "Datos cargados", `✅ ${ file.name }`, { timeout: 3000, position: "top-left" } );
                         }
                     };
 
@@ -108,7 +108,7 @@ const app = {
     },
 
     setHeaderTitle: function( title, subtitle, icon ) {
-        this.header.querySelector( "div" ).innerHTML = `${ LX.makeIcon( icon ?? "Info" , { svgClass: "xxl" }).innerHTML }<h1>${ title }</h1>`;
+        this.header.querySelector( "div" ).innerHTML = `${ LX.makeIcon( icon ?? "Info" , { svgClass: "xxl mr-2" }).innerHTML }<h1>${ title }</h1>`;
         this.header.querySelector( "p" ).innerHTML = subtitle ?? "";
     },
 
@@ -149,7 +149,7 @@ const app = {
 
         // Jowy
         {
-            const jowyContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+            const jowyContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
             tabs.add( "Jowy", jowyContainer, { selected: true, onSelect: (event, name) => this.showList( name.toLowerCase() ) } );
 
             const jowyArea = new LX.Area({ className: "rounded-lg" });
@@ -159,7 +159,7 @@ const app = {
 
         // HxG
         {
-            const hxgContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+            const hxgContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
             tabs.add( "HxG", hxgContainer, { xselected: true, onSelect: (event, name) => this.showList( name.toLowerCase() ) } );
 
             const hxgArea = new LX.Area({ className: "rounded-lg" });
@@ -169,7 +169,7 @@ const app = {
 
         // Bathby
         {
-            const bathbyContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+            const bathbyContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
             tabs.add( "Bathby", bathbyContainer, { xselected: true, onSelect: (event, name) => this.showList( name.toLowerCase() ) } );
 
             const bathbyArea = new LX.Area({ className: "rounded-lg" });
@@ -179,7 +179,7 @@ const app = {
 
         // Otros
         {
-            const miscContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+            const miscContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
             tabs.add( "Otros", miscContainer, { xselected: true, onSelect: (event, name) => this.showList( name.toLowerCase() ) } );
 
             const miscArea = new LX.Area({ className: "rounded-lg" });
@@ -201,25 +201,24 @@ const app = {
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2 flex flex-row gap-2" });
-        utilButtonsPanel.sameLine(4);
+        utilButtonsPanel.sameLine(3);
         utilButtonsPanel.addButton(null, "StartButton", this.showSingleSheinData.bind( this ), { icon: "Eye", title: "Ver información detallada", tooltip: true } );
         utilButtonsPanel.addButton(null, "ClearButton", this.clearData.bind( this ), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
-        utilButtonsPanel.addButton(null, "ExportButton", this.exportSEUR.bind( this, false, this.lastSheinData ), { icon: "Download", title: "Exportar datos SEUR", tooltip: true });
-        utilButtonsPanel.addButton(null, "CopyColsButton", this.copySEURData.bind( this ), { icon: "Copy", title: "Copiar Columna", tooltip: true });
+        utilButtonsPanel.addButton(null, "ExportButton", this.exportSEUR.bind( this, false, this.lastSheinData ), { icon: "Download", title: "Exportar datos", tooltip: true });
         area.attach( utilButtonsPanel.root );
         
         const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-2 pt-0" } );
         this.sheinTabs = tabs.root;
 
         // SEUR
-        const seurContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+        const seurContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
         tabs.add("Todo", seurContainer, { selected: true, onSelect: (event, name) => this.showSheinList() } );
 
         const seurArea = new LX.Area({ className: "rounded-lg" });
         seurContainer.appendChild( seurArea.root );
 
         // Groups List
-        const groupsListContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary border rounded-lg overflow-hidden" );
+        const groupsListContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
         tabs.add( "Por cantidad", groupsListContainer, { xselected: true, onSelect: (event, name) => this.showGroupsByCountryList() } );
 
         const groupsListArea = new LX.Area({ className: "rounded-lg" });
@@ -261,7 +260,7 @@ const app = {
 
     openDataToSeurApp: function( dataMarketplace ) {
 
-        this.setHeaderTitle( `Envíos por ${ dataMarketplace }`, "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "Truck" );
+        this.setHeaderTitle( `Envíos SEUR: <i>${ dataMarketplace }</i>`, "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "Truck" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", true );
         this.sheinDataArea.root.classList.toggle( "hidden", false );
@@ -309,6 +308,7 @@ const app = {
         else if( this.tool == "Shein-seur" )
         {
             this.showSheinList( fileData );
+            this.showGroupsByCountryList( fileData );
         }
         
         if( err !== null )
@@ -702,7 +702,23 @@ const app = {
             }, {
             selectable: false,
             sortable: false,
-            toggleColumns: true,
+            sortColumns: false,
+            toggleColumns: false,
+            columnActions: [
+                { icon: "Copy", name: "Copiar", callback: ( colData ) => {
+                    if( !this.lastShownSeurData )
+                    {
+                        return;
+                    }
+                    const tsv = colData.map(r => r.join('\t')).join('\n');
+                    navigator.clipboard.writeText( tsv ).then(() => {
+                        LX.toast( "Copiado", "✅ Columna copiada al portapapeles.", { timeout: 3000, position: "top-left" } );
+                    }).catch(err => {
+                        console.error('Error copying text: ', err);
+                        LX.toast( "Error", "❌ No se pudo copiar la columna.", { timeout: -1, position: "top-left" } );
+                    });
+                } }
+            ],
             filter: "SKU del vendedor",
         });
 
@@ -858,34 +874,6 @@ const app = {
         window.location.href = authUrl;
     },
 
-    copySEURData: function( name, event ) {
-
-        if( !this.lastShownSeurData )
-        {
-            return;
-        }
-
-        const items = this.lastSeurColumnData.map( ( row, index ) => {
-
-            const rowName = row;
-
-            return { name: rowName, callback: () => {
-
-                const copyRows = [];
-
-                for( let row of this.lastShownSeurData )
-                {
-                    copyRows.push( [ row[ index ] ] );
-                }
-
-                const tsv = copyRows.map(r => r.join('\t')).join('\n');
-                navigator.clipboard.writeText(tsv);
-            } };
-        } );
-
-        LX.addDropdownMenu( event.target, items, { side: "right", align: "start" } )
-    },
-
     exportSEUR: function( ignoreErrors = false, sheinData ) {
 
         const columnData = [
@@ -969,7 +957,7 @@ const app = {
         const month = `${ date.getMonth() + 1 }`;
         const year = `${ date.getFullYear() }`;
         const todayStringDate = `${ "0".repeat( 2 - day.length ) }${ day }_${ "0".repeat( 2 - month.length ) }${ month }_${ year }`;
-        const filename = `SEUR_SHEIN_${ todayStringDate }.xlsx`;
+        const filename = `SEUR_${ this.tool.substring( 0, this.tool.indexOf("-") ).toUpperCase() }_${ todayStringDate }.xlsx`;
 
         let err = 0;
         let errMsg = "";
