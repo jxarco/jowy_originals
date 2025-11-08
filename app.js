@@ -880,15 +880,6 @@ const app = {
 
                 const tsv = copyRows.map(r => r.join('\t')).join('\n');
                 navigator.clipboard.writeText(tsv);
-
-                // const html = "";
-
-                // navigator.clipboard.writeText( html ).then(() => {
-                //     LX.toast( "Copiado", "✅ Columna copiada al portapapeles.", { timeout: 3000, position: "top-left" } );
-                // }).catch(err => {
-                //     console.error('Error copying text: ', err);
-                //     LX.toast( "Error", "❌ No se pudo copiar la columna.", { timeout: -1, position: "top-left" } );
-                // });
             } };
         } );
 
@@ -1265,10 +1256,10 @@ app.data["bathby"].template = ( id, url, transport ) => {
     menubar.setButtonImage("hxg", `data/hxg_${ starterTheme }.png`, () => { window.open("https://homexgym.com/wp-admin/") }, { float: "left" });
     menubar.setButtonImage("jowy", `data/jowy_${ starterTheme }.png`, () => { window.open("https://www.jowyoriginals.com/wp-admin/") }, { float: "left" });
 
-    const commandButton = new LX.Select("Transporte", transportOptions, `CBL`, (v) => { app.updateTransport( v ) }, {
-        width: "256px", nameWidth: "45%", className: "right", overflowContainer: null, skipReset: true }
-    );
-    menubar.root.appendChild( commandButton.root );
+    // const commandButton = new LX.Select("Transporte", transportOptions, `CBL`, (v) => { app.updateTransport( v ) }, {
+    //     width: "256px", nameWidth: "45%", className: "right", overflowContainer: null, skipReset: true }
+    // );
+    // menubar.root.appendChild( commandButton.root );
 
     menubar.addButtons( [
         {
@@ -1283,7 +1274,7 @@ app.data["bathby"].template = ( id, url, transport ) => {
                 menubar.setButtonImage("jowy", `data/jowy_${ newTheme }.png`);
             }
         }
-    ], { float: "right" });
+    ], { float: "center" });
 
     app.init( menubar.siblingArea );
 }
