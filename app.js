@@ -370,6 +370,15 @@ const app = {
                     const rowIndex = tableData.indexOf(rowData);
                     this.showMessages( compName, rowIndex );
                 }},
+                { icon: "Copy", title: "Copiar Nombre", callback: (rowData) => {
+                    const data = rowData[5];
+                    navigator.clipboard.writeText( data ).then(() => {
+                        LX.toast( "Copiado", `✅ "${ data }" copiado al portapapeles.`, { timeout: 3000, position: "top-left" } );
+                    }).catch(err => {
+                        console.error('Error copying text: ', err);
+                        LX.toast( "Error", "❌ No se pudo copiar el nombre.", { timeout: -1, position: "top-left" } );
+                    });
+                }},
                 // "menu"
             ] : []
         });
