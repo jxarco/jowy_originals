@@ -579,21 +579,22 @@ const app = {
 
     openweCommerceOrders: function() {
 
-        const allRows = [ ...this.data[ "jowy" ].list, ...this.data[ "hxg" ].list, ...this.data[ "bathby" ].list ];
+        const allRows = this.data[ this.compName ].list;
+        // const allRows = [ ...this.data[ "jowy" ].list, ...this.data[ "hxg" ].list, ...this.data[ "bathby" ].list ];
         const allLinks = allRows.map( row => {
             const str = row["REFERENCIA"];
             const idx = str.indexOf("/");
             if(idx === -1) return;
 
-            let compName = undefined;
-            switch( str[ 0 ] )
-            {
-                case '2': compName = "jowy"; break;
-                case '3': compName = "hxg"; break;
-                case '4': compName = "bathby"; break;
-            }
+            let compName = this.compName;
+            // switch( str[ 0 ] )
+            // {
+            //     case '2': compName = "jowy"; break;
+            //     case '3': compName = "hxg"; break;
+            //     case '4': compName = "bathby"; break;
+            // }
 
-            if(!compName) return;
+            // if(!compName) return;
             
             const url = this.data[ compName ].url;
             const orderNumber = str.substring(idx+1);
