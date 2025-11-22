@@ -613,7 +613,10 @@ const app = {
                 dialogPanel.addSeparator();
                 dialogPanel.sameLine(2, "justify-center");
                 dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" } );
-                dialogPanel.addButton(null, "Continuar", fn, { buttonClass: "contrast" });
+                dialogPanel.addButton(null, "Continuar", () => {
+                    dialogClosable.close();
+                    fn();
+                }, { buttonClass: "contrast" });
 
             }, { modal: true, size: ["400px", null], closable: true, draggable: false });    
         }
