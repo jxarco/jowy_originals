@@ -18,14 +18,12 @@ const app = {
         "Italy": "ITALIA",
         "France": "FRANCIA",
     },
-
     data: {
-        "misc": { list: [], dom: null },
-        "jowy": { list: [], dom: null },
-        "hxg": { list: [], dom: null },
-        "bathby": { list: [], dom: null },
+        "otros": { list: [], dom: null },
+        "jowy": { list: [], dom: null, url: "https://www.jowyoriginals.com/wp-admin/" },
+        "hxg": { list: [], dom: null, url: "https://homexgym.com/wp-admin/" },
+        "bathby": { list: [], dom: null, url: "https://bathby.com/wp-admin/" },
     },
-
     init: function( appArea ) {
 
         this.area = appArea;
@@ -61,6 +59,7 @@ const app = {
             <p class="font-light" style="max-width:32rem">Elige una de las herramientas para empezar.</p>
         `, this.area );
         header.style.background = `url('data/banner_${ LX.getTheme() }.png') no-repeat center center / cover`;
+        header.style.transition = "transform 0.1s ease-in";
         this.header = header;
 
         // add file drag and drop event to header
@@ -84,7 +83,7 @@ const app = {
             // Check if a file was dropped
             if (event.dataTransfer.files.length > 0) {
                 const file = event.dataTransfer.files[0];
-                if (file.name.endsWith('.xlsx')) {
+                if (file.name.endsWith('.xlsx') || file.name.endsWith('.xlsm')) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const data = e.target.result;
@@ -130,19 +129,23 @@ const app = {
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2 flex flex-row gap-2" });
-        utilButtonsPanel.sameLine(3);
+        utilButtonsPanel.sameLine(4);
 
         const seeMessagesButton = utilButtonsPanel.addButton(null, "SeeMessagesButton", () => {
-            if( this.compName !== "misc" ) this.showMessages( this.compName, 0 );
+            if( this.compName !== "otros" ) this.showMessages( this.compName, 0 );
         }, { icon: "Eye", title: "Ver mensajes", tooltip: true });
 
         const clearButtonWidget = utilButtonsPanel.addButton(null, "ClearButton", () => {
             this.clearData();
         }, { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
 
-        const messageFromTrackIdButton = utilButtonsPanel.addButton(null, "CopyButton",  async () => {
+        const messageFromTrackIdButton = utilButtonsPanel.addButton(null, "NewCustomMessage",  () => {
             this.openMessageDialog();
         }, { icon: "Plus", title: "Nuevo mensaje", tooltip: true } );
+
+        const openweCommerceOrdersButton = utilButtonsPanel.addButton(null, "OpenOrdersButton",  () => {
+            this.openweCommerceOrders();
+        }, { icon: "ExternalLink", title: "Abrir todos los pedidos", tooltip: true } );
 
         area.attach( utilButtonsPanel.root );
 
@@ -186,7 +189,7 @@ const app = {
 
             const miscArea = new LX.Area({ className: "rounded-lg" });
             miscContainer.appendChild( miscArea.root );
-            this.data["misc"].dom = miscContainer;
+            this.data["otros"].dom = miscContainer;
         }
 
         // Move up into the panel section
@@ -241,7 +244,7 @@ const app = {
         this.footer = new LX.Footer( {
             className: "border-top",
             parent: LX.root,
-            credits: `${ new Date().getUTCFullYear() } Alex Rodríguez.`,
+            credits: `${ new Date().getUTCFullYear() }. Alex Rodríguez (@jxarco)`,
             socials: [
                 { title: "Github", link: "https://github.com/jxarco/", icon: "Github" }
             ]
@@ -295,10 +298,10 @@ const app = {
 
                 switch( ref[ 0 ] )
                 {
-                    case '1': this.data["misc"].list.push( row ); break;
                     case '2': this.data["jowy"].list.push( row ); break;
                     case '3': this.data["hxg"].list.push( row ); break;
                     case '4': this.data["bathby"].list.push( row ); break;
+                    default: this.data["otros"].list.push( row ); break;
                 }
             }
 
@@ -325,18 +328,27 @@ const app = {
     showList: function( compName ) {
         const dom = this.data[ compName ].dom;
         const list = this.data[ compName ].list;
+        const url = this.data[ compName ].url;
         dom.innerHTML = "";
 
         const columnData = [
-            [ "DIA", null ],
+            // [ "DIA", null ],
             [ "F_DOC", null ],
-            [ "NENVIO", null ],
             [ "CLAVE", null ],
             [ "F_SITUACION", null ],
+            [ "REFERENCIA", null, ( str ) => {
+                const idx = str.indexOf("/");
+                return idx === -1 ? str : str.substring(0, idx);
+            } ],
+            [ "REFERENCIA", "NPEDIDO", ( str ) => {
+                const idx = str.indexOf("/");
+                return idx === -1 ? "" : str.substring(idx+1);
+            } ],
+            [ "NENVIO", null ],
+            [ "LOCALIZADOR", null ],
             [ "NOMCONS", "NOMBRE" ],
             [ "POBLACION", null ],
-            [ "DETALLE", null ],
-            [ "LOCALIZADOR", null ]
+            // [ "DETALLE", null ],
         ];
 
         // Create table data from the list
@@ -345,7 +357,8 @@ const app = {
             for( let c of columnData )
             {
                 const ogColName = c[ 0 ];
-                lRow.push( row[ ogColName ] ?? "?" );
+                const fn = c[ 2 ] ?? ( (str) => str );
+                lRow.push( fn( row[ ogColName ] ?? "?" ) );
             }
             return lRow;
         });
@@ -365,13 +378,17 @@ const app = {
                 { name: "F_DOC", type: "date" },
                 { name: "F_SITUACION", type: "date" }
             ],
-            rowActions: compName != "misc" ? [
+            rowActions: compName != "otros" ? [
                 { icon: "Eye", title: "Ver mensaje", callback: (rowData) => {
                     const rowIndex = tableData.indexOf(rowData);
                     this.showMessages( compName, rowIndex );
                 }},
+                { icon: "ExternalLink", title: "Abrir Pedido", callback: (rowData) => {
+                    const orderNumber = rowData[4];
+                    if( orderNumber !== "" ) window.open(`${ url }post.php?post=${ orderNumber }&action=edit`);
+                }},
                 { icon: "Copy", title: "Copiar Nombre", callback: (rowData) => {
-                    const data = rowData[5];
+                    const data = rowData[7];
                     navigator.clipboard.writeText( data ).then(() => {
                         LX.toast( "Copiado", `✅ "${ data }" copiado al portapapeles.`, { timeout: 3000, position: "top-left" } );
                     }).catch(err => {
@@ -379,7 +396,6 @@ const app = {
                         LX.toast( "Error", "❌ No se pudo copiar el nombre.", { timeout: -1, position: "top-left" } );
                     });
                 }},
-                // "menu"
             ] : []
         });
 
@@ -406,12 +422,22 @@ const app = {
             return;
         }
 
+        let str = row["REFERENCIA"] ?? "";
+        let orderNumber = undefined;
+        const idx = str.indexOf("/");
+        if(idx != -1)
+        {
+            orderNumber = str.substring(idx+1);
+            str = str.substring(0, idx);
+        }
+
         const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6", `
             <h2 class="flex flex-row items-center gap-1">${ row["NOMCONS"] }</h2>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Población</p><p class="flex flex-row items-center font-medium">${ row["POBLACION"] }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Clave</p><p class="flex flex-row items-center font-medium">${ row["CLAVE"] }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de envío</p><p class="flex flex-row items-center font-medium">${ row["NENVIO"] }</p></div>
-            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Referencia</p><p class="flex flex-row items-center font-medium">${ row["REFERENCIA"] ?? "Vacío" }</p></div>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Referencia</p><p class="flex flex-row items-center font-medium">${ str }</p></div>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de pedido</p><p class="flex flex-row items-center font-medium">${ orderNumber ?? "" }</p></div>
         `, dom );
 
         // Add button to copy NOMBRE USUARIO
@@ -447,7 +473,17 @@ const app = {
         const body = LX.makeContainer( [ null, "auto" ], "p-2", templateString, dom );
 
         const footerPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
-        footerPanel.sameLine(2);
+        footerPanel.sameLine();
+
+        if( orderNumber )
+        {
+            const openWeCLink = footerPanel.addButton(null, "OpenWeCLinkButton", () => {
+                const url = this.data[ compName ].url;
+                const link = `${ url }post.php?post=${ orderNumber }&action=edit`;
+                window.open(link);
+            }, { width: "100px", icon: "ExternalLink", title: "Abrir pedido", tooltip: true });
+            dom.appendChild( footerPanel.root );
+        } 
 
         const copyButtonWidget = footerPanel.addButton(null, "CopyButton",  async () => {
             navigator.clipboard.writeText( templateString ).then(() => {
@@ -463,13 +499,15 @@ const app = {
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "auto";
             }, 3000 );
 
-        }, { width: "100px", swap: "Check", icon: "Copy", title: "Copiar", tooltip: true } );
+        }, { width: "100px", swap: "Check", icon: "Copy", title: "Copiar mensaje", tooltip: true } );
         copyButtonWidget.root.querySelector( ".swap-on svg" ).addClass( "fg-success" );
 
         const nextButtonWidget = footerPanel.addButton(null, "NextButton", () => {
             this.showMessages( compName, rowOffset + 1 );
-        }, { width: "100px", icon: "ArrowRight", title: "Siguiente", tooltip: true });
+        }, { width: "100px", icon: "ArrowRight", title: "Siguiente mensaje", tooltip: true });
         dom.appendChild( footerPanel.root );
+
+        footerPanel.endLine();
 
         this.compName = compName;
         this.rowOffset = rowOffset;
@@ -521,7 +559,7 @@ const app = {
 
             const getTemplate = () => {
                 const comp = c.toLowerCase();
-                if( comp == "misc" ) return "";
+                if( comp == "otros" ) return "";
                 let url = cblTrackingUrl;
                 switch( t )
                 {
@@ -533,10 +571,55 @@ const app = {
                 return template( id, url, t );
             };
 
-            const body = LX.makeContainer( [ null, "auto" ], "p-8", "", right );
+            const body = LX.makeContainer( [ null, "auto" ], "p-4 items-center", "", right );
             body.innerHTML = getTemplate();
 
-        }, { modal: true, size: ["800px", null], closable: true, draggable: false });
+        }, { modal: true, size: ["900px", null], closable: true, draggable: false });
+    },
+
+    openweCommerceOrders: function() {
+
+        const allRows = [ ...this.data[ "jowy" ].list, ...this.data[ "hxg" ].list, ...this.data[ "bathby" ].list ];
+        const allLinks = allRows.map( row => {
+            const str = row["REFERENCIA"];
+            const idx = str.indexOf("/");
+            if(idx === -1) return;
+
+            let compName = undefined;
+            switch( str[ 0 ] )
+            {
+                case '2': compName = "jowy"; break;
+                case '3': compName = "hxg"; break;
+                case '4': compName = "bathby"; break;
+            }
+
+            if(!compName) return;
+            
+            const url = this.data[ compName ].url;
+            const orderNumber = str.substring(idx+1);
+            return `${ url }post.php?post=${ orderNumber }&action=edit`;
+        }).filter( l => l !== undefined );
+
+        const fn = () => { allLinks.forEach( l => window.open(l) ) };
+
+        if( allLinks.length > 1 )
+        {
+            const dialogClosable = new LX.Dialog("⚠️ Aviso", dialogPanel => {
+
+                dialogPanel.addTextArea(null, `Esto abrirá ${ allLinks.length } pestañas al mismo tiempo. ¿Quieres continuar?`, 
+                    null, { fitHeight: true, disabled: true }
+                );
+                dialogPanel.addSeparator();
+                dialogPanel.sameLine(2, "justify-center");
+                dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" } );
+                dialogPanel.addButton(null, "Continuar", fn, { buttonClass: "contrast" });
+
+            }, { modal: true, size: ["400px", null], closable: true, draggable: false });    
+        }
+        else
+        {
+            fn();
+        } 
     },
 
     showSheinList: function( data ) {
@@ -854,7 +937,7 @@ const app = {
         console.log("Clearing data...");
         localStorage.removeItem( "lastTool" );
 
-        this.data["misc"].list = [];
+        this.data["otros"].list = [];
         this.data["jowy"].list = [];
         this.data["hxg"].list = [];
         this.data["bathby"].list = [];
@@ -869,7 +952,7 @@ const app = {
     },
 
     updateLists: function() {
-        this.showList( "misc" );
+        this.showList( "otros" );
         this.showList( "bathby" );
         this.showList( "hxg" );
         this.showList( "jowy" );
@@ -1205,7 +1288,7 @@ app.data["jowy"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="text-decoration: none; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FDC645; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<p style="word-break: break-word;text-decoration: none; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FDC645; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
 <a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
 <a style="border-bottom:1px solid #736060; margin-block: 0.5rem;"></a>
 <a href="https://www.jowyoriginals.com/" style="background: none;text-decoration: none;color: #927124;">jowyoriginals.com</a>
@@ -1217,7 +1300,7 @@ app.data["hxg"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<p style="word-break: break-word;text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
 <a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
 <a style="border-bottom:1px solid #927124; margin-block: 0.5rem;"></a>
 <a href="https://homexgym.com/" style="background: none;text-decoration: none;color: #927124;">homexgym.com</a>
@@ -1229,7 +1312,7 @@ app.data["bathby"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #F2D1D1; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<p style="word-break: break-word;text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #F2D1D1; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
 <a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
 <a style="border-bottom:1px solid #736060; margin-block: 0.5rem;"></a>
 <a href="https://bathby.com/" style="background: none;text-decoration: none;color: #736060;">bathby.com</a>
