@@ -20,9 +20,9 @@ const app = {
     },
     data: {
         "otros": { list: [], dom: null },
-        "jowy": { list: [], dom: null, url: "https://www.jowyoriginals.com/wp-admin/" },
-        "hxg": { list: [], dom: null, url: "https://homexgym.com/wp-admin/" },
-        "bathby": { list: [], dom: null, url: "https://bathby.com/wp-admin/" },
+        "jowy": { name: "Jowy", list: [], dom: null, url: "https://www.jowyoriginals.com/wp-admin/" },
+        "hxg": { name: "HxG", list: [], dom: null, url: "https://homexgym.com/wp-admin/" },
+        "bathby": { name: "Bathby", list: [], dom: null, url: "https://bathby.com/wp-admin/" },
     },
     init: function( appArea ) {
 
@@ -519,9 +519,9 @@ const app = {
 
             const dialogArea = new LX.Area({ className: "" });
             dialogPanel.attach( dialogArea.root );
-            const [ left, right ] = dialogArea.split({ type: "horizontal", sizes: [ "60%", "40%" ], resize: false });
+            const [ left, right ] = dialogArea.split({ type: "horizontal", sizes: [ "55%", "45%" ], resize: false });
 
-            let t = this.transport, id = "123456789", c = "Jowy";
+            let t = "SEUR", id = "123456789", c = this.data[ this.compName ].name;
 
             let p = new LX.Panel({ className: "bg-none bg-primary border-none p-2" });
             p.addSelect("Empresa", companyOptions, c, (value, event) => {
@@ -535,7 +535,7 @@ const app = {
             p.addText("Número seguimiento", id, (value, event) => {
                 id = value;
                 body.innerHTML = getTemplate();
-            }, { nameWidth: "30%" });
+            }, { nameWidth: "30%", skipReset: true });
             p.addSeparator();
 
             const copyButtonWidget = p.addButton(null, "CopyButton",  async () => {
