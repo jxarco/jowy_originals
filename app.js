@@ -519,23 +519,23 @@ const app = {
 
             const dialogArea = new LX.Area({ className: "" });
             dialogPanel.attach( dialogArea.root );
-            const [ left, right ] = dialogArea.split({ type: "horizontal", sizes: [ "50%", "50%" ], resize: false });
+            const [ left, right ] = dialogArea.split({ type: "horizontal", sizes: [ "60%", "40%" ], resize: false });
 
-            let t = this.transport, id = 123456789, c = "Jowy";
+            let t = this.transport, id = "123456789", c = "Jowy";
 
             let p = new LX.Panel({ className: "bg-none bg-primary border-none p-2" });
             p.addSelect("Empresa", companyOptions, c, (value, event) => {
                 c = value;
                 body.innerHTML = getTemplate();
-            }, { nameWidth: "50%", skipReset: true });
+            }, { nameWidth: "30%", skipReset: true });
             p.addSelect("Transporte", transportOptions, t, (value, event) => {
                 t = value;
                 body.innerHTML = getTemplate();
-            }, { nameWidth: "50%", skipReset: true });
-            p.addNumber("Número seguimiento", id, (value, event) => {
+            }, { nameWidth: "30%", skipReset: true });
+            p.addText("Número seguimiento", id, (value, event) => {
                 id = value;
                 body.innerHTML = getTemplate();
-            }, { nameWidth: "50%" });
+            }, { nameWidth: "30%" });
             p.addSeparator();
 
             const copyButtonWidget = p.addButton(null, "CopyButton",  async () => {
@@ -574,7 +574,7 @@ const app = {
             const body = LX.makeContainer( [ null, "auto" ], "p-4 items-center", "", right );
             body.innerHTML = getTemplate();
 
-        }, { modal: true, size: ["900px", null], closable: true, draggable: false });
+        }, { modal: true, size: ["min(100%, 900px)", null], closable: true, draggable: false });
     },
 
     openweCommerceOrders: function() {
