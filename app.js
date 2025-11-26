@@ -25,14 +25,14 @@ const app = {
         "bathby": { name: "Bathby", list: [], dom: null, url: "https://bathby.com/wp-admin/" },
     },
     statusColors: {
-        "Documentada": null,
-        "Entregada": "#15803d",
-        "Incidencia": "#dc2626",
-        "En reparto": "#0d9488",
-        "En destino": "#2563eb",
-        "En tránsito": "#ca8a04",
-        "En gestión": "#a21caf",
-        "Devuelta": "#dc2626",
+        "Documentada": { icon: "File", bg: "#272c31ff" },
+        "Entregada": { icon: "CircleCheck", bg: "#218118" },
+        "Incidencia": { icon: "CircleAlert", bg: "#dc2626" },
+        "En reparto": { icon: "Truck", bg: "#0d9488" },
+        "En destino": { icon: "Warehouse", bg: "#2563eb" },
+        "En tránsito": { icon: "Package", bg: "#a21caf" },
+        "En gestión": { icon: "TriangleAlert", bg: "#ca8a04" },
+        "Devuelta": { icon: "Frown", bg: "#dc2626" },
     },
     init: function( appArea ) {
 
@@ -42,7 +42,7 @@ const app = {
         this.createContentHtml();
         this.createFooterHtml();
 
-        const hash = window.location.hash.substr(1); // remove leading #
+        const hash = window.location.hash.substring(1); // remove leading #
         const params = new URLSearchParams(hash);
         const accessToken = params.get("access_token");
 
@@ -61,6 +61,16 @@ const app = {
                 this.openDataToSeurApp( lastTool.substring( 0, lastTool.indexOf( '-' ) ) );
             }
         }
+
+        // LX.requestBinary( "envios.xlsx", (data) => {
+        //     const workbook = XLSX.read(data, {type: "binary"});
+        //     app.sheetName = workbook.SheetNames[0];
+        //     const sheet = workbook.Sheets[ app.sheetName ];
+        //     if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
+        //     {
+        //         LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 3000, position: "top-left" } );
+        //     }
+        // } );
     },
 
     createHeaderHtml: function() {
@@ -345,9 +355,9 @@ const app = {
             // [ "DIA", null ],
             [ "F_DOC", null ],
             [ "CLAVE", "SITUACIÓN", ( str ) => {
-                // return `<div class="flex flex-row items-center gap-1"><span class="w-2 h-2 rounded-full" style="background-color:${ this.statusColors[ str ] }"></span>
-                // <span class="font-semibold" xstyle="color:${ this.statusColors[ str ] }">${str}</span><div>`
-                return `${ LX.badge( str, "font-medium border-none", { style: { backgroundColor: this.statusColors[ str ] ?? "" } } ) }`
+                const status = this.statusColors[ str ] ?? {};
+                let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: "md fg-white" } ).innerHTML : "";
+                return `${ LX.badge( iconStr + str , "text-sm font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
             } ],
             [ "F_SITUACION", null ],
             [ "REFERENCIA", null, ( str ) => {
