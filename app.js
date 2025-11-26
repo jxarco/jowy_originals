@@ -24,6 +24,16 @@ const app = {
         "hxg": { name: "HxG", list: [], dom: null, url: "https://homexgym.com/wp-admin/" },
         "bathby": { name: "Bathby", list: [], dom: null, url: "https://bathby.com/wp-admin/" },
     },
+    statusColors: {
+        "Documentada": null,
+        "Entregada": "#15803d",
+        "Incidencia": "#dc2626",
+        "En reparto": "#0d9488",
+        "En destino": "#2563eb",
+        "En tránsito": "#ca8a04",
+        "En gestión": "#a21caf",
+        "Devuelta": "#dc2626",
+    },
     init: function( appArea ) {
 
         this.area = appArea;
@@ -334,7 +344,11 @@ const app = {
         const columnData = [
             // [ "DIA", null ],
             [ "F_DOC", null ],
-            [ "CLAVE", null ],
+            [ "CLAVE", "SITUACIÓN", ( str ) => {
+                // return `<div class="flex flex-row items-center gap-1"><span class="w-2 h-2 rounded-full" style="background-color:${ this.statusColors[ str ] }"></span>
+                // <span class="font-semibold" xstyle="color:${ this.statusColors[ str ] }">${str}</span><div>`
+                return `${ LX.badge( str, "font-medium border-none", { style: { backgroundColor: this.statusColors[ str ] ?? "" } } ) }`
+            } ],
             [ "F_SITUACION", null ],
             [ "REFERENCIA", null, ( str ) => {
                 const idx = str.indexOf("/");
@@ -374,7 +388,7 @@ const app = {
             toggleColumns: true,
             filter: "NOMBRE",
             customFilters: [
-                { name: "CLAVE", options: ["Documentada", "En tránsito", "En destino", "En reparto", "Entregada"] },
+                { name: "SITUACIÓN", options: Object.keys( this.statusColors ) },
                 { name: "F_DOC", type: "date" },
                 { name: "F_SITUACION", type: "date" }
             ],
