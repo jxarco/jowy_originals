@@ -4,7 +4,8 @@
 
 export class WooCommerceClient
 {
-    constructor() {
+    constructor()
+    {
         this.store = null;
         this.ck = null;
         this.cs = null;
@@ -62,6 +63,23 @@ export class WooCommerceClient
     //
     // --- PUBLIC READ-ONLY HELPERS ---
     //
+
+    async checkConnection()
+    {
+        try {
+            // Try a minimal request
+            await this._get("orders", { per_page: 1 });
+
+            // If we get here, credentials and server are OK
+            return { ok: true };
+        } catch (err) {
+            // Return detailed error
+            return {
+                ok: false,
+                error: err.message
+            };
+        }
+    }
 
     async getOrdersPage( page = 1, perPage = 20 )
     {

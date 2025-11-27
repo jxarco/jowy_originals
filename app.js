@@ -1225,6 +1225,31 @@ const app = {
         });
     },
 
+    async configureWooCommerce( store, ck, cs ) {
+
+        this.wcClient.configure( store, ck, cs );
+
+        const r = await this.wcClient.checkConnection();
+        if( r.ok )
+        {
+            LX.toast( "Login correcto", `✅ Has iniciado sesión en ${ store }`, { timeout: 3000, position: "top-left" } );
+
+            // Store in localStorage
+            localStorage.setItem( "wooc_ck", ck );
+            localStorage.setItem( "wooc_cs", cs );
+        }
+        else
+        {
+            LX.toast( "Error", "❌ Tienda o claves no válidas.", { timeout: -1, position: "top-left" } );
+        }
+
+        return r;
+
+        // this.wcClient.getOrdersPage().then(result => {
+        //     console.log("Page 1 orders:", result.data);
+        // });
+    },
+
     _request: function( request ) {
 
         var dataType = request.dataType || "text";
@@ -1388,6 +1413,35 @@ app.data["bathby"].template = ( id, url, transport ) => {
                 menubar.setButtonImage("hxg", `data/hxg_${ newTheme }.png`);
                 menubar.setButtonImage("jowy", `data/jowy_${ newTheme }.png`);
                 app.header.style.background = `url('data/banner_${ newTheme }.png') no-repeat center center / cover`;
+            }
+        },
+        {
+            title: "Login WooComerce",
+            icon: "User",
+            callback:  (value, event) => {
+                const dialog = new LX.Dialog("WooComerce Login", (p) => {
+
+                    let ck = localStorage.getItem( "wooc_ck" ) ?? "";
+                    let cs = localStorage.getItem( "wooc_cs" ) ?? "";
+
+                    let store = `https://${ app.compName }.com`;
+                    p.addText("URL Tienda", store, (value, event) => {
+                        store = value;
+                    }, { nameWidth: "30%", skipReset: true });
+                    p.addText("Clave cliente", ck, (value, event) => {
+                        ck = value;
+                    }, { nameWidth: "30%", skipReset: true, type: "password" });
+                    p.addText("Clave secreta", cs, (value, event) => {
+                        cs = value;
+                    }, { nameWidth: "30%", skipReset: true, type: "password" });
+                    p.addButton(null, "Login", async (value, event) => {
+                        const r = await app.configureWooCommerce( store, ck, cs );
+                        if( r.ok )
+                        {
+                            dialog.close();
+                        }
+                    }, { nameWidth: "30%", skipReset: true });
+                }, { modal: false, size: ["min(100%, 400px)", null], closable: true, draggable: false });
             }
         }
     ], { float: "center" });
