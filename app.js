@@ -1,4 +1,5 @@
 import { LX } from 'lexgui';
+import { WooCommerceClient } from './extra/woocomerce.js';
 
 window.LX = LX;
 
@@ -61,6 +62,8 @@ const app = {
                 this.openDataToSeurApp( lastTool.substring( 0, lastTool.indexOf( '-' ) ) );
             }
         }
+
+        this.wcClient = new WooCommerceClient();
 
         // LX.requestBinary( "envios.xlsx", (data) => {
         //     const workbook = XLSX.read(data, {type: "binary"});
