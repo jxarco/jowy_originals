@@ -65,15 +65,15 @@ const app = {
 
         this.wcClient = new WooCommerceClient();
 
-        // LX.requestBinary( "envios.xlsx", (data) => {
-        //     const workbook = XLSX.read(data, {type: "binary"});
-        //     app.sheetName = workbook.SheetNames[0];
-        //     const sheet = workbook.Sheets[ app.sheetName ];
-        //     if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
-        //     {
-        //         LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 3000, position: "top-left" } );
-        //     }
-        // } );
+        LX.requestBinary( "envios.xlsx", (data) => {
+            const workbook = XLSX.read(data, {type: "binary"});
+            app.sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[ app.sheetName ];
+            if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
+            {
+                LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 3000, position: "top-left" } );
+            }
+        } );
     },
 
     createHeaderHtml: function() {
@@ -458,13 +458,17 @@ const app = {
             str = str.substring(0, idx);
         }
 
-        const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6", `
+        const status = this.statusColors[ "Incidencia" ] ?? {};
+        let iconStr = LX.makeIcon( "CircleAlert", { svgClass: "md fg-white" } ).innerHTML;
+        const noOrderStr = `${ LX.badge( iconStr + "Sin número" , "text-lg font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
+
+        const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6 mb-3", `
             <h2 class="flex flex-row items-center gap-1">${ row["NOMCONS"] }</h2>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Población</p><p class="flex flex-row items-center font-medium">${ row["POBLACION"] }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Clave</p><p class="flex flex-row items-center font-medium">${ row["CLAVE"] }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de envío</p><p class="flex flex-row items-center font-medium">${ row["NENVIO"] }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Referencia</p><p class="flex flex-row items-center font-medium">${ str }</p></div>
-            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de pedido</p><p class="flex flex-row items-center font-medium">${ orderNumber ?? "" }</p></div>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de pedido</p><p class="flex flex-row items-center font-medium">${ orderNumber ?? noOrderStr }</p></div>
         `, dom );
 
         // Add button to copy NOMBRE USUARIO
@@ -486,6 +490,43 @@ const app = {
             }, { swap: "Check", icon: "Copy", title: "Copiar", tooltip: true } );
             copyButtonWidget.root.querySelector( ".swap-on svg" ).addClass( "fg-success" );
             nPedidoH2.appendChild( copyButtonWidget.root );
+        }
+
+        // Invoice data
+        if( 1 || orderNumber !== undefined )
+        {
+            const invoiceContainer = LX.makeContainer( [ "null", "auto" ], "flex flex-col border-bottom gap-2 px-3 pb-2 mb-6", ``, dom );
+            const invoicePanel = new LX.Panel({ width: "50%", className: "p-0" });
+            invoiceContainer.appendChild( invoicePanel.root );
+
+            let invoiceNumber = 0, invoiceDate = null;
+
+            invoicePanel.addNumber( "Número de Factura", invoiceNumber, () => {
+                invoiceNumber = v;
+            }, { nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
+            invoicePanel.addDate( "Fecha de Factura", invoiceDate, (v) => {
+                invoiceDate = v;
+            }, { today: true, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
+            invoicePanel.addButton( null, "Validar", () => {
+                const dialogClosable = new LX.Dialog("⚠️ Validar en WooCommerce", dialogPanel => {
+                    dialogPanel.addTextArea(null, `Vas a validar los siguientes datos en WooCommerce para el pedido ${ orderNumber }. Revisa los datos antes de continuar.`, 
+                        null, { fitHeight: true, disabled: true }
+                    );
+                    dialogPanel.addSeparator();
+                    dialogPanel.addNumber( "Número de Factura", invoiceNumber, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
+                    dialogPanel.addText( "Fecha de Factura", invoiceDate, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
+                    dialogPanel.sameLine(2, "justify-center");
+                    dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" } );
+                    dialogPanel.addButton(null, "Continuar", () => {
+                        dialogClosable.close();
+
+                        // Upload to woocommerce
+                        // ...
+
+                    }, { buttonClass: "contrast" });
+
+                }, { modal: true, size: ["400px", null], closable: true, draggable: false });
+            }, { buttonClass: "contrast" } );
         }
 
         let url = cblTrackingUrl;
