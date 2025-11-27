@@ -502,15 +502,20 @@ const app = {
         const footerPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
         footerPanel.sameLine();
 
-        if( orderNumber )
-        {
-            const openWeCLink = footerPanel.addButton(null, "OpenWeCLinkButton", () => {
+        const openWeCLink = footerPanel.addButton(null, "OpenWeCLinkButton", () => {
+            if( orderNumber )
+            {
                 const url = this.data[ compName ].url;
                 const link = `${ url }post.php?post=${ orderNumber }&action=edit`;
                 window.open(link);
-            }, { width: "100px", icon: "ExternalLink", title: "Abrir pedido", tooltip: true });
-            dom.appendChild( footerPanel.root );
-        } 
+            }
+            else
+            {
+                // No deberia ocurrir!
+                throw("Trying to open orderLink without order number!");
+            }
+        }, { disabled: ( orderNumber === undefined ), width: "100px", icon: "ExternalLink", title: "Abrir pedido", tooltip: ( orderNumber !== undefined ) });
+        dom.appendChild( footerPanel.root ); 
 
         const copyButtonWidget = footerPanel.addButton(null, "CopyButton",  async () => {
             navigator.clipboard.writeText( templateString ).then(() => {
