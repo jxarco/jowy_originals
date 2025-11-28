@@ -590,7 +590,7 @@ const app = {
             invoicePanel.addText( "Número de Factura", invoiceNumber.toString(), (v) => {
                 v = parseInt( v );
                 invoiceNumber = !Number.isNaN( v ) ? v : 0;
-            }, { disabled: orderInvoice !== null, placeholder: compData.prefix, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
+            }, { disabled: orderInvoice !== null, placeholder: "000000", nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
             invoicePanel.addDate( "Fecha de Factura", invoiceDate, (v) => {
                 invoiceDate = v;
             }, { disabled: orderInvoice !== null, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
