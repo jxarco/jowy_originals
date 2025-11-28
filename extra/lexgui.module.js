@@ -13613,7 +13613,7 @@ class DatePicker extends BaseComponent
             const calendarIcon = LX.makeIcon( "Calendar" );
             const calendarButton = new LX.Button( null, d0, () => {
                 this._popover = new LX.Popover( calendarButton.root, [ this.calendar ] );
-            }, { buttonClass: `flex flex-row px-3 ${ emptyDate ? "" : "fg-tertiary" } justify-between` } );
+            }, { disabled: options.disabled, buttonClass: `flex flex-row px-3 ${ emptyDate ? "" : "fg-tertiary" } justify-between` } );
             calendarButton.root.querySelector( "button" ).appendChild( calendarIcon );
             calendarButton.root.style.width = "100%";
             container.appendChild( calendarButton.root );

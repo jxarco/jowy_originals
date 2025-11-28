@@ -465,12 +465,19 @@ const app = {
         this.rowOffset = undefined;
     },
 
-    showMessages: function( compName, rowOffset = 0 ) {
+    showMessages: async function( compName, rowOffset = 0 ) {
         
         const compData = this.data[ compName ];
         const dom = compData.dom;
         const list = compData.list;
+
+        // Check login for compName
         const wcc = compData.wcc;
+        if( !wcc.connected )
+        {
+            this.openWooCommerceLogin();
+            return;
+        }
         
         dom.innerHTML = "";
 
@@ -550,83 +557,89 @@ const app = {
             const invoicePanel = new LX.Panel({ width: "50%", className: "p-0" });
             invoiceContainer.appendChild( invoicePanel.root );
 
+            const orderInvoice = await wcc.getInvoice( orderNumber );
             const date = new Date();
             let invoiceNumber = 0, invoiceDate = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
             let customerNote = true;
 
+            if( orderInvoice !== null )
+            {
+                invoiceNumber = orderInvoice.number;
+                invoiceDate = orderInvoice.date;
+            }
+
             invoicePanel.addNumber( "Número de Factura", invoiceNumber, (v) => {
                 invoiceNumber = v;
-            }, { nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
+            }, { disabled: orderInvoice !== null, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
             invoicePanel.addDate( "Fecha de Factura", invoiceDate, (v) => {
                 invoiceDate = v;
-            }, { nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
-            invoicePanel.addButton( null, "Facturar", () => {
+            }, { disabled: orderInvoice !== null, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
 
-                // Check login for compName
-                if( !wcc.connected )
-                {
-                    this.openWooCommerceLogin();
-                    return;
-                }
-
-                const dialogClosable = new LX.Dialog("Facturar en WooCommerce", dialogPanel => {
-                    dialogPanel.addTextArea(null, `Vas a facturar con los siguientes datos en WooCommerce (pedido ${ orderNumber }). Revisa los datos antes de continuar.`, 
-                        null, { fitHeight: true, disabled: true }
-                    );
-                    dialogPanel.addSeparator();
-                    dialogPanel.addNumber( "Número de Factura", invoiceNumber, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
-                    dialogPanel.addText( "Fecha de Factura", invoiceDate, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
-                    dialogPanel.addSeparator();
-                    dialogPanel.addCheckbox( "Añadir nota de seguimiento", customerNote, (v) => {
-                        customerNote = v;
-                    }, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
-                    dialogPanel.sameLine(2, "justify-center mt-2");
-                    dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" } );
-                    dialogPanel.addButton(null, "Continuar", async () => {
-                        dialogClosable.close();
-
-                        const oN = orderNumber;// ?? 4529;
-                        const iN = invoiceNumber;
-                        const iD = convertDateDMYtoMDY( invoiceDate );
-
-                        // console.log(oN, iN, iD);
-
-                        if( customerNote )
-                        {
-                            let r = await wcc.createOrderNote( oN, templateString );
-                            if( !r.ok )
+            if( orderInvoice === null )
+            {
+                invoicePanel.addButton( null, "Facturar", () => {
+                    const dialogClosable = new LX.Dialog("Facturar en WooCommerce", dialogPanel => {
+                        dialogPanel.addTextArea(null, `Vas a facturar con los siguientes datos en WooCommerce (pedido ${ orderNumber }). Revisa los datos antes de continuar.`, 
+                            null, { fitHeight: true, disabled: true }
+                        );
+                        dialogPanel.addSeparator();
+                        dialogPanel.addNumber( "Número de Factura", invoiceNumber, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
+                        dialogPanel.addText( "Fecha de Factura", invoiceDate, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
+                        dialogPanel.addSeparator();
+                        dialogPanel.addCheckbox( "Añadir nota de seguimiento", customerNote, (v) => {
+                            customerNote = v;
+                        }, { disabled: true, nameWidth: "60%", className: "text-lg fg-tertiary" } );
+                        dialogPanel.sameLine(2, "justify-center mt-2");
+                        dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" } );
+                        dialogPanel.addButton(null, "Continuar", async () => {
+                            dialogClosable.close();
+    
+                            const oN = orderNumber;// ?? 4529;
+                            const iN = invoiceNumber;
+                            const iD = convertDateDMYtoMDY( invoiceDate );
+    
+                            // console.log(oN, iN, iD);
+    
+                            if( customerNote )
                             {
-                                LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
-                                return;
+                                let r = await wcc.createOrderNote( oN, templateString );
+                                if( !r.ok )
+                                {
+                                    LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
+                                    return;
+                                }
+    
+                                console.log("Nota creada para pedido #" + oN);
                             }
-
-                            console.log("Nota creada para pedido #" + oN);
-                        }
-
-                        {
-                            let r = await wcc.updateInvoice( oN, iN, iD, compData.prefix, compData.suffix, compData.padding );
-                            if( !r.ok )
+    
                             {
-                                LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
-                                return;
+                                let r = await wcc.updateInvoice( oN, iN, iD, compData.prefix, compData.suffix, compData.padding );
+                                if( !r.ok )
+                                {
+                                    LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
+                                    return;
+                                }
+    
+                                console.log(`Factura actualizada (${iN}, ${iD}) para pedido #${oN}`);
                             }
-
-                            console.log(`Factura actualizada (${iN}, ${iD}) para pedido #${oN}`);
-                        }
-                        
-                        LX.toast( "Proceso completado", "✅ Pulsa <span>Ver</span> para comprobar los datos en la plataforma.", { timeout: 5000, position: "top-left", action: {
-                            name: "Ver",
-                            callback: () => {
-                                const url = this.data[ compName ].url;
-                                const link = `${ url }post.php?post=${ orderNumber }&action=edit`;
-                                window.open(link);
-                            }
-                        } } );
-
-                    }, { buttonClass: "contrast" });
-
-                }, { modal: true, position: [ "calc(50% - 200px)", "250px" ], size: ["400px", null], closable: true, draggable: false });
-            }, { buttonClass: "contrast" } );
+                            
+                            LX.toast( "Proceso completado", "✅ Pulsa <span>Ver</span> para comprobar los datos en la plataforma.", { timeout: 5000, position: "top-left", action: {
+                                name: "Ver",
+                                callback: () => {
+                                    const url = this.data[ compName ].url;
+                                    const link = `${ url }post.php?post=${ orderNumber }&action=edit`;
+                                    window.open(link);
+                                }
+                            } } );
+    
+                            // refresh
+                            this.showMessages( compName, rowOffset );
+    
+                        }, { buttonClass: "contrast" });
+    
+                    }, { modal: true, position: [ "calc(50% - 200px)", "250px" ], size: ["400px", null], closable: true, draggable: false });
+                }, { buttonClass: "contrast" } );
+            }
         }
 
         const body = LX.makeContainer( [ null, "auto" ], "p-2", templateString, dom );

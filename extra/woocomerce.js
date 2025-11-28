@@ -130,6 +130,52 @@ export class WooCommerceClient
         }
     }
 
+    //
+    // --- CHECK IF ORDER HAS AN INVOICE ---
+    //
+    async hasInvoice( orderId )
+    {
+        const { data } = await this.getOrder( orderId );
+
+        if( !data || !data.meta_data ) return false;
+
+        // Look for invoice number and invoice date
+        const numberMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_number");
+        const dateMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_date");
+        const dateFormattedMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_date_formatted");
+
+        return Boolean(numberMeta && numberMeta.value
+            && dateMeta && dateMeta.value
+            && dateFormattedMeta && dateFormattedMeta.value
+        );
+    }
+
+    //
+    // --- GET INVOICE INFO FOR AN ORDER ---
+    //
+    async getInvoice( orderId )
+    {
+        const { data } = await this.getOrder( orderId );
+
+        if( !data || !data.meta_data ) return null;
+
+        const numberMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_number");
+        const dateMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_date");
+        const dateFormattedMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_date_formatted");
+        const numberDataMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_number_data");
+
+        if (numberMeta && numberMeta.value && dateMeta && dateMeta.value 
+            && dateFormattedMeta && dateFormattedMeta.value && numberDataMeta && numberDataMeta.value) {
+            const d = new Date( dateFormattedMeta.value );
+            return {
+                number: parseInt( numberDataMeta.value.number ),
+                date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`
+            };
+        }
+
+        return null;
+    }
+
     // ORDER ACTIONS
 
     //
