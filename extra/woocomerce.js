@@ -235,7 +235,7 @@ export class WooCommerceClient
         // Convert JS Date or string to timestamp + formatted version
         const dateObj = new Date( `${ date.trim() } 08:00` );
         const timestamp = Math.floor(dateObj.getTime() / 1000); 
-        const formattedDate = dateObj.toISOString().replace("T", " ").split(".")[0];
+        const formattedDate = dateObj.toISOString();
 
         // Construct formatted invoice number
         number = number.constructor !== Number ? parseInt(number) : number;

@@ -33,7 +33,7 @@ const app = {
             url: "https://www.jowyoriginals.com/wp-admin/",
             store: "https://jowyoriginals.com",
             padding: 6,
-            prefix: "4-",
+            prefix: "2-",
             suffix: "",
             wcc: new WooCommerceClient()
         },
@@ -44,7 +44,7 @@ const app = {
             url: "https://homexgym.com/wp-admin/",
             store: "https://homexgym.com",
             padding: 6,
-            prefix: "4-",
+            prefix: "3-",
             suffix: "",
             wcc: new WooCommerceClient()
         },
@@ -557,7 +557,24 @@ const app = {
             const invoicePanel = new LX.Panel({ width: "50%", className: "p-0" });
             invoiceContainer.appendChild( invoicePanel.root );
 
+            const skeleton = new LX.Skeleton(  `
+                <div class="flex flex-row w-1/2">
+                <div class="flex flex-col w-1/3 p-2 gap-2">
+                    <div class="w-full h-4 lexskeletonpart"></div>
+                    <div class="w-full h-4 lexskeletonpart"></div>
+                </div>
+                <div class="flex flex-col w-2/3 p-2 gap-2">
+                    <div class="w-full h-4 lexskeletonpart"></div>
+                    <div class="w-full h-4 lexskeletonpart"></div>
+                </div>
+                </div>
+            ` );
+            invoiceContainer.appendChild( skeleton.root );
+
             const orderInvoice = await wcc.getInvoice( orderNumber );
+
+            skeleton.destroy();
+
             const date = new Date();
             let invoiceNumber = 0, invoiceDate = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
             let customerNote = true;
@@ -568,8 +585,9 @@ const app = {
                 invoiceDate = orderInvoice.date;
             }
 
-            invoicePanel.addNumber( "Número de Factura", invoiceNumber, (v) => {
-                invoiceNumber = v;
+            invoicePanel.addText( "Número de Factura", invoiceNumber.toString(), (v) => {
+                v = parseInt( v );
+                invoiceNumber = !Number.isNaN( v ) ? v : 0;
             }, { disabled: orderInvoice !== null, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
             invoicePanel.addDate( "Fecha de Factura", invoiceDate, (v) => {
                 invoiceDate = v;
