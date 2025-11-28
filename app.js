@@ -9,6 +9,11 @@ const glsTrackingUrl = `https://gls-group.com/ES/es/seguimiento-envio/`;
 const transportOptions = ["CBL", "SEUR"];//, "GLS"];
 const companyOptions = ["Jowy", "HxG", "Bathby"];
 
+const convertDateDMYtoMDY = str => {
+    const [day, month, year] = str.split("/");
+    return `${month}/${day}/${year}`;
+};
+
 const app = {
 
     transport: "CBL", // Default transport
@@ -21,9 +26,39 @@ const app = {
     },
     data: {
         "otros": { list: [], dom: null },
-        "jowy": { name: "Jowy", list: [], dom: null, url: "https://www.jowyoriginals.com/wp-admin/" },
-        "hxg": { name: "HxG", list: [], dom: null, url: "https://homexgym.com/wp-admin/" },
-        "bathby": { name: "Bathby", list: [], dom: null, url: "https://bathby.com/wp-admin/" },
+        "jowy": {
+            name: "Jowy",
+            list: [],
+            dom: null,
+            url: "https://www.jowyoriginals.com/wp-admin/",
+            store: "https://jowyoriginals.com",
+            padding: 6,
+            prefix: "4-",
+            suffix: "",
+            wcc: new WooCommerceClient()
+        },
+        "hxg": {
+            name: "HxG",
+            list: [],
+            dom: null,
+            url: "https://homexgym.com/wp-admin/",
+            store: "https://homexgym.com",
+            padding: 6,
+            prefix: "4-",
+            suffix: "",
+            wcc: new WooCommerceClient()
+        },
+        "bathby": {
+            name: "Bathby",
+            list: [],
+            dom: null,
+            url: "https://bathby.com/wp-admin/",
+            store: "https://bathby.com",
+            padding: 6,
+            prefix: "4-",
+            suffix: "",
+            wcc: new WooCommerceClient()
+        },
     },
     statusColors: {
         "Documentada": { icon: "File", bg: "#272c31ff" },
@@ -63,15 +98,13 @@ const app = {
             }
         }
 
-        this.wcClient = new WooCommerceClient();
-
         LX.requestBinary( "envios.xlsx", (data) => {
             const workbook = XLSX.read(data, {type: "binary"});
             app.sheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[ app.sheetName ];
             if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
             {
-                LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 3000, position: "top-left" } );
+                LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 5000, position: "top-left" } );
             }
         } );
     },
@@ -115,7 +148,7 @@ const app = {
                         const sheet = workbook.Sheets[ app.sheetName ];
                         if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
                         {
-                            LX.toast( "Datos cargados", `✅ ${ file.name }`, { timeout: 3000, position: "top-left" } );
+                            LX.toast( "Datos cargados", `✅ ${ file.name }`, { timeout: 5000, position: "top-left" } );
                         }
                     };
 
@@ -417,7 +450,7 @@ const app = {
                 { icon: "Copy", title: "Copiar Nombre", callback: (rowData) => {
                     const data = rowData[7];
                     navigator.clipboard.writeText( data ).then(() => {
-                        LX.toast( "Copiado", `✅ "${ data }" copiado al portapapeles.`, { timeout: 3000, position: "top-left" } );
+                        LX.toast( "Copiado", `✅ "${ data }" copiado al portapapeles.`, { timeout: 5000, position: "top-left" } );
                     }).catch(err => {
                         console.error('Error copying text: ', err);
                         LX.toast( "Error", "❌ No se pudo copiar el nombre.", { timeout: -1, position: "top-left" } );
@@ -433,8 +466,12 @@ const app = {
     },
 
     showMessages: function( compName, rowOffset = 0 ) {
-        const dom = this.data[ compName ].dom;
-        const list = this.data[ compName ].list;
+        
+        const compData = this.data[ compName ];
+        const dom = compData.dom;
+        const list = compData.list;
+        const wcc = compData.wcc;
+        
         dom.innerHTML = "";
 
         // hack to remove all tooltips
@@ -458,6 +495,9 @@ const app = {
             str = str.substring(0, idx);
         }
 
+        orderNumber = parseInt(orderNumber);
+
+        const hasOrderNumber = !Number.isNaN( orderNumber );
         const status = this.statusColors[ "Incidencia" ] ?? {};
         let iconStr = LX.makeIcon( "CircleAlert", { svgClass: "md fg-white" } ).innerHTML;
         const noOrderStr = `${ LX.badge( iconStr + "Sin número" , "text-lg font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
@@ -465,10 +505,10 @@ const app = {
         const header = LX.makeContainer( [ null, "auto" ], "flex flex-col border-top border-bottom gap-2 px-3 py-6 mb-3", `
             <h2 class="flex flex-row items-center gap-1">${ row["NOMCONS"] }</h2>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Población</p><p class="flex flex-row items-center font-medium">${ row["POBLACION"] }</p></div>
-            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Clave</p><p class="flex flex-row items-center font-medium">${ row["CLAVE"] }</p></div>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Situación</p><p class="flex flex-row items-center font-medium">${ row["CLAVE"] }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de envío</p><p class="flex flex-row items-center font-medium">${ row["NENVIO"] }</p></div>
             <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Referencia</p><p class="flex flex-row items-center font-medium">${ str }</p></div>
-            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de pedido</p><p class="flex flex-row items-center font-medium">${ orderNumber ?? noOrderStr }</p></div>
+            <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de pedido</p><p class="flex flex-row items-center font-medium">${ hasOrderNumber ? orderNumber : noOrderStr }</p></div>
         `, dom );
 
         // Add button to copy NOMBRE USUARIO
@@ -476,7 +516,7 @@ const app = {
             const nPedidoH2 = header.querySelector( "h2" );
             const copyButtonWidget = new LX.Button(null, "CopyButton",  async function() {
                 navigator.clipboard.writeText( nPedidoH2.innerText ).then(() => {
-                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 5000, position: "top-left" } );
                 }).catch(err => {
                     console.error('Error copying text: ', err);
                     LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
@@ -492,43 +532,6 @@ const app = {
             nPedidoH2.appendChild( copyButtonWidget.root );
         }
 
-        // Invoice data
-        if( 1 || orderNumber !== undefined )
-        {
-            const invoiceContainer = LX.makeContainer( [ "null", "auto" ], "flex flex-col border-bottom gap-2 px-3 pb-2 mb-6", ``, dom );
-            const invoicePanel = new LX.Panel({ width: "50%", className: "p-0" });
-            invoiceContainer.appendChild( invoicePanel.root );
-
-            let invoiceNumber = 0, invoiceDate = null;
-
-            invoicePanel.addNumber( "Número de Factura", invoiceNumber, () => {
-                invoiceNumber = v;
-            }, { nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
-            invoicePanel.addDate( "Fecha de Factura", invoiceDate, (v) => {
-                invoiceDate = v;
-            }, { today: true, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
-            invoicePanel.addButton( null, "Validar", () => {
-                const dialogClosable = new LX.Dialog("⚠️ Validar en WooCommerce", dialogPanel => {
-                    dialogPanel.addTextArea(null, `Vas a validar los siguientes datos en WooCommerce para el pedido ${ orderNumber }. Revisa los datos antes de continuar.`, 
-                        null, { fitHeight: true, disabled: true }
-                    );
-                    dialogPanel.addSeparator();
-                    dialogPanel.addNumber( "Número de Factura", invoiceNumber, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
-                    dialogPanel.addText( "Fecha de Factura", invoiceDate, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
-                    dialogPanel.sameLine(2, "justify-center");
-                    dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" } );
-                    dialogPanel.addButton(null, "Continuar", () => {
-                        dialogClosable.close();
-
-                        // Upload to woocommerce
-                        // ...
-
-                    }, { buttonClass: "contrast" });
-
-                }, { modal: true, size: ["400px", null], closable: true, draggable: false });
-            }, { buttonClass: "contrast" } );
-        }
-
         let url = cblTrackingUrl;
         switch( this.transport )
         {
@@ -538,13 +541,101 @@ const app = {
 
         const template = this.data[ compName ].template;
         const templateString = template( row["LOCALIZADOR"], url );
+
+        // Invoice data
+        
+        if( hasOrderNumber )
+        {
+            const invoiceContainer = LX.makeContainer( [ "null", "auto" ], "flex flex-col border-bottom gap-2 px-3 pb-2 mb-6", ``, dom );
+            const invoicePanel = new LX.Panel({ width: "50%", className: "p-0" });
+            invoiceContainer.appendChild( invoicePanel.root );
+
+            const date = new Date();
+            let invoiceNumber = 0, invoiceDate = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
+            let customerNote = true;
+
+            invoicePanel.addNumber( "Número de Factura", invoiceNumber, (v) => {
+                invoiceNumber = v;
+            }, { nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
+            invoicePanel.addDate( "Fecha de Factura", invoiceDate, (v) => {
+                invoiceDate = v;
+            }, { nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
+            invoicePanel.addButton( null, "Facturar", () => {
+
+                // Check login for compName
+                if( !wcc.connected )
+                {
+                    this.openWooCommerceLogin();
+                    return;
+                }
+
+                const dialogClosable = new LX.Dialog("Facturar en WooCommerce", dialogPanel => {
+                    dialogPanel.addTextArea(null, `Vas a facturar con los siguientes datos en WooCommerce (pedido ${ orderNumber }). Revisa los datos antes de continuar.`, 
+                        null, { fitHeight: true, disabled: true }
+                    );
+                    dialogPanel.addSeparator();
+                    dialogPanel.addNumber( "Número de Factura", invoiceNumber, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
+                    dialogPanel.addText( "Fecha de Factura", invoiceDate, () => {}, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
+                    dialogPanel.addSeparator();
+                    dialogPanel.addCheckbox( "Añadir nota de seguimiento", customerNote, (v) => {
+                        customerNote = v;
+                    }, { disabled: true, nameWidth: "40%", className: "text-lg fg-tertiary" } );
+                    dialogPanel.sameLine(2, "justify-center mt-2");
+                    dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" } );
+                    dialogPanel.addButton(null, "Continuar", async () => {
+                        dialogClosable.close();
+
+                        const oN = orderNumber;// ?? 4529;
+                        const iN = invoiceNumber;
+                        const iD = convertDateDMYtoMDY( invoiceDate );
+
+                        // console.log(oN, iN, iD);
+
+                        if( customerNote )
+                        {
+                            let r = await wcc.createOrderNote( oN, templateString );
+                            if( !r.ok )
+                            {
+                                LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
+                                return;
+                            }
+
+                            console.log("Nota creada para pedido #" + oN);
+                        }
+
+                        {
+                            let r = await wcc.updateInvoice( oN, iN, iD, compData.prefix, compData.suffix, compData.padding );
+                            if( !r.ok )
+                            {
+                                LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
+                                return;
+                            }
+
+                            console.log(`Factura actualizada (${iN}, ${iD}) para pedido #${oN}`);
+                        }
+                        
+                        LX.toast( "Proceso completado", "✅ Pulsa <span>Ver</span> para comprobar los datos en la plataforma.", { timeout: 5000, position: "top-left", action: {
+                            name: "Ver",
+                            callback: () => {
+                                const url = this.data[ compName ].url;
+                                const link = `${ url }post.php?post=${ orderNumber }&action=edit`;
+                                window.open(link);
+                            }
+                        } } );
+
+                    }, { buttonClass: "contrast" });
+
+                }, { modal: true, position: [ "calc(50% - 200px)", "250px" ], size: ["400px", null], closable: true, draggable: false });
+            }, { buttonClass: "contrast" } );
+        }
+
         const body = LX.makeContainer( [ null, "auto" ], "p-2", templateString, dom );
 
         const footerPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2" });
         footerPanel.sameLine();
 
         const openWeCLink = footerPanel.addButton(null, "OpenWeCLinkButton", () => {
-            if( orderNumber )
+            if( hasOrderNumber )
             {
                 const url = this.data[ compName ].url;
                 const link = `${ url }post.php?post=${ orderNumber }&action=edit`;
@@ -555,12 +646,12 @@ const app = {
                 // No deberia ocurrir!
                 throw("Trying to open orderLink without order number!");
             }
-        }, { disabled: ( orderNumber === undefined ), width: "100px", icon: "ExternalLink", title: "Abrir pedido", tooltip: ( orderNumber !== undefined ) });
+        }, { disabled: !hasOrderNumber, width: "100px", icon: "ExternalLink", title: "Abrir pedido", tooltip: hasOrderNumber });
         dom.appendChild( footerPanel.root ); 
 
         const copyButtonWidget = footerPanel.addButton(null, "CopyButton",  async () => {
             navigator.clipboard.writeText( templateString ).then(() => {
-                LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
+                LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 5000, position: "top-left" } );
             }).catch(err => {
                 console.error('Error copying text: ', err);
                 LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
@@ -613,7 +704,7 @@ const app = {
 
             const copyButtonWidget = p.addButton(null, "CopyButton",  async () => {
                 navigator.clipboard.writeText( body.innerHTML ).then(() => {
-                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 5000, position: "top-left" } );
                 }).catch(err => {
                     console.error('Error copying text: ', err);
                     LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
@@ -653,23 +744,12 @@ const app = {
     openweCommerceOrders: function() {
 
         const allRows = this.data[ this.compName ].list;
-        // const allRows = [ ...this.data[ "jowy" ].list, ...this.data[ "hxg" ].list, ...this.data[ "bathby" ].list ];
         const allLinks = allRows.map( row => {
             const str = row["REFERENCIA"];
             const idx = str.indexOf("/");
             if(idx === -1) return;
 
-            let compName = this.compName;
-            // switch( str[ 0 ] )
-            // {
-            //     case '2': compName = "jowy"; break;
-            //     case '3': compName = "hxg"; break;
-            //     case '4': compName = "bathby"; break;
-            // }
-
-            // if(!compName) return;
-            
-            const url = this.data[ compName ].url;
+            const url = this.data[ this.compName ].url;
             const orderNumber = str.substring(idx+1);
             return `${ url }post.php?post=${ orderNumber }&action=edit`;
         }).filter( l => l !== undefined );
@@ -691,7 +771,7 @@ const app = {
                     fn();
                 }, { buttonClass: "contrast" });
 
-            }, { modal: true, size: ["400px", null], closable: true, draggable: false });    
+            }, { modal: true, position: [ "calc(50% - 200px)", "250px" ], size: ["400px", null], closable: true, draggable: false });    
         }
         else
         {
@@ -883,7 +963,7 @@ const app = {
                     }
                     const tsv = colData.map(r => r.join('\t')).join('\n');
                     navigator.clipboard.writeText( tsv ).then(() => {
-                        LX.toast( "Copiado", "✅ Columna copiada al portapapeles.", { timeout: 3000, position: "top-left" } );
+                        LX.toast( "Copiado", "✅ Columna copiada al portapapeles.", { timeout: 5000, position: "top-left" } );
                     }).catch(err => {
                         console.error('Error copying text: ', err);
                         LX.toast( "Error", "❌ No se pudo copiar la columna.", { timeout: -1, position: "top-left" } );
@@ -950,7 +1030,7 @@ const app = {
             const copyButtonWidget = new LX.Button(null, "CopyButton",  async function() {
                 const textToCopy = this.root.parentElement.childNodes[ 1 ].innerText;
                 navigator.clipboard.writeText( textToCopy ).then(() => {
-                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 5000, position: "top-left" } );
                 }).catch(err => {
                     console.error('Error copying text: ', err);
                     LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
@@ -972,7 +1052,7 @@ const app = {
             const copyButtonWidget = new LX.Button(null, "CopyButton",  async function() {
                 const textToCopy = nPedidoH2.innerText.substring( nPedidoH2.innerText.indexOf( ": " ) + 2 );
                 navigator.clipboard.writeText( textToCopy ).then(() => {
-                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 3000, position: "top-left" } );
+                    LX.toast( "Copiado", "✅ Mensaje copiado al portapapeles.", { timeout: 5000, position: "top-left" } );
                 }).catch(err => {
                     console.error('Error copying text: ', err);
                     LX.toast( "Error", "❌ No se pudo copiar el mensaje.", { timeout: -1, position: "top-left" } );
@@ -1235,7 +1315,7 @@ const app = {
 
         if( !ignoreErrors )
         {
-            LX.toast( filename, "✅ Datos exportados correctamente!", { timeout: 3000, position: "top-left" } );
+            LX.toast( filename, "✅ Datos exportados correctamente!", { timeout: 5000, position: "top-left" } );
         }
     },
 
@@ -1271,29 +1351,54 @@ const app = {
         });
     },
 
-    async configureWooCommerce( store, ck, cs ) {
+    openWooCommerceLogin() {
 
-        this.wcClient.configure( store, ck, cs );
+        const compData = this.data[ this.compName ];
 
-        const r = await this.wcClient.checkConnection();
+        const dialog = new LX.Dialog( compData.name + " WooComerce Login", (p) => {
+
+            let ck = localStorage.getItem( this.compName + "_wooc_ck" ) ?? "";
+            let cs = localStorage.getItem( this.compName + "_wooc_cs" ) ?? "";
+            let store = this.data[ this.compName ].store;
+
+            p.addText("URL Tienda", store, (value, event) => {},{ disabled: true, nameWidth: "30%", skipReset: true });
+            p.addText("Clave cliente", ck, (value, event) => {
+                ck = value;
+            }, { nameWidth: "30%", skipReset: true, type: "password" });
+            p.addText("Clave secreta", cs, (value, event) => {
+                cs = value;
+            }, { nameWidth: "30%", skipReset: true, type: "password" });
+            p.addButton(null, "Login", async (value, event) => {
+                const r = await this.configureWooCommerce( this.compName, store, ck, cs );
+                if( r.ok )
+                {
+                    dialog.close();
+                }
+                else
+                {
+                    LX.emit( "@login_errors", "❌ Credenciales no válidas" );
+                }
+            }, { nameWidth: "30%", skipReset: true });
+            p.addSeparator();
+            p.addTextArea( null, "", null, { disabled: true, fitHeight: true, signal: "@login_errors" } )
+
+        }, { modal: true, position: [ "calc(50% - 200px)", "250px" ], size: ["400px", null], closable: true, draggable: false });
+    },
+
+    async configureWooCommerce( compName, store, ck, cs ) {
+
+        const wcc = this.data[ compName ].wcc;
+        const r = await wcc.configure( store, ck, cs );
         if( r.ok )
         {
-            LX.toast( "Login correcto", `✅ Has iniciado sesión en ${ store }`, { timeout: 3000, position: "top-left" } );
+            LX.toast( "Login correcto", `✅ Has iniciado sesión en ${ store }`, { timeout: 5000, position: "top-left" } );
 
             // Store in localStorage
-            localStorage.setItem( "wooc_ck", ck );
-            localStorage.setItem( "wooc_cs", cs );
-        }
-        else
-        {
-            LX.toast( "Error", "❌ Tienda o claves no válidas.", { timeout: -1, position: "top-left" } );
+            localStorage.setItem( compName + "_wooc_ck", ck );
+            localStorage.setItem( compName + "_wooc_cs", cs );
         }
 
         return r;
-
-        // this.wcClient.getOrdersPage().then(result => {
-        //     console.log("Page 1 orders:", result.data);
-        // });
     },
 
     _request: function( request ) {
@@ -1461,35 +1566,13 @@ app.data["bathby"].template = ( id, url, transport ) => {
                 app.header.style.background = `url('data/banner_${ newTheme }.png') no-repeat center center / cover`;
             }
         },
-        {
-            title: "Login WooComerce",
-            icon: "User",
-            callback:  (value, event) => {
-                const dialog = new LX.Dialog("WooComerce Login", (p) => {
-
-                    let ck = localStorage.getItem( "wooc_ck" ) ?? "";
-                    let cs = localStorage.getItem( "wooc_cs" ) ?? "";
-
-                    let store = `https://${ app.compName }.com`;
-                    p.addText("URL Tienda", store, (value, event) => {
-                        store = value;
-                    }, { nameWidth: "30%", skipReset: true });
-                    p.addText("Clave cliente", ck, (value, event) => {
-                        ck = value;
-                    }, { nameWidth: "30%", skipReset: true, type: "password" });
-                    p.addText("Clave secreta", cs, (value, event) => {
-                        cs = value;
-                    }, { nameWidth: "30%", skipReset: true, type: "password" });
-                    p.addButton(null, "Login", async (value, event) => {
-                        const r = await app.configureWooCommerce( store, ck, cs );
-                        if( r.ok )
-                        {
-                            dialog.close();
-                        }
-                    }, { nameWidth: "30%", skipReset: true });
-                }, { modal: false, size: ["min(100%, 400px)", null], closable: true, draggable: false });
-            }
-        }
+        // {
+        //     title: "Login WooComerce",
+        //     icon: "User",
+        //     callback:  (value, event) => {
+                
+        //     }
+        // }
     ], { float: "center" });
 
     app.init( menubar.siblingArea );
