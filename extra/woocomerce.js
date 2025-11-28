@@ -169,6 +169,7 @@ export class WooCommerceClient
             const d = new Date( dateFormattedMeta.value );
             return {
                 number: parseInt( numberDataMeta.value.number ),
+                numberFormatted: numberMeta.value,
                 date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`
             };
         }

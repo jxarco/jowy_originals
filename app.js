@@ -503,6 +503,7 @@ const app = {
         }
 
         orderNumber = parseInt(orderNumber);
+        // orderNumber = 4529;
 
         const hasOrderNumber = !Number.isNaN( orderNumber );
         const status = this.statusColors[ "Incidencia" ] ?? {};
@@ -576,19 +577,20 @@ const app = {
             skeleton.destroy();
 
             const date = new Date();
-            let invoiceNumber = 0, invoiceDate = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
+            let invoiceNumber = "", invoiceDate = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
             let customerNote = true;
 
             if( orderInvoice !== null )
             {
                 invoiceNumber = orderInvoice.number;
                 invoiceDate = orderInvoice.date;
+                invoicePanel.addText( "Número de Factura (FT)", orderInvoice.numberFormatted.toString(), null, { disabled: true, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
             }
 
             invoicePanel.addText( "Número de Factura", invoiceNumber.toString(), (v) => {
                 v = parseInt( v );
                 invoiceNumber = !Number.isNaN( v ) ? v : 0;
-            }, { disabled: orderInvoice !== null, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
+            }, { disabled: orderInvoice !== null, placeholder: compData.prefix, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
             invoicePanel.addDate( "Fecha de Factura", invoiceDate, (v) => {
                 invoiceDate = v;
             }, { disabled: orderInvoice !== null, nameWidth: "40%", className: "text-xl font-light fg-tertiary" } );
@@ -1391,6 +1393,7 @@ const app = {
             let ck = localStorage.getItem( this.compName + "_wooc_ck" ) ?? "";
             let cs = localStorage.getItem( this.compName + "_wooc_cs" ) ?? "";
             let store = this.data[ this.compName ].store;
+            let spinner = null;
 
             p.addText("URL Tienda", store, (value, event) => {},{ disabled: true, nameWidth: "30%", skipReset: true });
             p.addText("Clave cliente", ck, (value, event) => {
@@ -1400,6 +1403,8 @@ const app = {
                 cs = value;
             }, { nameWidth: "30%", skipReset: true, type: "password" });
             p.addButton(null, "Login", async (value, event) => {
+                spinner = LX.makeIcon( "LoaderCircle", { iconClass: "flex p-2", svgClass: "xxl animate-spin" } );
+                p.attach( spinner );
                 const r = await this.configureWooCommerce( this.compName, store, ck, cs );
                 if( r.ok )
                 {
@@ -1407,6 +1412,7 @@ const app = {
                 }
                 else
                 {
+                    spinner.remove();
                     LX.emit( "@login_errors", "❌ Credenciales no válidas" );
                 }
             }, { nameWidth: "30%", skipReset: true });
@@ -1526,10 +1532,10 @@ app.data["jowy"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="word-break: break-word;text-decoration: none; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FDC645; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
-<a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
+<p style="word-break: break-word;text-decoration: none; border-radius: 12px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #e94343; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<a href="${ url }" style="background: none;text-decoration: none;color: #e0e0e0ff;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
 <a style="border-bottom:1px solid #736060; margin-block: 0.5rem;"></a>
-<a href="https://www.jowyoriginals.com/" style="background: none;text-decoration: none;color: #927124;">jowyoriginals.com</a>
+<a href="https://www.jowyoriginals.com/" style="background: none;text-decoration: none;color: #d8c1c1ff;">jowyoriginals.com</a>
 </p>`;
 }
 
@@ -1538,7 +1544,7 @@ app.data["hxg"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="word-break: break-word;text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<p style="word-break: break-word;text-decoration: none; border-radius: 24px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #FFC844; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
 <a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
 <a style="border-bottom:1px solid #927124; margin-block: 0.5rem;"></a>
 <a href="https://homexgym.com/" style="background: none;text-decoration: none;color: #927124;">homexgym.com</a>
@@ -1550,10 +1556,10 @@ app.data["bathby"].template = ( id, url, transport ) => {
 <ul>
 <li><strong>N&ordm; de env&iacute;o:</strong> ${ id }</li>
 </ul>
-<p style="word-break: break-word;text-decoration: none; border-radius: 25px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #F2D1D1; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
+<p style="word-break: break-word;text-decoration: none; border-radius: 24px; font-size: 16px; font-family: Helvetica,Arial,sans-serif; padding: 12px; max-width: 300px; background-color: #e7c5d2ff; text-align: center; display: flex; flex-direction: column; letter-spacing: -0.05rem;">
 <a href="${ url }" style="background: none;text-decoration: none;color: #222;"><strong>HAZ CLIC AQUÍ PARA SEGUIR TU PEDIDO</strong></a>
 <a style="border-bottom:1px solid #736060; margin-block: 0.5rem;"></a>
-<a href="https://bathby.com/" style="background: none;text-decoration: none;color: #736060;">bathby.com</a>
+<a href="https://bathby.com/" style="background: none;text-decoration: none;color: #83596bff;">bathby.com</a>
 </p>`;
 }
 
