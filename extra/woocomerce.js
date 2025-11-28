@@ -233,7 +233,7 @@ export class WooCommerceClient
         }
 
         // Convert JS Date or string to timestamp + formatted version
-        const dateObj = date instanceof Date ? date : new Date(date);
+        const dateObj = new Date( `${ date.trim() } 08:00` );
         const timestamp = Math.floor(dateObj.getTime() / 1000); 
         const formattedDate = dateObj.toISOString().replace("T", " ").split(".")[0];
 
