@@ -329,12 +329,12 @@ const app = {
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2 flex flex-row gap-2" });
-        utilButtonsPanel.sameLine(1);
-        // utilButtonsPanel.addButton(null, "StartButton", this.showSingleSheinData.bind( this ), { icon: "Eye", title: "Ver información detallada", tooltip: true } );
+        utilButtonsPanel.sameLine(3);
         utilButtonsPanel.addButton(null, "ClearButton", this.clearData.bind( this ), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
         utilButtonsPanel.addNumber(null, this.ordersBeforeDays, (v) => {
             this.ordersBeforeDays = v;
-        }, { width: "auto", step: 1, min: 1, max: 90, units: "días", skipSlider: true });
+        }, { step: 1, min: 1, max: 120, units: "días", skipSlider: true });
+        utilButtonsPanel.addButton(null, "TooltipButton", null, { disabled: true, icon: "Info", buttonClass: "bg-none", title: "Ver pedidos de hasta 'N' días atrás", tooltip: true } );
         area.attach( utilButtonsPanel.root );
         
         const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-2 pt-0" } );
@@ -417,7 +417,7 @@ const app = {
 
     openOrdersApp: function()
     {
-        this.setHeaderTitle( `Pedidos Web`, "", "Package" );
+        this.setHeaderTitle( `Salida Stock por Web`, "", "Package" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", true );
         this.sheinDataArea.root.classList.toggle( "hidden", true );
@@ -1286,11 +1286,11 @@ const app = {
         const r = await wcc.getAllOrdersByFilter( after, before, [ "processing", "on-hold" ] );
         console.log(r)
 
-        this.setHeaderTitle( `Pedidos Web: <i>${ name }</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`, "Package" );
+        this.setHeaderTitle( `Salida Stock por Web: <i>${ name }</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`, "Package" );
 
         dialog.destroy();
 
-        // fecha, sku, desc (auto), cantidad, transporte (), "Web", pais, observaciones (num pedido)
+        // fecha, sku, desc (auto), cantidad, transporte (), "WEB", pais, observaciones (num pedido)
 
         const columnData = [
             [ "paymethod", "PAGO", (r) => {
@@ -1298,70 +1298,66 @@ const app = {
                 const b = new LX.Button(null, "Payment", null, { buttonClass: "bg-none", icon: "CircleDollarSign", title: r["payment_method_title"] });
                 return b.root.innerHTML;
             } ],
+            [ "preview", "PREVIEW", (r, i) => {
+                return `<img title="${i["name"]}" class="rounded" style="width:3rem;" src="${ i["image"]["src"] }">`;
+            } ],
             [ "date", "FECHA", (r) => {
                 const d = new Date(r["date_created"]);
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
             } ],
-            [ "sku", "REFERENCIA" ],
-            [ "desc", "DESCRIPCIÓN", (r) => "" ],
-            [ "quantity", "CANTIDAD" ],
-            [ "transport", "TRANSPORTE", (r) => "CBL/SEUR/..." ],
-            [ "platform", "PLATAFORMA", (r) => "Web" ],
-            [ "country", "NOMBRE" ],
+            [ "sku", "REFERENCIA", (r, i) => i["sku"] ],
+            // [ "desc", "DESCRIPCIÓN", (r) => "" ],
+            [ "quantity", "UNIDADES", (r, i) => i["quantity"] ],
+            [ "transport", "TRANSPORTE", (r, i) => {
+                const q = i["quantity"];
+                const sku = i["sku"];
+                if( ( sku.startsWith("JW-D") && q > 2 ) || 
+                    sku.startsWith("JW-RT") ||
+                    sku.startsWith("HG-AD") ) return "CBL";
+                return "SEUR";
+            } ],
+            [ "platform", "PLATAFORMA", (r) => "WEB" ],
+            [ "country", "PAÍS", (r) => {
+                const shippingInfo = r["shipping"];
+                const ctr = shippingInfo["country"];
+                return this.countryFormat[ctr] ?? ctr;
+            } ],
             [ "notes", "OBSERVACIONES", (r) => `${ r["number"] }${ r["status"] == "on-hold" ? " TRANSFERENCIA" : "" }` ]
         ];
 
-        // Create table data from the list
-        const tableData = r.map( row => {
-            const lRow = [];
-            for( let c of columnData )
-            {
-                const ogColName = c[ 0 ];
-                if( row[ ogColName ] )
-                {
-                    const fn = c[ 2 ] ?? ( (str) => str );
-                    lRow.push( fn( row[ ogColName ] ) );
-                }
-                else if( c[2] )
-                {
-                    const fn = c[ 2 ];
-                    lRow.push( fn( row ) );
-                }
-                else
-                {
-                    const shippingInfo = row["shipping"];
-                    const items = row["line_items"];
-                    const item = items[ 0 ];
+        const tableData = [];
 
-                    switch( ogColName )
+        // Create table data from the list
+        r.forEach( row =>
+        {
+            const items = row["line_items"];
+
+            for( let item of items )
+            {
+                const lRow = [];
+
+                for( let c of columnData )
+                {
+                    const ogColName = c[ 0 ];
+                    if( row[ ogColName ] )
                     {
-                        case "sku":
-                        {
-                            // 1 item by now..
-                            lRow.push( item["sku"] );
-                            break;   
-                        }
-                        case "quantity":
-                        {
-                            // 1 item by now..
-                            lRow.push( item["quantity"] );
-                            break;   
-                        }
-                        case "country":
-                        {
-                            const ctr = shippingInfo["country"];
-                            lRow.push( this.countryFormat[ctr] ?? ctr );
-                            break;   
-                        }
-                        default:
-                        {
-                            lRow.push( "?" );
-                        }
+                        const fn = c[ 2 ] ?? ( (str) => str );
+                        lRow.push( fn( row[ ogColName ] ) );
+                    }
+                    else if( c[2] )
+                    {
+                        const fn = c[ 2 ];
+                        lRow.push( fn( row, item ) );
+                    }
+                    else
+                    {
+                        lRow.push( "?" );
                     }
                 }
+
+                tableData.push(lRow);
             }
-            return lRow;
-        }).filter( v => v !== undefined );
+        });
 
         const date = new Date();
         const todayStringDate = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
@@ -1376,12 +1372,19 @@ const app = {
             sortable: false,
             toggleColumns: false,
             filter: "OBSERVACIONES",
+            centered: [4, 5, 6, 7, 8],
             customFilters: [
                 { name: "FECHA", type: "date", default: [ todayStringDate, todayStringDate ] },
             ],
             rowActions: [
                 { icon: "Copy", title: "Copiar", callback: (rowData) => {
-                    const tsv = rowData.slice(1).join('\t');
+                    const data = [
+                        ...rowData.slice( 2, 4 ),
+                        "",
+                        ...rowData.slice( 4 )
+                    ];
+                    const tsv = data.join('\t');
+                    console.log(tsv)
                     navigator.clipboard.writeText( tsv ).then(() => {
                         LX.toast( "Copiado", `✅ "${ tsv }" copiado al portapapeles.`, { timeout: 5000, position: "top-left" } );
                     }).catch(err => {
@@ -1845,14 +1848,13 @@ app.data["bathby"].template = ( id, url, transport ) => {
         // { name: "Calculadora", callback: app.redirectToOAuth.bind( app ) }
     ] );
 
+    const separator = LX.makeContainer(["1px", "100%"], "content-center ml-4 mr-2", "" );
+    LX.makeContainer(["auto", "1.25rem"], "bg-quaternary", "", separator );
+    menubar.root.insertChildAtIndex(separator, 0);
+
     menubar.setButtonImage("bathby", `data/bathby_${ starterTheme }.png`, () => { window.open("https://bathby.com/wp-admin/") }, { float: "left" });
     menubar.setButtonImage("hxg", `data/hxg_${ starterTheme }.png`, () => { window.open("https://homexgym.com/wp-admin/") }, { float: "left" });
     menubar.setButtonImage("jowy", `data/jowy_${ starterTheme }.png`, () => { window.open("https://www.jowyoriginals.com/wp-admin/") }, { float: "left" });
-
-    // const commandButton = new LX.Select("Transporte", transportOptions, `CBL`, (v) => { app.updateTransport( v ) }, {
-    //     width: "256px", nameWidth: "45%", className: "right", overflowContainer: null, skipReset: true }
-    // );
-    // menubar.root.appendChild( commandButton.root );
 
     menubar.addButtons( [
         {
