@@ -14,22 +14,39 @@ const convertDateDMYtoMDY = str => {
     return `${month}/${day}/${year}`;
 };
 
+const convertDateMDYtoDMY = str => {
+    const [month, day, year] = str.split("/");
+    return `${day}/${month}/${year}`;
+};
+
+function getDateNDaysAgo( n = 30 ) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString();
+}
+
 const app = {
 
     transport: "CBL", // Default transport
     sheetName: "",
     countryFormat: {
         "Spain": "ESPAÑA",
+        "ES": "ESPAÑA",
         "Portugal": "PORTUGAL",
+        "PT": "PORTUGAL",
         "Italy": "ITALIA",
         "France": "FRANCIA",
+        "FR": "FRANCIA",
     },
+    ordersBeforeDays: 15,
+
     data: {
         "otros": { list: [], dom: null },
         "jowy": {
             name: "Jowy",
             list: [],
             dom: null,
+            domO: null,
             url: "https://www.jowyoriginals.com/wp-admin/",
             store: "https://jowyoriginals.com",
             padding: 6,
@@ -41,6 +58,7 @@ const app = {
             name: "HxG",
             list: [],
             dom: null,
+            domO: null,
             url: "https://homexgym.com/wp-admin/",
             store: "https://homexgym.com",
             padding: 6,
@@ -52,6 +70,7 @@ const app = {
             name: "Bathby",
             list: [],
             dom: null,
+            domO: null,
             url: "https://bathby.com/wp-admin/",
             store: "https://bathby.com",
             padding: 6,
@@ -60,6 +79,7 @@ const app = {
             wcc: new WooCommerceClient()
         },
     },
+
     statusColors: {
         "Documentada": { icon: "File", bg: "#272c31ff" },
         "Entregada": { icon: "CircleCheck", bg: "#218118" },
@@ -70,6 +90,7 @@ const app = {
         "En gestión": { icon: "TriangleAlert", bg: "#ca8a04" },
         "Devuelta": { icon: "Frown", bg: "#dc2626" },
     },
+
     init: function( appArea ) {
 
         this.area = appArea;
@@ -95,6 +116,9 @@ const app = {
             }
             else if( lastTool.includes( "-seur" ) ) {
                 this.openDataToSeurApp( lastTool.substring( 0, lastTool.indexOf( '-' ) ) );
+            }
+            else if( lastTool.includes( "orders" ) ) {
+                this.openOrdersApp();
             }
         }
 
@@ -176,6 +200,9 @@ const app = {
 
         this.createSheinDataContentHtml();
         this.showSheinList( [] );
+
+        this.createOrdersContentHtml();
+        this.updateOrders();
     },
 
     createTrackingMessagesContentHtml: function() {
@@ -295,6 +322,62 @@ const app = {
         this.sheinDataArea = area;
     },
 
+    createOrdersContentHtml: function() {
+
+        const area = new LX.Area( { skipAppend: true } );
+        this.area.attach( area );
+
+        // Create utility buttons
+        const utilButtonsPanel = new LX.Panel({ height: "auto", className: "bg-none bg-primary border-none p-2 flex flex-row gap-2" });
+        utilButtonsPanel.sameLine(1);
+        // utilButtonsPanel.addButton(null, "StartButton", this.showSingleSheinData.bind( this ), { icon: "Eye", title: "Ver información detallada", tooltip: true } );
+        utilButtonsPanel.addButton(null, "ClearButton", this.clearData.bind( this ), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
+        utilButtonsPanel.addNumber(null, this.ordersBeforeDays, (v) => {
+            this.ordersBeforeDays = v;
+        }, { width: "auto", step: 1, min: 1, max: 90, units: "días", skipSlider: true });
+        area.attach( utilButtonsPanel.root );
+        
+        const tabs = area.addTabs( { parentClass: "p-4", sizes: [ "auto", "auto" ], contentClass: "p-2 pt-0" } );
+        this.ordersTabs = tabs.root;
+
+        // Jowy
+        {
+            const jowyContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
+            tabs.add( "Jowy", jowyContainer, { selected: true, onSelect: (event, name) => this.showOrders( name.toLowerCase() ) } );
+
+            const jowyArea = new LX.Area({ className: "rounded-lg" });
+            jowyContainer.appendChild( jowyArea.root );
+            this.data["jowy"].domO = jowyContainer;
+        }
+
+        // HxG
+        {
+            const hxgContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
+            tabs.add( "HxG", hxgContainer, { xselected: true, onSelect: (event, name) => this.showOrders( name.toLowerCase() ) } );
+
+            const hxgArea = new LX.Area({ className: "rounded-lg" });
+            hxgContainer.appendChild( hxgArea.root );
+            this.data["hxg"].domO = hxgContainer;
+        }
+
+        // Bathby
+        {
+            const bathbyContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
+            tabs.add( "Bathby", bathbyContainer, { xselected: true, onSelect: (event, name) => this.showOrders( name.toLowerCase() ) } );
+
+            const bathbyArea = new LX.Area({ className: "rounded-lg" });
+            bathbyContainer.appendChild( bathbyArea.root );
+            this.data["bathby"].domO = bathbyContainer;
+        }
+
+        // Move up into the panel section
+        utilButtonsPanel.attach(tabs.root);
+
+        area.root.classList.add( "hidden" );
+
+        this.ordersArea = area;
+    },
+
     createFooterHtml: function() {
 
         this.footer = new LX.Footer( {
@@ -308,30 +391,44 @@ const app = {
 
     },
 
-    openTrackingMessagesApp: function() {
-
+    openTrackingMessagesApp: function()
+    {
         this.setHeaderTitle( "Mensajes de seguimiento", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "MessagesSquare" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", false );
         this.sheinDataArea.root.classList.toggle( "hidden", true );
+        this.ordersArea.root.classList.toggle( "hidden", true );
 
         this.tool = "tracking-messages";
         localStorage.setItem( "lastTool", this.tool );
     },
 
-    openDataToSeurApp: function( dataMarketplace ) {
-
+    openDataToSeurApp: function( dataMarketplace )
+    {
         this.setHeaderTitle( `Envíos SEUR: <i>${ dataMarketplace }</i>`, "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "Truck" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", true );
         this.sheinDataArea.root.classList.toggle( "hidden", false );
+        this.ordersArea.root.classList.toggle( "hidden", true );
 
         this.tool = dataMarketplace + "-seur";
         localStorage.setItem( "lastTool", this.tool );
     },
 
-    processData: function( fileData, local ) {
+    openOrdersApp: function()
+    {
+        this.setHeaderTitle( `Pedidos Web`, "", "Package" );
 
+        this.trackingMessagesArea.root.classList.toggle( "hidden", true );
+        this.sheinDataArea.root.classList.toggle( "hidden", true );
+        this.ordersArea.root.classList.toggle( "hidden", false );
+
+        this.tool = "orders";
+        localStorage.setItem( "lastTool", this.tool );
+    },
+
+    processData: function( fileData, local )
+    {
         let err = null;
 
         if( this.tool == "tracking-messages" )
@@ -381,7 +478,8 @@ const app = {
         return true;
     },
 
-    showList: function( compName ) {
+    showList: function( compName )
+    {
         const dom = this.data[ compName ].dom;
         const list = this.data[ compName ].list;
         const url = this.data[ compName ].url;
@@ -475,7 +573,7 @@ const app = {
         const wcc = compData.wcc;
         if( !wcc.connected )
         {
-            this.openWooCommerceLogin();
+            this.openWooCommerceLogin( this.showMessages.bind( this, compName, rowOffset ) );
             return;
         }
         
@@ -618,7 +716,7 @@ const app = {
                             const iN = invoiceNumber;
                             const iD = convertDateDMYtoMDY( invoiceDate );
     
-                            // console.log(oN, iN, iD);
+                            const dialog = this.makeLoadingDialog();
     
                             if( customerNote )
                             {
@@ -626,6 +724,7 @@ const app = {
                                 if( !r.ok )
                                 {
                                     LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
+                                    dialog.destroy();
                                     return;
                                 }
     
@@ -637,12 +736,15 @@ const app = {
                                 if( !r.ok )
                                 {
                                     LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
+                                    dialog.destroy();
                                     return;
                                 }
     
                                 console.log(`Factura actualizada (${iN}, ${iD}) para pedido #${oN}`);
                             }
                             
+                            dialog.destroy();
+
                             LX.toast( "Proceso completado", "✅ Pulsa <span>Ver</span> para comprobar los datos en la plataforma.", { timeout: 5000, position: "top-left", action: {
                                 name: "Ver",
                                 callback: () => {
@@ -1123,7 +1225,8 @@ const app = {
         }
     },
 
-    clearData: function() {
+    clearData: function()
+    {
         console.log("Clearing data...");
         localStorage.removeItem( "lastTool" );
 
@@ -1134,22 +1237,170 @@ const app = {
 
         delete this.lastSheinData;
 
-        // Clean tracking tool
+        // Clean tools
         this.updateLists();
-
-        // Clean SHEIN tool
-        this.showSheinList( [] );
+        this.showSheinList([]);
+        this.updateOrders();
     },
 
-    updateLists: function() {
+    updateLists: function()
+    {
         this.showList( "otros" );
         this.showList( "bathby" );
         this.showList( "hxg" );
         this.showList( "jowy" );
     },
 
-    redirectToOAuth: function() {
+    updateOrders: function()
+    {
+        this.showOrders( "bathby", true );
+        this.showOrders( "hxg", true );
+        this.showOrders( "jowy", true );
+    },
 
+    showOrders: async function( compName, clean = false )
+    {
+        const dom = this.data[ compName ].domO;
+        const wcc = this.data[ compName ].wcc;
+        const name = this.data[ compName ].name;
+        const url = this.data[ compName ].url;
+        dom.innerHTML = "";
+
+        if( clean )
+        {
+            return;
+        }
+
+        this.compName = compName;
+
+        if( !wcc.connected )
+        {
+            this.openWooCommerceLogin( this.showOrders.bind( this, compName, clean ) );
+            return;
+        }
+
+        const dialog = this.makeLoadingDialog("Cargando pedidos, espere...");
+
+        const after = getDateNDaysAgo( this.ordersBeforeDays );
+        const before = null;
+        const r = await wcc.getAllOrdersByFilter( after, before, [ "processing", "on-hold" ] );
+        console.log(r)
+
+        this.setHeaderTitle( `Pedidos Web: <i>${ name }</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`, "Package" );
+
+        dialog.destroy();
+
+        // fecha, sku, desc (auto), cantidad, transporte (), "Web", pais, observaciones (num pedido)
+
+        const columnData = [
+            [ "paymethod", "PAGO", (r) => {
+                // `payment_method_title`
+                const b = new LX.Button(null, "Payment", null, { buttonClass: "bg-none", icon: "CircleDollarSign", title: r["payment_method_title"] });
+                return b.root.innerHTML;
+            } ],
+            [ "date", "FECHA", (r) => {
+                const d = new Date(r["date_created"]);
+                return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+            } ],
+            [ "sku", "REFERENCIA" ],
+            [ "desc", "DESCRIPCIÓN", (r) => "" ],
+            [ "quantity", "CANTIDAD" ],
+            [ "transport", "TRANSPORTE", (r) => "CBL/SEUR/..." ],
+            [ "platform", "PLATAFORMA", (r) => "Web" ],
+            [ "country", "NOMBRE" ],
+            [ "notes", "OBSERVACIONES", (r) => `${ r["number"] }${ r["status"] == "on-hold" ? " TRANSFERENCIA" : "" }` ]
+        ];
+
+        // Create table data from the list
+        const tableData = r.map( row => {
+            const lRow = [];
+            for( let c of columnData )
+            {
+                const ogColName = c[ 0 ];
+                if( row[ ogColName ] )
+                {
+                    const fn = c[ 2 ] ?? ( (str) => str );
+                    lRow.push( fn( row[ ogColName ] ) );
+                }
+                else if( c[2] )
+                {
+                    const fn = c[ 2 ];
+                    lRow.push( fn( row ) );
+                }
+                else
+                {
+                    const shippingInfo = row["shipping"];
+                    const items = row["line_items"];
+                    const item = items[ 0 ];
+
+                    switch( ogColName )
+                    {
+                        case "sku":
+                        {
+                            // 1 item by now..
+                            lRow.push( item["sku"] );
+                            break;   
+                        }
+                        case "quantity":
+                        {
+                            // 1 item by now..
+                            lRow.push( item["quantity"] );
+                            break;   
+                        }
+                        case "country":
+                        {
+                            const ctr = shippingInfo["country"];
+                            lRow.push( this.countryFormat[ctr] ?? ctr );
+                            break;   
+                        }
+                        default:
+                        {
+                            lRow.push( "?" );
+                        }
+                    }
+                }
+            }
+            return lRow;
+        }).filter( v => v !== undefined );
+
+        const date = new Date();
+        const todayStringDate = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
+
+        const tableWidget = new LX.Table(null, {
+                head: columnData.map( c => {
+                    return c[ 1 ] ?? c[ 0 ];
+                }),
+                body: tableData
+            }, {
+            selectable: false,
+            sortable: false,
+            toggleColumns: false,
+            filter: "OBSERVACIONES",
+            customFilters: [
+                { name: "FECHA", type: "date", default: [ todayStringDate, todayStringDate ] },
+            ],
+            rowActions: [
+                { icon: "Copy", title: "Copiar", callback: (rowData) => {
+                    const tsv = rowData.join('\t');
+                    navigator.clipboard.writeText( tsv ).then(() => {
+                        LX.toast( "Copiado", `✅ "${ tsv }" copiado al portapapeles.`, { timeout: 5000, position: "top-left" } );
+                    }).catch(err => {
+                        console.error('Error copying text: ', err);
+                        LX.toast( "Error", "❌ No se pudo copiar.", { timeout: -1, position: "top-left" } );
+                    });
+                }},
+                { icon: "ExternalLink", title: "Abrir Pedido", callback: (rowData) => {
+                    const orderNumber = rowData[7].split( " " )[0];
+                    if( orderNumber !== "" ) window.open(`${ url }post.php?post=${ orderNumber }&action=edit`);
+                }},
+            ]
+        });
+
+        dom.appendChild( tableWidget.root );
+    },
+
+    redirectToOAuth: function()
+    {
         // For now is read only
         const clientId = "851633355284-ecd2lk1f1v771sv18rkmrjvvup6752iq.apps.googleusercontent.com";
         const redirectUri = encodeURIComponent( window.location.origin + window.location.pathname );
@@ -1158,8 +1409,8 @@ const app = {
         window.location.href = authUrl;
     },
 
-    exportSEUR: function( ignoreErrors = false, sheinData ) {
-
+    exportSEUR: function( ignoreErrors = false, sheinData )
+    {
         const columnData = [
             [ "Número del pedido", null ],
             [ "ID del artículo", null ],
@@ -1384,7 +1635,7 @@ const app = {
         });
     },
 
-    openWooCommerceLogin() {
+    openWooCommerceLogin( callback ) {
 
         const compData = this.data[ this.compName ];
 
@@ -1409,6 +1660,11 @@ const app = {
                 if( r.ok )
                 {
                     dialog.close();
+
+                    if(callback)
+                    {
+                        callback();
+                    }
                 }
                 else
                 {
@@ -1436,6 +1692,14 @@ const app = {
         }
 
         return r;
+    },
+
+    makeLoadingDialog( title )
+    {
+        return new LX.Dialog( title ?? "Acción en curso, espere...", (p) => {
+            let spinner = LX.makeIcon( "LoaderCircle", { iconClass: "flex p-2", svgClass: "xxl animate-spin" } );
+            p.attach( spinner );
+        }, { modal: true, position: [ "calc(50% - 150px)", "250px" ], size: ["300px", null], closable: false, draggable: false });
     },
 
     _request: function( request ) {
@@ -1577,6 +1841,7 @@ app.data["bathby"].template = ( id, url, transport ) => {
             { name: "Decathlon", disabled: true, callback: app.openDataToSeurApp.bind( app ), icon: "Volleyball" }
             
         ] },
+        { name: "Pedidos Web", callback: app.openOrdersApp.bind( app ), icon: "Package" }
         // { name: "Calculadora", callback: app.redirectToOAuth.bind( app ) }
     ] );
 

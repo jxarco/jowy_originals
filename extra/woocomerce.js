@@ -2,35 +2,29 @@
 // Nothing is stored persistently. Keys live only in memory.
 // Requires: store URL, consumer key, consumer secret (read-only keys).
 
-export class WooCommerceClient
-{
-    constructor()
-    {
+export class WooCommerceClient {
+    constructor() {
         this.store = null;
         this.ck = null;
         this.cs = null;
         this.connected = false;
     }
 
-    async configure( store, ck, cs )
-    {
+    async configure(store, ck, cs) {
         this.store = store.replace(/\/$/, "");
         this.ck = ck;
         this.cs = cs;
 
         const r = await this.checkConnection();
-        if( r.ok )
-        {
+        if (r.ok) {
             this.connected = true;
         }
 
         return r;
     }
 
-    async _get( endpoint, params = {} )
-    {
-        if( !this.store || !this.ck || !this.cs )
-        {
+    async _get(endpoint, params = {}) {
+        if (!this.store || !this.ck || !this.cs) {
             throw new Error("WooCommerce API not configured.");
         }
 
@@ -52,8 +46,7 @@ export class WooCommerceClient
             }
         });
 
-        if( !res.ok )
-        {
+        if (!res.ok) {
             const text = await res.text();
             throw new Error(`WooCommerce API error ${res.status}: ${text}`);
         }
@@ -71,11 +64,13 @@ export class WooCommerceClient
     // --- PUBLIC READ-ONLY HELPERS ---
     //
 
-    async checkConnection()
-    {
+    async checkConnection() {
         try {
             // Try a minimal request
-            await this._get("orders", { per_page: 1 });
+
+            // const a = new Date();
+            await this._get("");
+            // console.log(new Date().getTime() - a.getTime())
 
             // If we get here, credentials and server are OK
             return { ok: true };
@@ -88,8 +83,7 @@ export class WooCommerceClient
         }
     }
 
-    async getOrdersPage( page = 1, perPage = 20 )
-    {
+    async getOrdersPage(page = 1, perPage = 20) {
         try {
             const r = await this._get("orders", { page, per_page: perPage });
             return r;
@@ -101,9 +95,47 @@ export class WooCommerceClient
         }
     }
 
+    //
+    // --- GET ORDERS FILTERED BY DATE + STATUS ---
+    //
+    async getOrdersByFilter(after = null, before = null, status = null, per_page = 100, page = 1) {
+        const params = { per_page, page };
+
+        if (after) params.after = new Date(after).toISOString();
+        if (before) params.before = new Date(before).toISOString();
+        if (status)
+        {
+            if (Array.isArray(status)) {
+                params.status = status.join(",");
+            } else {
+                params.status = status;
+            }
+        }
+
+        // statuses: pending, processing, on-hold, completed, cancelled, refunded, failed, trash
+
+        return this._get("orders", params);
+    }
+
+    async getAllOrdersByFilter(after = null, before = null, status = null, per_page = 100) {
+        let page = 1;
+        let allOrders = [];
+
+        while (true) {
+            const { data, totalPages } = await this.getOrdersByFilter( after, before, status, per_page, page );
+
+            allOrders.push(...data);
+
+            if (page >= totalPages) break;
+
+            page++;
+        }
+
+        return allOrders;
+    }
+
     // Get ALL orders (auto-pagination)
-    async getAllOrders( perPage = 50 )
-    {
+    async getAllOrders(perPage = 50) {
         let page = 1;
         let allOrders = [];
 
@@ -117,10 +149,9 @@ export class WooCommerceClient
         return allOrders;
     }
 
-    async getOrder( id )
-    {
+    async getOrder(id) {
         try {
-            const r = await this._get( `orders/${id}` )
+            const r = await this._get(`orders/${id}`)
             return r;
         } catch (err) {
             return {
@@ -133,11 +164,10 @@ export class WooCommerceClient
     //
     // --- CHECK IF ORDER HAS AN INVOICE ---
     //
-    async hasInvoice( orderId )
-    {
-        const { data } = await this.getOrder( orderId );
+    async hasInvoice(orderId) {
+        const { data } = await this.getOrder(orderId);
 
-        if( !data || !data.meta_data ) return false;
+        if (!data || !data.meta_data) return false;
 
         // Look for invoice number and invoice date
         const numberMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_number");
@@ -153,24 +183,23 @@ export class WooCommerceClient
     //
     // --- GET INVOICE INFO FOR AN ORDER ---
     //
-    async getInvoice( orderId )
-    {
-        const { data } = await this.getOrder( orderId );
+    async getInvoice(orderId) {
+        const { data } = await this.getOrder(orderId);
 
-        if( !data || !data.meta_data ) return null;
+        if (!data || !data.meta_data) return null;
 
         const numberMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_number");
         const dateMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_date");
         const dateFormattedMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_date_formatted");
         const numberDataMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_number_data");
 
-        if (numberMeta && numberMeta.value && dateMeta && dateMeta.value 
+        if (numberMeta && numberMeta.value && dateMeta && dateMeta.value
             && dateFormattedMeta && dateFormattedMeta.value && numberDataMeta && numberDataMeta.value) {
-            const d = new Date( dateFormattedMeta.value );
+            const d = new Date(dateFormattedMeta.value);
             return {
-                number: parseInt( numberDataMeta.value.number ),
+                number: parseInt(numberDataMeta.value.number),
                 numberFormatted: numberMeta.value,
-                date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`
+                date: `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
             };
         }
 
@@ -182,10 +211,8 @@ export class WooCommerceClient
     //
     // --- CREATE ORDER NOTE ---
     //
-    async createOrderNote( orderId, note, customerNote = true )
-    {
-        if( !this.store || !this.ck || !this.cs )
-        {
+    async createOrderNote(orderId, note, customerNote = true) {
+        if (!this.store || !this.ck || !this.cs) {
             return {
                 ok: false,
                 error: `WooCommerce API error: API not configured`
@@ -223,10 +250,8 @@ export class WooCommerceClient
     //
     // --- UPDATE INVOICE (WooCommerce PDF Invoices plugin compatible) ---
     //
-    async updateInvoice( orderId, number, date, prefix = "4-", suffix = "", padding = 6 )
-    {
-        if( !this.store || !this.ck || !this.cs )
-        {
+    async updateInvoice(orderId, number, date, prefix = "4-", suffix = "", padding = 6) {
+        if (!this.store || !this.ck || !this.cs) {
             return {
                 ok: false,
                 error: `WooCommerce API error: API not configured`
@@ -234,8 +259,8 @@ export class WooCommerceClient
         }
 
         // Convert JS Date or string to timestamp + formatted version
-        const dateObj = new Date( `${ date.trim() } 08:00` );
-        const timestamp = Math.floor(dateObj.getTime() / 1000); 
+        const dateObj = new Date(`${date.trim()} 08:00`);
+        const timestamp = Math.floor(dateObj.getTime() / 1000);
         const formattedDate = dateObj.toISOString();
 
         // Construct formatted invoice number
@@ -245,7 +270,7 @@ export class WooCommerceClient
         const payload = {
             wpo_wcpdf_invoice_number: formattedNumber,
             meta_data: [
-                { 
+                {
                     key: "_wcpdf_invoice_number_data",
                     value: {
                         number: number,
@@ -285,34 +310,4 @@ export class WooCommerceClient
 
         return { ok: true, data: await res.json() };
     }
-
-    // async createOrUpdateInvoice( orderId, number, dateISO, note = "" )
-    // {
-    //     if( !this.store || !this.ck || !this.cs )
-    //     {
-    //         throw new Error("WooCommerce API not configured.");
-    //     }
-
-    //     const url = new URL(`${this.store}/wp-json/wc/v3/orders/${orderId}/documents`);
-    //     url.searchParams.append("consumer_key", this.ck);
-    //     url.searchParams.append("consumer_secret", this.cs);
-
-    //     const body = new FormData();
-    //     body.append("type", "invoice");
-    //     body.append("number", number);
-    //     body.append("date", dateISO);
-    //     if (note) body.append("note", note);
-
-    //     const res = await fetch(url.toString(), {
-    //         method: "POST",
-    //         body
-    //     });
-
-    //     if (!res.ok) {
-    //         const text = await res.text();
-    //         throw new Error(`WooCommerce Invoice API error ${res.status}: ${text}`);
-    //     }
-
-    //     return await res.json();  // will include { number, date, date_timestamp }
-    // }
 }
