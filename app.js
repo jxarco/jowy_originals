@@ -1381,7 +1381,7 @@ const app = {
             ],
             rowActions: [
                 { icon: "Copy", title: "Copiar", callback: (rowData) => {
-                    const tsv = rowData.join('\t');
+                    const tsv = rowData.slice(1).join('\t');
                     navigator.clipboard.writeText( tsv ).then(() => {
                         LX.toast( "Copiado", `✅ "${ tsv }" copiado al portapapeles.`, { timeout: 5000, position: "top-left" } );
                     }).catch(err => {
@@ -1390,7 +1390,7 @@ const app = {
                     });
                 }},
                 { icon: "ExternalLink", title: "Abrir Pedido", callback: (rowData) => {
-                    const orderNumber = rowData[7].split( " " )[0];
+                    const orderNumber = rowData[8].split( " " )[0];
                     if( orderNumber !== "" ) window.open(`${ url }post.php?post=${ orderNumber }&action=edit`);
                 }},
             ]
