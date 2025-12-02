@@ -122,15 +122,15 @@ const app = {
             }
         }
 
-        // LX.requestBinary( "envios.xlsx", (data) => {
-        //     const workbook = XLSX.read(data, {type: "binary"});
-        //     app.sheetName = workbook.SheetNames[0];
-        //     const sheet = workbook.Sheets[ app.sheetName ];
-        //     if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
-        //     {
-        //         LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 5000, position: "top-left" } );
-        //     }
-        // } );
+        LX.requestBinary( "envios.xlsx", (data) => {
+            const workbook = XLSX.read(data, {type: "binary"});
+            app.sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[ app.sheetName ];
+            if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
+            {
+                LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 5000, position: "top-left" } );
+            }
+        } );
     },
 
     createHeaderHtml: function() {
@@ -268,7 +268,7 @@ const app = {
         // Otros
         {
             const miscContainer = LX.makeContainer( [ null, "auto" ], "flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden" );
-            tabs.add( "Otros", miscContainer, { xselected: true, onSelect: (event, name) => this.showList( name.toLowerCase() ) } );
+            tabs.add( "Otros", miscContainer, { xselected: true, onSelect: (event, name) => this.showList( name.toLowerCase(), false ) } );
 
             const miscArea = new LX.Area({ className: "rounded-lg" });
             miscContainer.appendChild( miscArea.root );
@@ -460,7 +460,7 @@ const app = {
 
             if( err === null )
             {
-                this.updateLists();
+                this.showList( "jowy" );
             }
         }
         else if( this.tool == "Shein-seur" )
@@ -478,12 +478,61 @@ const app = {
         return true;
     },
 
-    showList: function( compName )
+    showList: async function( compName, requireLogin = true )
     {
-        const dom = this.data[ compName ].dom;
-        const list = this.data[ compName ].list;
-        const url = this.data[ compName ].url;
+        const compData = this.data[ compName ];
+        const { dom, list, url, wcc } = compData;
+        
+        this.compName = compName;
+        this.rowOffset = undefined;
+
+        // Check login for compName
+        if( requireLogin && !wcc.connected )
+        {
+            this.openWooCommerceLogin( this.showList.bind( this, compName ) );
+            return;
+        }
+
         dom.innerHTML = "";
+
+        this.orders = {};
+
+        if( requireLogin )
+        {
+            const dialog = this.makeLoadingDialog("Cargando pedidos, espere...");
+            const dateList = list.map(r=>r["F_DOC"]);
+            let after = null;
+            let before = null;
+
+            if(dateList.length)
+            {
+                after = new Date(convertDateDMYtoMDY(dateList[0]));
+                before = new Date(convertDateDMYtoMDY(dateList[0]));
+
+                for (let i = 1; i < dateList.length; i++)
+                {
+                    const d = new Date(convertDateDMYtoMDY(dateList[i]));
+                    if (d < after) after = d;
+                    if (d > before) before = d;
+                }
+
+                // Add margin to have the order creation date
+                after.setDate(after.getDate() - 60);
+
+                // Always add 1 to have a little margin
+                before.setDate(before.getDate() + 1);
+            }
+
+            console.log("Getting orders from " + after?.toISOString());
+            console.log("Getting orders until " + before?.toISOString());
+
+            const r = await wcc.getAllOrdersByFilter( after, before, null, 25 );
+            r.forEach( row => this.orders[ row["number"] ] = row );
+
+            dialog.destroy();
+        }
+
+        console.log(this.orders)
 
         const columnData = [
             // [ "DIA", null ],
@@ -536,35 +585,52 @@ const app = {
                 { name: "F_DOC", type: "date" },
                 { name: "F_SITUACION", type: "date" }
             ],
-            rowActions: compName != "otros" ? [
-                { icon: "Eye", title: "Ver mensaje", callback: (rowData) => {
-                    const rowIndex = tableData.indexOf(rowData);
-                    this.showMessages( compName, rowIndex );
-                }},
-                { icon: "ExternalLink", title: "Abrir Pedido", callback: (rowData) => {
-                    const orderNumber = rowData[4];
-                    if( orderNumber !== "" ) window.open(`${ url }post.php?post=${ orderNumber }&action=edit`);
-                }},
-                { icon: "Copy", title: "Copiar Nombre", callback: (rowData) => {
-                    const data = rowData[7];
-                    navigator.clipboard.writeText( data ).then(() => {
-                        LX.toast( "Copiado", `✅ "${ data }" copiado al portapapeles.`, { timeout: 5000, position: "top-left" } );
-                    }).catch(err => {
-                        console.error('Error copying text: ', err);
-                        LX.toast( "Error", "❌ No se pudo copiar el nombre.", { timeout: -1, position: "top-left" } );
-                    });
-                }},
-            ] : []
+            rowActions: compName != "otros" ? ["menu"] : [],
+            onMenuAction: (index, tableData) => {
+                const rowData = tableData.body[ index ];
+                const orderNumber = rowData[4];
+                const status = LX.stripTags(rowData[1]);
+                const options = [
+                    { icon: "Eye", name: "Ver mensaje", callback: (name) => {
+                        this.showMessages( compName, index );
+                    }},
+                    { icon: "ExternalLink", name: "Abrir Pedido", callback: (name) => {
+                        if( orderNumber !== "" ) window.open(`${ url }post.php?post=${ orderNumber }&action=edit`);
+                    }},
+                    { icon: "Copy", name: "Copiar Nombre", callback: (name) => {
+                        const data = rowData[7];
+                        navigator.clipboard.writeText( data ).then(() => {
+                            LX.toast( "Copiado", `✅ "${ data }" copiado al portapapeles.`, { timeout: 5000, position: "top-left" } );
+                        }).catch(err => {
+                            console.error('Error copying text: ', err);
+                            LX.toast( "Error", "❌ No se pudo copiar el nombre.", { timeout: -1, position: "top-left" } );
+                        });
+                    }}
+                ]
+
+                if( (orderNumber !== "") && (status == "Entregada") && (this.orders[orderNumber]?.status === "processing" ) )
+                {
+                    options.push( null,
+                        { icon: "CheckCircle", name: "Marcar como Completado", callback: (name) => {
+                            this.markOrderAsCompleted( orderNumber );
+                        }}
+                    )
+                }
+
+                return options;
+            }
         });
 
         dom.appendChild( tableWidget.root );
-
-        this.compName = compName;
-        this.rowOffset = undefined;
     },
 
-    showMessages: async function( compName, rowOffset = 0 ) {
-        
+    markOrderAsCompleted: async function( orderNumber )
+    {
+        console.log("TODO: mark as completed for " + orderNumber);
+    },
+
+    showMessages: async function( compName, rowOffset = 0 )
+    {
         const compData = this.data[ compName ];
         const dom = compData.dom;
         const list = compData.list;
@@ -670,7 +736,7 @@ const app = {
             ` );
             invoiceContainer.appendChild( skeleton.root );
 
-            const orderInvoice = await wcc.getInvoice( orderNumber );
+            const orderInvoice = await wcc.getInvoice( orderNumber, this.orders[orderNumber] );
 
             skeleton.destroy();
 
@@ -1245,10 +1311,10 @@ const app = {
 
     updateLists: function()
     {
-        this.showList( "otros" );
-        this.showList( "bathby" );
-        this.showList( "hxg" );
-        this.showList( "jowy" );
+        this.showList( "otros", false );
+        this.showList( "bathby", false );
+        this.showList( "hxg", false );
+        this.showList( "jowy", false );
     },
 
     updateOrders: function()

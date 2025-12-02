@@ -183,8 +183,13 @@ export class WooCommerceClient {
     //
     // --- GET INVOICE INFO FOR AN ORDER ---
     //
-    async getInvoice(orderId) {
-        const { data } = await this.getOrder(orderId);
+    async getInvoice(orderId, data) {
+
+        if(!data)
+        {
+            const r = await this.getOrder(orderId);
+            data = r.data;
+        }
 
         if (!data || !data.meta_data) return null;
 

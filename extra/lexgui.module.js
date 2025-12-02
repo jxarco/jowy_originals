@@ -13426,7 +13426,7 @@ class Table extends BaseComponent
                                     const menuOptions = options.onMenuAction( r, data );
                                     console.assert( menuOptions.length, "Add items to the Menu Action Dropdown!" );
 
-                                    new LX.DropdownMenu( event.target, menuOptions, { side: "bottom", align: "end" });
+                                    new LX.DropdownMenu( event.target, menuOptions, { side: "top", align: "end" });
                                 });
                             }
                             else // custom actions
