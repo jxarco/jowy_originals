@@ -60,6 +60,38 @@ export class WooCommerceClient {
         };
     }
 
+    async _put(endpoint, body = {}, params = {}) {
+        if (!this.store || !this.ck || !this.cs) {
+            throw new Error("WooCommerce API not configured.");
+        }
+
+        const url = new URL(`${this.store}/wp-json/wc/v3/${endpoint}`);
+
+        // Add provided params
+        for (const [key, value] of Object.entries(params)) {
+            url.searchParams.append(key, value);
+        }
+
+        // Add API keys
+        url.searchParams.append("consumer_key", this.ck);
+        url.searchParams.append("consumer_secret", this.cs);
+
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            throw new Error(`PUT request failed: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+
     //
     // --- PUBLIC READ-ONLY HELPERS ---
     //
@@ -83,6 +115,32 @@ export class WooCommerceClient {
         }
     }
 
+    async updateOrderStatus(orderId, status) {
+        if (!orderId) {
+            throw new Error("updateOrderStatus requires an orderId");
+        }
+        if (!status || typeof status !== "string") {
+            throw new Error("updateOrderStatus requires a valid status string");
+        }
+
+        const payload = { status };
+
+        try {
+            const updated = await this._put(`orders/${orderId}`, payload);
+            return {
+                ok: true,
+                updated
+            };
+        } catch (err) {
+            console.error("Error updating order status:", err);
+            return {
+                ok: false,
+                error: err.message
+            };
+        }
+    }
+
+
     async getOrdersPage(page = 1, perPage = 20) {
         try {
             const r = await this._get("orders", { page, per_page: perPage });
@@ -103,16 +161,13 @@ export class WooCommerceClient {
 
         if (after) params.after = new Date(after).toISOString();
         if (before) params.before = new Date(before).toISOString();
-        if (status)
-        {
+        if (status) {
             if (Array.isArray(status)) {
                 params.status = status.join(",");
             } else {
                 params.status = status;
             }
         }
-
-        // statuses: pending, processing, on-hold, completed, cancelled, refunded, failed, trash
 
         return this._get("orders", params);
     }
@@ -122,7 +177,7 @@ export class WooCommerceClient {
         let allOrders = [];
 
         while (true) {
-            const { data, totalPages } = await this.getOrdersByFilter( after, before, status, per_page, page );
+            const { data, totalPages } = await this.getOrdersByFilter(after, before, status, per_page, page);
 
             allOrders.push(...data);
 
@@ -132,6 +187,24 @@ export class WooCommerceClient {
         }
 
         return allOrders;
+    }
+
+    async getOrdersByIds(ids = [], page = 1, per_page = 100) {
+        if (!Array.isArray(ids) || ids.length === 0) {
+            throw new Error("getOrdersByIds requires a non-empty array of IDs");
+        }
+
+        // Convert to query params: include[]=123&include[]=456
+        const params = {
+            page,
+            per_page,
+        };
+
+        ids.forEach((id, index) => {
+            params[`include[${index}]`] = id;
+        });
+
+        return await this._get("orders", params);
     }
 
     // Get ALL orders (auto-pagination)
@@ -185,8 +258,7 @@ export class WooCommerceClient {
     //
     async getInvoice(orderId, data) {
 
-        if(!data)
-        {
+        if (!data) {
             const r = await this.getOrder(orderId);
             data = r.data;
         }
@@ -264,7 +336,7 @@ export class WooCommerceClient {
         }
 
         // Convert JS Date or string to timestamp + formatted version
-        const dateObj = new Date(`${date.trim()} 08:00`);
+        const dateObj = new Date(`${date.trim()}`);
         const timestamp = Math.floor(dateObj.getTime() / 1000);
         const formattedDate = dateObj.toISOString();
 

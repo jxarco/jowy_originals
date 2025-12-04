@@ -38,6 +38,26 @@ const app = {
         "France": "FRANCIA",
         "FR": "FRANCIA",
     },
+    orderStatus: {
+        "pending": "Pendiente de pago",
+        "processing": "Procesando",
+        "on-hold": "En espera",
+        "completed": "Completado",
+        "cancelled": "Cancelado",
+        "refunded": "Reembolsado",
+        "failed": "Fallido",
+        "trash": "Borrador"
+    },
+    trackStatusColors: {
+        "Documentada": { icon: "File", bg: "#272c31ff" },
+        "Entregada": { icon: "CircleCheck", bg: "#218118" },
+        "Incidencia": { icon: "CircleAlert", bg: "#dc2626" },
+        "En reparto": { icon: "Truck", bg: "#0d9488" },
+        "En destino": { icon: "Warehouse", bg: "#2563eb" },
+        "En tránsito": { icon: "Package", bg: "#a21caf" },
+        "En gestión": { icon: "TriangleAlert", bg: "#ca8a04" },
+        "Devuelta": { icon: "Frown", bg: "#dc2626" },
+    },
     ordersBeforeDays: 15,
 
     data: {
@@ -80,17 +100,6 @@ const app = {
         },
     },
 
-    statusColors: {
-        "Documentada": { icon: "File", bg: "#272c31ff" },
-        "Entregada": { icon: "CircleCheck", bg: "#218118" },
-        "Incidencia": { icon: "CircleAlert", bg: "#dc2626" },
-        "En reparto": { icon: "Truck", bg: "#0d9488" },
-        "En destino": { icon: "Warehouse", bg: "#2563eb" },
-        "En tránsito": { icon: "Package", bg: "#a21caf" },
-        "En gestión": { icon: "TriangleAlert", bg: "#ca8a04" },
-        "Devuelta": { icon: "Frown", bg: "#dc2626" },
-    },
-
     init: function( appArea ) {
 
         this.area = appArea;
@@ -122,7 +131,7 @@ const app = {
             }
         }
 
-        LX.requestBinary( "envios.xlsx", (data) => {
+        LX.requestBinary( "listadoenvios.xlsx", (data) => {
             const workbook = XLSX.read(data, {type: "binary"});
             app.sheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[ app.sheetName ];
@@ -226,9 +235,21 @@ const app = {
             this.openMessageDialog();
         }, { icon: "Plus", title: "Nuevo mensaje", tooltip: true } );
 
-        const openweCommerceOrdersButton = utilButtonsPanel.addButton(null, "OpenOrdersButton",  () => {
-            this.openweCommerceOrders();
-        }, { icon: "ExternalLink", title: "Abrir todos los pedidos", tooltip: true } );
+        const moreOptionsButton = utilButtonsPanel.addButton(null, "MoreOptionsButton", (value, event) =>
+        {
+            LX.addDropdownMenu( event.target, [
+                {
+                    name: "Abrir todos los pedidos",
+                    icon: "ExternalLink",
+                    callback: () => this.openweCommerceOrders()
+                },
+                {
+                    name: "Actualizar pedidos",
+                    icon: "RefreshCw",
+                    callback: () => this.showList( this.compName, true, true )
+                }
+            ], { side: "bottom", align: "start" } )    
+        }, { icon: "EllipsisVertical", title: "Más opciones", tooltip: true } );
 
         area.attach( utilButtonsPanel.root );
 
@@ -378,8 +399,8 @@ const app = {
         this.ordersArea = area;
     },
 
-    createFooterHtml: function() {
-
+    createFooterHtml: function()
+    {
         this.footer = new LX.Footer( {
             className: "border-top",
             parent: LX.root,
@@ -388,12 +409,11 @@ const app = {
                 { title: "Github", link: "https://github.com/jxarco/", icon: "Github" }
             ]
         } );
-
     },
 
     openTrackingMessagesApp: function()
     {
-        this.setHeaderTitle( "Mensajes de seguimiento", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "MessagesSquare" );
+        this.setHeaderTitle( "Gestión de pedidos: <i>CBL</i>", "Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.", "FileText" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", false );
         this.sheinDataArea.root.classList.toggle( "hidden", true );
@@ -478,67 +498,56 @@ const app = {
         return true;
     },
 
-    showList: async function( compName, requireLogin = true )
+    showList: async function( compName, requireLogin = true, refreshOrders = false )
     {
         const compData = this.data[ compName ];
         const { dom, list, url, wcc } = compData;
         
+        // Force refresh if changing COMP tab
+        if( requireLogin && this.compName !== compName )
+        {
+            refreshOrders = true;
+        }
+
         this.compName = compName;
         this.rowOffset = undefined;
 
         // Check login for compName
         if( requireLogin && !wcc.connected )
         {
-            this.openWooCommerceLogin( this.showList.bind( this, compName ) );
+            this.openWooCommerceLogin( this.showList.bind( this, compName, requireLogin, refreshOrders ) );
             return;
         }
 
         dom.innerHTML = "";
 
-        this.orders = {};
-
-        if( requireLogin )
+        if( requireLogin && ( refreshOrders || !this.orders ) )
         {
-            const dialog = this.makeLoadingDialog("Cargando pedidos, espere...");
-            const dateList = list.map(r=>r["F_DOC"]);
-            let after = null;
-            let before = null;
-
-            if(dateList.length)
-            {
-                after = new Date(convertDateDMYtoMDY(dateList[0]));
-                before = new Date(convertDateDMYtoMDY(dateList[0]));
-
-                for (let i = 1; i < dateList.length; i++)
-                {
-                    const d = new Date(convertDateDMYtoMDY(dateList[i]));
-                    if (d < after) after = d;
-                    if (d > before) before = d;
-                }
-
-                // Add margin to have the order creation date
-                after.setDate(after.getDate() - 60);
-
-                // Always add 1 to have a little margin
-                before.setDate(before.getDate() + 1);
-            }
-
-            console.log("Getting orders from " + after?.toISOString());
-            console.log("Getting orders until " + before?.toISOString());
-
-            const r = await wcc.getAllOrdersByFilter( after, before, null, 25 );
-            r.forEach( row => this.orders[ row["number"] ] = row );
-
-            dialog.destroy();
+            this.orders = await this.getCompOrders( compName );
         }
 
-        console.log(this.orders)
-
         const columnData = [
-            // [ "DIA", null ],
+            [ "ESTADO", null, ( str, row ) => {
+                const ref = row["REFERENCIA"];
+                const idx = ref.indexOf("/");
+                const status = this.trackStatusColors[ "Incidencia" ];
+                let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: "md fg-white" } ).innerHTML : "";
+                const err = `${ LX.badge( iconStr , "text-sm font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
+                if( idx != -1 && this.orders )
+                {
+                    const oN = ref.substring(idx+1);
+                    const o = this.orders[ oN ];
+                    if( !o ) return err;
+                    const str = this.orderStatus[ o.status ];
+                    const status = this.trackStatusColors[ str ] ?? {};
+                    let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: "md fg-white" } ).innerHTML : "";
+                    return `${ LX.badge( iconStr + str , "text-sm font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
+                }
+                return err;
+            } ],
             [ "F_DOC", null ],
             [ "CLAVE", "SITUACIÓN", ( str ) => {
-                const status = this.statusColors[ str ] ?? {};
+                const status = this.trackStatusColors[ str ] ?? {};
                 let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: "md fg-white" } ).innerHTML : "";
                 return `${ LX.badge( iconStr + str , "text-sm font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
             } ],
@@ -554,8 +563,7 @@ const app = {
             [ "NENVIO", null ],
             [ "LOCALIZADOR", null ],
             [ "NOMCONS", "NOMBRE" ],
-            [ "POBLACION", null ],
-            // [ "DETALLE", null ],
+            // [ "POBLACION", null ],
         ];
 
         // Create table data from the list
@@ -565,7 +573,7 @@ const app = {
             {
                 const ogColName = c[ 0 ];
                 const fn = c[ 2 ] ?? ( (str) => str );
-                lRow.push( fn( row[ ogColName ] ?? "?" ) );
+                lRow.push( fn( row[ ogColName ] ?? "?", row ) );
             }
             return lRow;
         });
@@ -580,20 +588,25 @@ const app = {
             sortable: false,
             toggleColumns: true,
             filter: "NOMBRE",
+            centered: [ 0 ],
             customFilters: [
-                { name: "SITUACIÓN", options: Object.keys( this.statusColors ) },
+                { name: "ESTADO", options: Object.values( this.orderStatus ) },
+                { name: "SITUACIÓN", options: Object.keys( this.trackStatusColors ) },
                 { name: "F_DOC", type: "date" },
                 { name: "F_SITUACION", type: "date" }
             ],
-            rowActions: compName != "otros" ? ["menu"] : [],
+            rowActions: compName != "otros" ? [
+                    { icon: "Eye", name: "Ver mensaje", callback: (rowData) => {
+                        const rowIndex = tableData.indexOf(rowData);
+                        this.showMessages( compName, rowIndex );
+                    }},
+                    "menu"
+                ] : [],
             onMenuAction: (index, tableData) => {
                 const rowData = tableData.body[ index ];
-                const orderNumber = rowData[4];
-                const status = LX.stripTags(rowData[1]);
+                const orderNumber = rowData[5];
+                const status = LX.stripTags(rowData[2]);
                 const options = [
-                    { icon: "Eye", name: "Ver mensaje", callback: (name) => {
-                        this.showMessages( compName, index );
-                    }},
                     { icon: "ExternalLink", name: "Abrir Pedido", callback: (name) => {
                         if( orderNumber !== "" ) window.open(`${ url }post.php?post=${ orderNumber }&action=edit`);
                     }},
@@ -611,8 +624,8 @@ const app = {
                 if( (orderNumber !== "") && (status == "Entregada") && (this.orders[orderNumber]?.status === "processing" ) )
                 {
                     options.push( null,
-                        { icon: "CheckCircle", name: "Marcar como Completado", callback: (name) => {
-                            this.markOrderAsCompleted( orderNumber );
+                        { icon: "CheckCircle", name: "Completar Pedido", callback: (name) => {
+                            this.markOrderAsCompleted( tableWidget, index, wcc, orderNumber );
                         }}
                     )
                 }
@@ -624,9 +637,45 @@ const app = {
         dom.appendChild( tableWidget.root );
     },
 
-    markOrderAsCompleted: async function( orderNumber )
+    markOrderAsCompleted: async function( tableWidget, index, wcc, orderNumber )
     {
-        console.log("TODO: mark as completed for " + orderNumber);
+        const dialogClosable = new LX.Dialog("Completar Pedido", dialogPanel => {
+            dialogPanel.addTextArea(null, `Vas a completar el pedido ${ orderNumber } en WooCommerce. ¿Quieres continuar?`, 
+                null, { fitHeight: true, disabled: true }
+            );
+            dialogPanel.addSeparator();
+            dialogPanel.sameLine(2, "justify-center mt-2");
+            dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" } );
+            dialogPanel.addButton(null, "Continuar", async () => {
+                dialogClosable.close();
+
+                // orderNumber = 4529;
+
+                const newStatus = "completed";
+                const dialog = this.makeLoadingDialog();
+                const r = await wcc.updateOrderStatus( orderNumber, newStatus );
+
+                dialog.destroy();
+
+                // console.log(r)
+
+                if(!r.ok)
+                {
+                    LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
+                    return;
+                }
+
+                const scrollLeft = tableWidget.root.querySelector("table").scrollLeft;
+                this.orders[ orderNumber ].status = newStatus;
+                tableWidget.data.body[ index ][ 0 ] = this.orderStatus[ newStatus ]
+                tableWidget.refresh();
+                tableWidget.root.querySelector("table").scrollLeft = scrollLeft;
+                
+                LX.toast( `Pedido ${ orderNumber }`, `✅ Pedido completado con éxito.`, { timeout: 5000, position: "top-left" } );
+
+            }, { buttonClass: "contrast" });
+
+        }, { modal: true, position: [ "calc(50% - 200px)", "250px" ], size: ["400px", null], closable: true, draggable: false });
     },
 
     showMessages: async function( compName, rowOffset = 0 )
@@ -641,6 +690,11 @@ const app = {
         {
             this.openWooCommerceLogin( this.showMessages.bind( this, compName, rowOffset ) );
             return;
+        }
+
+        if( !this.orders )
+        {
+            this.orders = await this.getCompOrders( compName );
         }
         
         dom.innerHTML = "";
@@ -670,7 +724,7 @@ const app = {
         // orderNumber = 4529;
 
         const hasOrderNumber = !Number.isNaN( orderNumber );
-        const status = this.statusColors[ "Incidencia" ] ?? {};
+        const status = this.trackStatusColors[ "Incidencia" ] ?? {};
         let iconStr = LX.makeIcon( "CircleAlert", { svgClass: "md fg-white" } ).innerHTML;
         const noOrderStr = `${ LX.badge( iconStr + "Sin número" , "text-lg font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
 
@@ -718,28 +772,17 @@ const app = {
         
         if( hasOrderNumber )
         {
+            if( !this.orders[ orderNumber ] )
+            {
+                LX.toast( "Error", `❌ Número de pedido ${ orderNumber } inválido.`, { timeout: -1, position: "top-left" } );
+                return;
+            }
+
             const invoiceContainer = LX.makeContainer( [ "null", "auto" ], "flex flex-col border-bottom gap-2 px-3 pb-2 mb-6", ``, dom );
             const invoicePanel = new LX.Panel({ width: "50%", className: "p-0" });
             invoiceContainer.appendChild( invoicePanel.root );
 
-            const skeleton = new LX.Skeleton(  `
-                <div class="flex flex-row w-1/2">
-                <div class="flex flex-col w-1/3 p-2 gap-2">
-                    <div class="w-full h-4 lexskeletonpart"></div>
-                    <div class="w-full h-4 lexskeletonpart"></div>
-                </div>
-                <div class="flex flex-col w-2/3 p-2 gap-2">
-                    <div class="w-full h-4 lexskeletonpart"></div>
-                    <div class="w-full h-4 lexskeletonpart"></div>
-                </div>
-                </div>
-            ` );
-            invoiceContainer.appendChild( skeleton.root );
-
             const orderInvoice = await wcc.getInvoice( orderNumber, this.orders[orderNumber] );
-
-            skeleton.destroy();
-
             const date = new Date();
             let invoiceNumber = "", invoiceDate = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
             let customerNote = true;
@@ -780,8 +823,7 @@ const app = {
     
                             const oN = orderNumber;// ?? 4529;
                             const iN = invoiceNumber;
-                            const iD = convertDateDMYtoMDY( invoiceDate );
-    
+                            const iD = `${ convertDateDMYtoMDY( invoiceDate ) } ${ date.getHours() }:${ date.getMinutes() }`;
                             const dialog = this.makeLoadingDialog();
     
                             if( customerNote )
@@ -820,6 +862,9 @@ const app = {
                                 }
                             } } );
     
+                            // store new returned order
+                            this.orders[ orderNumber ] = r.data;
+
                             // refresh
                             this.showMessages( compName, rowOffset );
     
@@ -876,6 +921,45 @@ const app = {
 
         this.compName = compName;
         this.rowOffset = rowOffset;
+    },
+
+    getCompOrders: async function( compName )
+    {
+        const compData = this.data[ compName ];
+        const { dom, list, url, wcc } = compData;
+
+        const orders = {};
+        
+        const ids = list.map( row => {
+            const ref = row["REFERENCIA"];
+            const idx = ref.indexOf("/");
+            if( idx != -1 )
+            {
+                return parseInt( ref.substring(idx+1) );
+            }
+        }).filter( v => v !== undefined );
+
+        if( !ids.length )
+        {
+            return {};
+        }
+
+        const dialog = this.makeLoadingDialog("Cargando pedidos, espere...");
+
+        const r = await wcc.getOrdersByIds( ids );
+        if( !r.ok )
+        {
+            LX.toast( "WooCommerce Error", `❌ ${ r.error }`, { timeout: -1, position: "top-left" } );
+            return;
+        }
+
+        r.data.forEach( o => orders[ o["number"] ] = o );
+
+        dialog.destroy();
+
+        console.log("New orders", orders)
+
+        return orders;
     },
 
     openMessageDialog: function() {
