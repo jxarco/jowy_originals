@@ -12796,6 +12796,16 @@ class Table extends BaseComponent
         data.head.forEach( ( col, index ) => { data.colVisibilityMap[ index ] = true; });
         this.data = data;
 
+        if( options.hiddenColumns && Array.isArray( options.hiddenColumns ) )
+        {
+            for( let colName of options.hiddenColumns )
+            {
+                const idx = data.head.indexOf( colName );
+                if( idx === -1 ) continue;
+                data.colVisibilityMap[ idx ] = false;
+            }
+        }
+
         const getDate = ( text ) =>
         {
             // Match DD/MM/YYYY or DD-MM-YYYY

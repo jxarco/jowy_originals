@@ -263,6 +263,11 @@ export class WooCommerceClient {
             data = r.data;
         }
 
+        return this.getInvoiceData( data );
+    }
+
+    getInvoiceData(data) {
+
         if (!data || !data.meta_data) return null;
 
         const numberMeta = data.meta_data.find(m => m.key === "_wcpdf_invoice_number");

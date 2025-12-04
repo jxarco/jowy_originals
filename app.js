@@ -48,6 +48,16 @@ const app = {
         "failed": "Fallido",
         "trash": "Borrador"
     },
+    orderStatusColors: {
+        "Pendiente de pago": { icon: "HandCoins", bg: "#2563eb" },
+        "Procesando": { icon: "Loader", bg: "#272c31ff" },
+        "En espera": { icon: "Clock3", bg: "#ca8a04" },
+        "Completado": { icon: "CheckCircle", bg: "#218118" },
+        "Cancelado": { icon: "Ban", bg: "#dc2626" },
+        "Reembolsado": { icon: "CircleDollarSign", bg: "#a21caf" },
+        "Fallido": { icon: "CircleX", bg: "#dc2626" },
+        "Borrador": { icon: "FileText", bg: "#0d9488" },
+    },
     trackStatusColors: {
         "Documentada": { icon: "File", bg: "#272c31ff" },
         "Entregada": { icon: "CircleCheck", bg: "#218118" },
@@ -58,7 +68,7 @@ const app = {
         "En gestión": { icon: "TriangleAlert", bg: "#ca8a04" },
         "Devuelta": { icon: "Frown", bg: "#dc2626" },
     },
-    ordersBeforeDays: 15,
+    ordersBeforeDays: 7,
 
     data: {
         "otros": { list: [], dom: null },
@@ -437,7 +447,7 @@ const app = {
 
     openOrdersApp: function()
     {
-        this.setHeaderTitle( `Salida Stock por Web`, "", "Package" );
+        this.setHeaderTitle( `Salida Stock (Web)`, "", "PackagePlus" );
 
         this.trackingMessagesArea.root.classList.toggle( "hidden", true );
         this.sheinDataArea.root.classList.toggle( "hidden", true );
@@ -527,23 +537,36 @@ const app = {
         }
 
         const columnData = [
-            [ "ESTADO", null, ( str, row ) => {
-                const ref = row["REFERENCIA"];
-                const idx = ref.indexOf("/");
-                const status = this.trackStatusColors[ "Incidencia" ];
-                let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: "md fg-white" } ).innerHTML : "";
-                const err = `${ LX.badge( iconStr , "text-sm font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
-                if( idx != -1 && this.orders )
+            [ "REFERENCIA", "NPEDIDO", ( str, row, oN ) => {
+                return oN ?? "";
+            } ],
+            [ "ESTADO", null, ( str, row, oN ) => {
+                
+                if( oN && this.orders )
                 {
-                    const oN = ref.substring(idx+1);
                     const o = this.orders[ oN ];
-                    if( !o ) return err;
+                    if( !o )
+                    {
+                        const status = this.trackStatusColors[ "Incidencia" ];
+                        let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: "md fg-white" } ).innerHTML : "";
+                        return `${ LX.badge( iconStr , "text-sm font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
+                    }
                     const str = this.orderStatus[ o.status ];
-                    const status = this.trackStatusColors[ str ] ?? {};
+                    const status = this.orderStatusColors[ str ] ?? {};
                     let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: "md fg-white" } ).innerHTML : "";
                     return `${ LX.badge( iconStr + str , "text-sm font-bold border-none ", { style: { height: "1.4rem", borderRadius: "0.65rem", backgroundColor: status.bg ?? "", color: status.fg ?? "" } } ) }`;
                 }
-                return err;
+                return "";
+            } ],
+            [ "NFACTURA", null, ( str, row, oN ) => {
+                if( oN && this.orders )
+                {
+                    const o = this.orders[ oN ];
+                    if( !o ) return "";
+                    const orderInvoice = wcc.getInvoiceData( o );
+                    return orderInvoice?.numberFormatted ?? "";
+                }
+                return "";
             } ],
             [ "F_DOC", null ],
             [ "CLAVE", "SITUACIÓN", ( str ) => {
@@ -556,24 +579,25 @@ const app = {
                 const idx = str.indexOf("/");
                 return idx === -1 ? str : str.substring(0, idx);
             } ],
-            [ "REFERENCIA", "NPEDIDO", ( str ) => {
-                const idx = str.indexOf("/");
-                return idx === -1 ? "" : str.substring(idx+1);
-            } ],
             [ "NENVIO", null ],
             [ "LOCALIZADOR", null ],
             [ "NOMCONS", "NOMBRE" ],
-            // [ "POBLACION", null ],
+            [ "POBLACION", null ],
         ];
 
         // Create table data from the list
         const tableData = list.map( row => {
             const lRow = [];
+
+            const ref = row["REFERENCIA"];
+            const idx = ref.indexOf("/");
+            const oN = idx === -1 ? null : ref.substring(idx+1);
+
             for( let c of columnData )
             {
                 const ogColName = c[ 0 ];
                 const fn = c[ 2 ] ?? ( (str) => str );
-                lRow.push( fn( row[ ogColName ] ?? "?", row ) );
+                lRow.push( fn( row[ ogColName ] ?? "?", row, oN ) );
             }
             return lRow;
         });
@@ -587,8 +611,9 @@ const app = {
             selectable: false,
             sortable: false,
             toggleColumns: true,
+            hiddenColumns: [ "F_SITUACION", "REFERENCIA", "NENVIO", "LOCALIZADOR", "POBLACION" ],
             filter: "NOMBRE",
-            centered: [ 0 ],
+            centered: [ 0, 1 ],
             customFilters: [
                 { name: "ESTADO", options: Object.values( this.orderStatus ) },
                 { name: "SITUACIÓN", options: Object.keys( this.trackStatusColors ) },
@@ -604,14 +629,14 @@ const app = {
                 ] : [],
             onMenuAction: (index, tableData) => {
                 const rowData = tableData.body[ index ];
-                const orderNumber = rowData[5];
-                const status = LX.stripTags(rowData[2]);
+                const orderNumber = rowData[ tableData.head.indexOf("NPEDIDO") ];
+                const status = LX.stripTags(rowData[ tableData.head.indexOf("SITUACIÓN") ]);
                 const options = [
                     { icon: "ExternalLink", name: "Abrir Pedido", callback: (name) => {
                         if( orderNumber !== "" ) window.open(`${ url }post.php?post=${ orderNumber }&action=edit`);
                     }},
                     { icon: "Copy", name: "Copiar Nombre", callback: (name) => {
-                        const data = rowData[7];
+                        const data = rowData[ tableData.head.indexOf("NOMBRE") ];
                         navigator.clipboard.writeText( data ).then(() => {
                             LX.toast( "Copiado", `✅ "${ data }" copiado al portapapeles.`, { timeout: 5000, position: "top-left" } );
                         }).catch(err => {
@@ -667,7 +692,7 @@ const app = {
 
                 const scrollLeft = tableWidget.root.querySelector("table").scrollLeft;
                 this.orders[ orderNumber ].status = newStatus;
-                tableWidget.data.body[ index ][ 0 ] = this.orderStatus[ newStatus ]
+                tableWidget.data.body[ index ][ tableWidget.data.head.indexOf("ESTADO") ] = this.orderStatus[ newStatus ]
                 tableWidget.refresh();
                 tableWidget.root.querySelector("table").scrollLeft = scrollLeft;
                 
@@ -770,14 +795,14 @@ const app = {
 
         // Invoice data
         
+        if( hasOrderNumber && !this.orders[ orderNumber ] )
+        {
+            hasOrderNumber = false;
+            LX.toast( "Error", `❌ Número de pedido ${ orderNumber } inválido.`, { timeout: -1, position: "top-left" } );
+        }
+
         if( hasOrderNumber )
         {
-            if( !this.orders[ orderNumber ] )
-            {
-                LX.toast( "Error", `❌ Número de pedido ${ orderNumber } inválido.`, { timeout: -1, position: "top-left" } );
-                return;
-            }
-
             const invoiceContainer = LX.makeContainer( [ "null", "auto" ], "flex flex-col border-bottom gap-2 px-3 pb-2 mb-6", ``, dom );
             const invoicePanel = new LX.Panel({ width: "50%", className: "p-0" });
             invoiceContainer.appendChild( invoicePanel.root );
@@ -914,7 +939,31 @@ const app = {
 
         const nextButtonWidget = footerPanel.addButton(null, "NextButton", () => {
             this.showMessages( compName, rowOffset + 1 );
-        }, { width: "100px", icon: "ArrowRight", title: "Siguiente mensaje", tooltip: true });
+        }, { width: "100px", icon: "ArrowRight", title: "Siguiente", tooltip: true });
+        dom.appendChild( footerPanel.root );
+
+        const nextWithOrderNumberButtonWidget = footerPanel.addButton(null, "NextWithOrderNumberButton", () =>
+        {
+            let nRo = rowOffset + 1;
+
+            for( let i = nRo; i < list.length; ++i )
+            {
+                const r = list[ i ];
+                let str = r["REFERENCIA"] ?? "";
+                let oN = undefined;
+                const idx = str.indexOf("/");
+                if(idx != -1)
+                {
+                    oN = parseInt(str.substring(idx+1));
+                    if( oN !== undefined && !Number.isNaN( oN ) )
+                    {
+                        nRo = i;
+                        break;
+                    }
+                }                
+            }
+            this.showMessages( compName, nRo );
+        }, { width: "100px", icon: "ArrowRightToLine", title: "Siguiente (con #Pedido)", tooltip: true });
         dom.appendChild( footerPanel.root );
 
         footerPanel.endLine();
@@ -1386,6 +1435,7 @@ const app = {
         this.data["bathby"].list = [];
 
         delete this.lastSheinData;
+        delete this.orders;
 
         // Clean tools
         this.updateLists();
@@ -1434,9 +1484,9 @@ const app = {
         const after = getDateNDaysAgo( this.ordersBeforeDays );
         const before = null;
         const r = await wcc.getAllOrdersByFilter( after, before, [ "processing", "on-hold" ] );
-        console.log(r)
+        // console.log(r)
 
-        this.setHeaderTitle( `Salida Stock por Web: <i>${ name }</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`, "Package" );
+        this.setHeaderTitle( `Salida Stock (Web): <i>${ name }</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`, "PackagePlus" );
 
         dialog.destroy();
 
@@ -1459,6 +1509,9 @@ const app = {
             // [ "desc", "DESCRIPCIÓN", (r) => "" ],
             [ "quantity", "UNIDADES", (r, i) => i["quantity"] ],
             [ "transport", "TRANSPORTE", (r, i) => {
+                const shipping = (r["shipping_lines"] ?? [])[ 0 ];
+                if( shipping["method_id"] === "local_pickup" )
+                    return "RECOGIDA ALMACÉN";
                 const q = i["quantity"];
                 const sku = i["sku"];
                 if( ( sku.startsWith("JW-D") && q > 2 ) || 
@@ -1494,7 +1547,7 @@ const app = {
                         const fn = c[ 2 ] ?? ( (str) => str );
                         lRow.push( fn( row[ ogColName ] ) );
                     }
-                    else if( c[2] )
+                    else if( c[ 2 ] )
                     {
                         const fn = c[ 2 ];
                         lRow.push( fn( row, item ) );
@@ -1525,6 +1578,8 @@ const app = {
             centered: [4, 5, 6, 7, 8],
             customFilters: [
                 { name: "FECHA", type: "date", default: [ todayStringDate, todayStringDate ] },
+                { name: "TRANSPORTE", options: [ "CBL", "SEUR", "RECOGIDA ALMACÉN" ] },
+                { name: "PAÍS", options: [ "ESPAÑA", "FRANCIA", "PORTUGAL" ] }
             ],
             rowActions: [
                 { icon: "Copy", title: "Copiar", callback: (rowData) => {
