@@ -141,15 +141,15 @@ const app = {
             }
         }
 
-        LX.requestBinary( "listadoenvios.xlsx", (data) => {
-            const workbook = XLSX.read(data, {type: "binary"});
-            app.sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[ app.sheetName ];
-            if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
-            {
-                LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 5000, position: "top-left" } );
-            }
-        } );
+        // LX.requestBinary( "listadoenvios.xlsx", (data) => {
+        //     const workbook = XLSX.read(data, {type: "binary"});
+        //     app.sheetName = workbook.SheetNames[0];
+        //     const sheet = workbook.Sheets[ app.sheetName ];
+        //     if( app.processData( XLSX.utils.sheet_to_json(sheet, { raw: false }) ) )
+        //     {
+        //         LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 5000, position: "top-left" } );
+        //     }
+        // } );
     },
 
     createHeaderHtml: function() {
