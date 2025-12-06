@@ -1089,7 +1089,7 @@ class DropdownMenu {
 
         if( DropdownMenu.currentMenu || !items?.length )
         {
-            DropdownMenu.currentMenu.destroy();
+            DropdownMenu.currentMenu?.destroy();
             this.invalid = true;
             return;
         }
