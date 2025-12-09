@@ -229,7 +229,7 @@ const core = {
             }
 
             if (err === null) {
-                this.cblTrackingApp.showList("jowy");
+                this.cblTrackingApp.showList("jowy", true, true);
             }
         }
         else if (this.tool == "Shein-seur") {
