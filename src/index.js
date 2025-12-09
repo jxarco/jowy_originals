@@ -307,15 +307,16 @@ const core = {
         });
     },
 
-    openWooCommerceLogin(callback) {
+    openWooCommerceLogin(callback, compName) {
 
-        const compData = this.data[this.compName];
+        compName = compName ?? this.compName;
+        const compData = this.data[compName];
 
         const dialog = new LX.Dialog(compData.name + " WooComerce Login", (p) => {
 
-            let ck = localStorage.getItem(this.compName + "_wooc_ck") ?? "";
-            let cs = localStorage.getItem(this.compName + "_wooc_cs") ?? "";
-            let store = this.data[this.compName].store;
+            let ck = localStorage.getItem(compName + "_wooc_ck") ?? "";
+            let cs = localStorage.getItem(compName + "_wooc_cs") ?? "";
+            let store = this.data[compName].store;
             let spinner = null;
 
             p.addText("URL Tienda", store, (value, event) => { }, { disabled: true, nameWidth: "30%", skipReset: true });
@@ -328,7 +329,7 @@ const core = {
             p.addButton(null, "Login", async (value, event) => {
                 spinner = LX.makeIcon("LoaderCircle", { iconClass: "flex p-2", svgClass: "xxl animate-spin" });
                 p.attach(spinner);
-                const r = await this.configureWooCommerce(this.compName, store, ck, cs);
+                const r = await this.configureWooCommerce(compName, store, ck, cs);
                 if (r.ok) {
                     dialog.close();
 

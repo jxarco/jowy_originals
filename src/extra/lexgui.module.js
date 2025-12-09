@@ -9545,8 +9545,14 @@ class Button extends BaseComponent
             }
             else if( options.mustConfirm )
             {
+                const swapInput = wValue.querySelector( "input" );
+
                 new LX.PopConfirm( wValue, {
                     onConfirm: () => {
+                        if( options.swap )
+                        {
+                            swapInput.checked = true;
+                        }
                         this._trigger( new LX.IEvent( name, value, e ), callback );
                     },
                     side: options.confirmSide,
@@ -9556,6 +9562,11 @@ class Button extends BaseComponent
                     title: options.confirmTitle,
                     content: options.confirmContent
                 } );
+
+                if( options.swap )
+                {
+                    swapInput.checked = false;
+                }
             }
             else
             {

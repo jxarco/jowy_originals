@@ -4382,7 +4382,7 @@ meter:-moz-meter-sub-sub-optimum::-moz-meter-bar {
     place-self: center;
     display: inline-grid;
     position: relative;
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 
 .swap input {

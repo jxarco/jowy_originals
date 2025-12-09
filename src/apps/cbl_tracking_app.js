@@ -427,7 +427,7 @@ class CblTrackingApp {
                         dialogPanel.addSeparator();
                         dialogPanel.addCheckbox("Añadir nota de seguimiento", customerNote, (v) => {
                             customerNote = v;
-                        }, { disabled: true, nameWidth: "60%", className: "text-lg fg-tertiary" });
+                        }, { disabled: false, nameWidth: "60%", className: "text-lg fg-tertiary" });
                         dialogPanel.sameLine(2, "justify-center mt-2");
                         dialogPanel.addButton(null, "Cerrar", () => dialogClosable.close(), { buttonClass: "fg-error" });
                         dialogPanel.addButton(null, "Continuar", async () => {
@@ -561,22 +561,90 @@ class CblTrackingApp {
             const [left, right] = dialogArea.split({ type: "horizontal", sizes: ["55%", "45%"], resize: false });
             const companyOptions = Object.values(core.data).filter(v => v.name).map(v => v.name);
 
-            let t = "SEUR", id = "123456789", c = core.data[core.compName].name;
+            let t = "SEUR", id = "", idOrder = "", c = core.data[core.compName].name;
+
+            let updateMessage = ( callback ) =>
+            {
+                body.innerHTML = getTemplate();
+                if( callback )
+                {
+                    callback();
+                }
+            }
 
             let p = new LX.Panel({ className: "bg-none bg-primary border-none p-2" });
             p.addSelect("Empresa", companyOptions, c, (value, event) => {
                 c = value;
-                body.innerHTML = getTemplate();
-            }, { nameWidth: "30%", skipReset: true });
+                updateMessage();
+            }, { nameWidth: "35%", skipReset: true });
             p.addSelect("Transporte", core.transportOptions, t, (value, event) => {
                 t = value;
-                body.innerHTML = getTemplate();
-            }, { nameWidth: "30%", skipReset: true });
+                updateMessage();
+            }, { nameWidth: "35%", skipReset: true });
             p.addText("Número seguimiento", id, (value, event) => {
                 id = value;
-                body.innerHTML = getTemplate();
-            }, { nameWidth: "30%", skipReset: true });
+                updateMessage();
+            }, { nameWidth: "35%", skipReset: true, placeholder: "0A00MD00" });
+            p.addText("Número de pedido", idOrder, (value, event) => {
+                idOrder = value;
+                updateMessage();
+            }, { nameWidth: "35%", skipReset: true, placeholder: "00000" });
             p.addSeparator();
+
+            p.sameLine( 2 );
+
+            const sendNoteButtonWidget = p.addButton(null, "SendNoteButton",  async () => {
+
+                const compName = c.toLowerCase();
+                const wcc = core.data[compName].wcc;
+                if (!wcc.connected) {
+                    core.openWooCommerceLogin(null, compName);
+                    sendNoteButtonWidget.swap();
+                    return;
+                }
+
+                sendNoteButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "none";
+                sendNoteButtonWidget.root.querySelector(".swap-on").classList.add( "hidden" );
+                const spinner = LX.makeIcon( "LoaderCircle", { iconClass: "flex", svgClass: "md animate-spin" } );
+                sendNoteButtonWidget.root.querySelector("button").appendChild( spinner );
+
+                {
+                    idOrder = "4529";
+                    let r = await wcc.createOrderNote(idOrder, getTemplate());
+                    if (!r.ok) {
+                        LX.toast("WooCommerce Error", `❌ ${r.error}`, { timeout: -1, position: "top-left" });
+
+                        sendNoteButtonWidget.root.querySelector( ".swap-on svg" ).addClass( "fg-error" );
+
+                        spinner.remove();
+                        sendNoteButtonWidget.root.querySelector(".swap-on").classList.remove( "hidden" );
+                        LX.doAsync( () => {
+                            sendNoteButtonWidget.swap( true );
+                            sendNoteButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "auto";
+                        }, 2000 );
+
+                        return;
+                    }
+
+                    sendNoteButtonWidget.root.querySelector( ".swap-on svg" ).addClass( "fg-success" );
+
+                    spinner.remove();
+                        sendNoteButtonWidget.root.querySelector(".swap-on").classList.remove( "hidden" );
+                        LX.doAsync( () => {
+                            sendNoteButtonWidget.swap( true );
+                            sendNoteButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = "auto";
+                        }, 2000 );
+
+                    console.log("Nota creada para pedido #" + idOrder);
+                }
+            }, { icon: "PaperPlane", swap: "Check", title: "Enviar Mensaje", tooltip: true, width: "50%", mustConfirm: true,
+                confirmSide: "right",
+                // confirmAlign: "start",
+                confirmText: "Continuar",
+                confirmCancelText: "Cancelar",
+                confirmTitle: "Confirmar acción",
+                confirmContent: `Se va a enviar un mensaje al cliente. ¿Quieres continuar?`
+            });
 
             const copyButtonWidget = p.addButton(null, "CopyButton", async () => {
                 navigator.clipboard.writeText(body.innerHTML).then(() => {
@@ -592,7 +660,7 @@ class CblTrackingApp {
                     copyButtonWidget.root.querySelector("input[type='checkbox']").style.pointerEvents = "auto";
                 }, 3000);
 
-            }, { swap: "Check", icon: "Copy", title: "Copiar", tooltip: true });
+            }, { swap: "Check", icon: "Copy", title: "Copiar Mensaje", tooltip: true, width: "50%" });
             copyButtonWidget.root.querySelector(".swap-on svg").addClass("fg-success");
 
             left.attach(p.root);
