@@ -1888,7 +1888,7 @@ a svg, svg path {
     padding: 0;
     outline: none;
     width: fit-content;
-    /* max-height: -webkit-fill-available; */
+    max-height: 400px;
     position: fixed;
     z-index: 10000;
     box-shadow: 0 0px 4px rgba(0, 0, 0, 0.203);

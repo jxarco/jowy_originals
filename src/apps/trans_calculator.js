@@ -1,19 +1,26 @@
 import { LX } from 'lexgui';
 import { Data } from '../data.js';
 
-const VOLUME_BRACKETS = [
+const VOLUME_BRACKETS_CBL = [
     5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
     150, 200, 250, 300, 500, 750, 1000, 3000
+];
+
+const VOLUME_BRACKETS_SEUR = [
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30
 ];
 
 const TRANSPORT_NAMES = [ "CBL", "SEUR" ];
 
 const NumberFormatter = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
 
+let lastTotalPrice = [];
+// let lastTotalPackages = 0;
+
 class TransportCalculatorApp {
 
     // _sku = "Vacío";
-    _sku = "JW-DF20";
+     _sku = "AD12";
     get sku() { return this._sku; }
     set sku(v) { this._sku = v; this.updateTransports(); }
 
@@ -40,7 +47,7 @@ class TransportCalculatorApp {
         // utilButtonsPanel.addButton(null, "ClearButton", core.clearData.bind(core), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
         utilButtonsPanel.addSelect("Ref", Object.keys(Data.sku), this.sku, (v) => {
             this.sku = v;
-        }, { className: "w-full", filter: true, overflowContainer: null, skipReset: true });
+        }, { className: "w-full", filter: true, overflowContainer: null, skipReset: true, emptyMsg: "No hay resultados." });
         utilButtonsPanel.addText("Unidades", this.quantity, (v) => {
             this.quantity = v;
         }, { trigger: "input", className: "w-full", nameWidth: "50%", placeholder: "0", skipReset: true });
@@ -96,7 +103,8 @@ class TransportCalculatorApp {
             return;
         }
 
-        let height,
+        let fullHeight,
+            fullWeight,
             totalVolume,
             totalVolumeKgs,
             volFactor,
@@ -121,9 +129,9 @@ class TransportCalculatorApp {
         // - 2,5 cm / 3 cm: entre 26, hasta un máximo de 77.
         // - 4 cm: 30 piezas, hasta un máximo de 45.
 
-        const product = Object.assign({thickness: 0, weight: 0, width: 0, depth: 0}, Data["sku"][this.sku]);
-        const { thickness, weight, width, depth } = product;
-        const packagingOptions = thickness !== 0 ? this.getPackaging(thickness, q) : [
+        const product = Object.assign({height: 0, weight: 0, width: 0, depth: 0}, Data["sku"][this.sku]);
+        const { height, weight, width, depth } = product;
+        const packagingOptions = width === 1.07 && height === 1.07 ? this.getPackaging(depth, q) : [
             {type: "Pallet", count: 1, unitsPerPackage: [q]}
         ];
 
@@ -134,6 +142,7 @@ class TransportCalculatorApp {
         zoneNumber = cz.zone ?? [];
         const balears = this.cp.startsWith("07");
         volFactor = this.country === "Francia" ? 300 : (balears || this.country === "Portugal" ? 333 : 220);
+        if(transportName === "SEUR") volFactor = 200;
         const shippingOptions = [];
 
         for (let packaging of packagingOptions) {
@@ -141,14 +150,15 @@ class TransportCalculatorApp {
             price = 0;
 
             // - Altura: grosor (en m) × nº de piezas.
-            height = q * thickness * 0.01;
+            fullHeight = q * depth;
+            fullWeight = q * weight;
     
             // - Si va en pallet: sumar 0,15 m por cada pallet.
             if (packaging.type == "Pallet") {
-                height += 0.15 * packaging.count;
+                fullHeight += 0.15 * packaging.count;
             }
 
-            totalVolume = height * width * depth;
+            totalVolume = fullHeight * width * height;
     
             // 3. Obtener los kg volumétricos
             // - 220 → Península
@@ -157,20 +167,29 @@ class TransportCalculatorApp {
             totalVolumeKgs = totalVolume * volFactor;
 
             // Coger el max entre totalVolumeKgs o Kgs
-            if(weight >= totalVolumeKgs) {
+            if(fullWeight >= totalVolumeKgs) {
                 useVolFactor = false;
-                totalVolumeKgs = weight;
+                totalVolumeKgs = fullWeight;
             }
             
-            const bracket = this.getVolumeBracket(totalVolumeKgs) ?? "max";
+            const bracket = this.getVolumeBracket(totalVolumeKgs, transportName) ?? "max";
             zoneNumber.forEach(v => {
-                const zp = Data.pricesByZone[v] ?? {};
+                const zp = Data.pricesByZone[transportName][v] ?? {};
                 price += zp[bracket] ?? 0;
             });
             
             // Desde 300, precio en eu/kg
-            if (totalVolumeKgs >= 300) {
-                price *= totalVolumeKgs;
+            if(transportName === "CBL") {
+                if (totalVolumeKgs > 300) {
+                    price *= totalVolumeKgs;
+                }
+            }
+            else {
+                if (totalVolumeKgs > 30) {
+                    const diffKgs = totalVolumeKgs - 30;
+                    const zN = zoneNumber[0];
+                    price = Data.pricesByZone[transportName][zN]["30"] + diffKgs * Data.pricesByZone[transportName][zN]["max"];
+                }
             }
     
             const gasPrice = 1.09;
@@ -179,10 +198,10 @@ class TransportCalculatorApp {
     
             shippingOptions.push({
                 packaging,
-                height,
+                height: fullHeight,
                 width,
                 depth,
-                weight,
+                weight: fullWeight,
                 totalVolume,
                 totalVolumeKgs,
                 volFactor,
@@ -211,9 +230,6 @@ class TransportCalculatorApp {
         const r = this.execute(transportName);
         if (!r) return;
 
-        let lastTotalPrice = 0,
-            lastTotalPackages = 0;
-
         for(let i = 0; i < r.length; ++i){
             const shippingOption = r[i];
             const {
@@ -234,19 +250,20 @@ class TransportCalculatorApp {
             } = shippingOption;
 
             const roundedTotalPrice = LX.round(finalPrice, 3);
-            const totalPriceDiff = LX.round(roundedTotalPrice - lastTotalPrice, 3);
-            const totalPackagesDiff = packaging.count - lastTotalPackages;
+            const totalPriceDiff = LX.round(roundedTotalPrice - lastTotalPrice[i], 3);
+            // const totalPackagesDiff = packaging.count - lastTotalPackages;
             const finalFormatted = NumberFormatter.format(finalPrice);
 
             const packagingModeContainer = LX.makeContainer(["100%", "auto"], "flex flex-col p-1 rounded-xl bg-secondary",
             ``, area);
 
+            // <span class="w-3 h-3 ${ transportName == "CBL" ? "bg-error" : "bg-accent"} rounded-full"></span>
             LX.makeContainer(["100%", "auto"], "px-4 py-4 flex flex-row gap-2 font-light text-xxl fg-secondary items-center align-center", `
-                ${LX.makeIcon(packaging.type == "Pallet" ? "Package2":"Handbag", { svgClass: "xl" }).innerHTML}
+                ${LX.makeIcon(packaging.type == "Pallet" ? "Package2":"Handbag", { svgClass: `xl ${ transportName == "CBL" ? "fg-error" : "fg-accent"}` }).innerHTML}
                 <span>
                     <span class="fg-tertiary">Resumen</span> <span class="font-semibold fg-primary">${transportName}: ${finalFormatted}</span>
-                    ${ i>0 ? `<span class="text-xl ${totalPriceDiff>0?"fg-error":"fg-success"}">(${totalPriceDiff>0?"+":""}${NumberFormatter.format(totalPriceDiff)})</span>
-                    <span class="text-xl ${totalPackagesDiff>0?"fg-error":"fg-success"}">(${totalPackagesDiff>0?"+":"-"}${totalPackagesDiff} bulto/s)</span>` : ""}
+                    ${ transportName == "SEUR" ? `<span class="text-xl ${totalPriceDiff>0?"fg-error":"fg-success"}">(${totalPriceDiff>0?"+":""}${NumberFormatter.format(totalPriceDiff)})</span>
+                    ` : ""}
                 </span>
                 `, packagingModeContainer);
     
@@ -330,8 +347,8 @@ class TransportCalculatorApp {
                 priceContainer.appendChild(copyButtonWidget.root);
             }
 
-            lastTotalPrice = roundedTotalPrice;
-            lastTotalPackages = packaging.count;
+            lastTotalPrice[i] = roundedTotalPrice;
+            // lastTotalPackages = packaging.count;
         }
     }
 
@@ -377,15 +394,15 @@ class TransportCalculatorApp {
         };
     }
 
-    getVolumeBracket(vol) {
-        for (const bracket of VOLUME_BRACKETS) {
+    getVolumeBracket(vol, transportName) {
+        for (const bracket of transportName === "CBL" ? VOLUME_BRACKETS_CBL : VOLUME_BRACKETS_SEUR) {
             if (vol <= bracket) return bracket;
         }
         return null;//"3000+";
     }
 
-    getPackaging(sizeCm, units) {
-        const size = Number(sizeCm);
+    getPackaging(sizeM, units) {
+        const size = Number(sizeM * 100);
 
         const bagCap = (() => {
             if (size === 2) return { perBag: 10, special: 11 };
