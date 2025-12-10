@@ -223,7 +223,7 @@ class OrdersApp
                         const tsv = data.join( '\t' );
                         // console.log(tsv)
                         navigator.clipboard.writeText( tsv ).then( () => {
-                            LX.toast( 'Copiado', `✅ "${tsv}" copiado al portapapeles.`, { timeout: 5000,
+                            LX.toast( 'Hecho!', `✅ "${tsv}" copiado al portapapeles.`, { timeout: 5000,
                                 position: 'top-left' } );
                         } ).catch( ( err ) => {
                             console.error( 'Error copying text: ', err );

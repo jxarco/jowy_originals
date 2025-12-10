@@ -13369,7 +13369,8 @@ class Table extends BaseComponent
                     }
 
                     const row = document.createElement( 'tr' );
-                    const rowId = LX.getSupportedDOMName( bodyData.join( '-' ) ).substr(0, 32);
+                    const rowCopy = LX.deepCopy( bodyData ).reverse();
+                    const rowId = LX.getSupportedDOMName( rowCopy.join( '-' ) ).substring(0, 64);
                     row.setAttribute( "rowId", rowId );
 
                     if( options.sortable ?? false )
@@ -13562,7 +13563,8 @@ class Table extends BaseComponent
 
         for( const row of this.data.body )
         {
-            const rowId = LX.getSupportedDOMName( row.join( '-' ) ).substr( 0, 32 );
+            const rowCopy = LX.deepCopy( row ).reverse();
+            const rowId = LX.getSupportedDOMName( rowCopy.join( '-' ) ).substring(0, 64);
             if( this.data.checkMap[ rowId ] === true )
             {
                 selectedRows.push( row );

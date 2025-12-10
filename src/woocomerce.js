@@ -103,6 +103,45 @@ export class WooCommerceClient
         return response.json();
     }
 
+    async _post( endpoint, body = {}, params = {} )
+    {
+        if ( !this.store || !this.ck || !this.cs )
+        {
+            throw new Error( 'WooCommerce API not configured.' );
+        }
+
+        const url = new URL( `${this.store}/wp-json/wc/v3/${endpoint}` );
+
+        // Add provided params
+        for ( const [ key, value ] of Object.entries( params ) )
+        {
+            url.searchParams.append( key, value );
+        }
+
+        // Add API keys
+        url.searchParams.append( 'consumer_key', this.ck );
+        url.searchParams.append( 'consumer_secret', this.cs );
+
+        const response = await fetch( url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify( body )
+        } );
+
+        if ( !response.ok )
+        {
+            const text = await response.text();
+            throw new Error( `WooCommerce API error ${response.status}: ${text}` );
+        }
+
+        return {
+            ok: true,
+            data: await response.json()
+        };
+    }
+
     //
     // --- PUBLIC READ-ONLY HELPERS ---
     //
@@ -159,6 +198,20 @@ export class WooCommerceClient
                 error: err.message
             };
         }
+    }
+
+    async batchUpdateOrders( orders = [] )
+    {
+        if ( !Array.isArray( orders ) || orders.length === 0 )
+        {
+            throw new Error( 'batchCompleteOrders requires a non-empty array of order' );
+        }
+
+        const payload = {
+            update: orders
+        };
+
+        return await this._post( 'orders/batch', payload );
     }
 
     async getOrdersPage( page = 1, perPage = 20 )

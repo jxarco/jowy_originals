@@ -176,7 +176,8 @@ const core = {
                         const sheet = workbook.Sheets[core.sheetName];
                         if ( core.processData( XLSX.utils.sheet_to_json( sheet, { raw: false } ) ) )
                         {
-                            LX.toast( 'Datos cargados', `✅ ${file.name}`, { timeout: 5000, position: 'top-left' } );
+                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000,
+                                position: 'top-left' } );
                         }
                     };
 
@@ -277,7 +278,7 @@ const core = {
 
         if ( err !== null )
         {
-            LX.toast( '❌ Error', err, { position: 'top-left' } );
+            LX.toast( 'Error', `❌ ${err}`, { position: 'top-left' } );
             return false;
         }
 
@@ -373,9 +374,9 @@ const core = {
             p.addText( 'Clave secreta', cs, ( value, event ) => {
                 cs = value;
             }, { nameWidth: '30%', skipReset: true, type: 'password' } );
-            p.addButton( null, 'Login', async ( value, event ) => {
-                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex p-2', svgClass: 'xxl animate-spin' } );
-                p.attach( spinner );
+            const loginButton = p.addButton( null, 'Login', async ( value, event ) => {
+                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
+                loginButton.root.querySelector( 'button' ).prepend( spinner );
                 const r = await this.configureWooCommerce( compName, store, ck, cs );
                 if ( r.ok )
                 {
@@ -391,7 +392,7 @@ const core = {
                     spinner.remove();
                     LX.emit( '@login_errors', '❌ Credenciales no válidas' );
                 }
-            }, { nameWidth: '30%', skipReset: true } );
+            }, { buttonClass: 'flex flex-row justify-center gap-2', skipReset: true } );
             p.addSeparator();
             p.addTextArea( null, '', null, { disabled: true, fitHeight: true, signal: '@login_errors' } );
         }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true,
@@ -404,7 +405,7 @@ const core = {
         const r = await wcc.configure( store, ck, cs );
         if ( r.ok )
         {
-            LX.toast( 'Login correcto', `✅ Has iniciado sesión en ${store}`, { timeout: 5000, position: 'top-left' } );
+            LX.toast( 'Hecho!', `✅ Has iniciado sesión en ${store}`, { timeout: 5000, position: 'top-left' } );
 
             // Store in localStorage
             localStorage.setItem( compName + '_wooc_ck', ck );

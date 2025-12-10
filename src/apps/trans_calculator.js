@@ -436,7 +436,7 @@ class TransportCalculatorApp
                 {
                     const textToCopy = roundedTotalPrice;
                     navigator.clipboard.writeText( textToCopy ).then( () => {
-                        LX.toast( 'Copiado', `✅ ${textToCopy} Copiado al portapapeles.`, { timeout: 5000,
+                        LX.toast( 'Hecho!', `✅ ${textToCopy} Copiado al portapapeles.`, { timeout: 5000,
                             position: 'top-left' } );
                     } ).catch( ( err ) => {
                         console.error( 'Error copying text: ', err );

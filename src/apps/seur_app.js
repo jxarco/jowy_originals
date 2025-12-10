@@ -247,7 +247,7 @@ class SeurApp
                         }
                         const tsv = colData.map( ( r ) => r.join( '\t' ) ).join( '\n' );
                         navigator.clipboard.writeText( tsv ).then( () => {
-                            LX.toast( 'Copiado', '✅ Columna copiada al portapapeles.', { timeout: 5000,
+                            LX.toast( 'Hecho!', '✅ Columna copiada al portapapeles.', { timeout: 5000,
                                 position: 'top-left' } );
                         } ).catch( ( err ) => {
                             console.error( 'Error copying text: ', err );
@@ -345,7 +345,7 @@ class SeurApp
             {
                 const textToCopy = this.root.parentElement.childNodes[1].innerText;
                 navigator.clipboard.writeText( textToCopy ).then( () => {
-                    LX.toast( 'Copiado', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
+                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
                         position: 'top-left' } );
                 } ).catch( ( err ) => {
                     console.error( 'Error copying text: ', err );
@@ -369,7 +369,7 @@ class SeurApp
             {
                 const textToCopy = nPedidoH2.innerText.substring( nPedidoH2.innerText.indexOf( ': ' ) + 2 );
                 navigator.clipboard.writeText( textToCopy ).then( () => {
-                    LX.toast( 'Copiado', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
+                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
                         position: 'top-left' } );
                 } ).catch( ( err ) => {
                     console.error( 'Error copying text: ', err );
@@ -601,7 +601,8 @@ class SeurApp
 
         if ( !ignoreErrors )
         {
-            LX.toast( filename, '✅ Datos exportados correctamente!', { timeout: 5000, position: 'top-left' } );
+            LX.toast( 'Hecho!', `✅ Datos exportados correctamente: ${filename}`, { timeout: 5000,
+                position: 'top-left' } );
         }
     }
 
