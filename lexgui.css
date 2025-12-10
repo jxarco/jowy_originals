@@ -812,8 +812,8 @@ a svg, svg path {
 
 .lexdialogcloser.notitle {
     position: absolute;
-    top: 0.5em;
-    right: 0;
+    top: 0.75em;
+    right: 0.75em;
 }
 
 .lexdialogcloser:hover {

@@ -553,7 +553,8 @@ class CblTrackingApp
         if ( hasOrderNumber && !this.orders[orderNumber] )
         {
             hasOrderNumber = false;
-            LX.toast( 'Error', `❌ Número de pedido ${orderNumber} inválido.`, { timeout: -1, position: 'top-center' } );
+            LX.toast( 'Error', `❌ Número de pedido ${orderNumber} inválido.`, { timeout: -1,
+                position: 'top-center' } );
         }
 
         if ( hasOrderNumber )
@@ -746,13 +747,15 @@ class CblTrackingApp
     openMessageDialog()
     {
         const core = this.core;
-        const dialogClosable = new LX.Dialog( 'Nuevo Mensaje de Seguimiento', ( dialogPanel ) => {
+        const dialogClosable = new LX.Dialog( 'Seguimiento por pedido', ( dialogPanel ) => {
             const dialogArea = new LX.Area( { className: '' } );
             dialogPanel.attach( dialogArea.root );
             const [ left, right ] = dialogArea.split( { type: 'horizontal', sizes: [ '55%', '45%' ], resize: false } );
             const companyOptions = Object.values( core.data ).filter( ( v ) => v.name ).map( ( v ) => v.name );
 
-            let t = 'SEUR', id = '', idOrder = '', c = core.data[core.compName].name;
+            const date = new Date();
+            let invoiceNumber = '', invoiceDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+            let t = 'SEUR', idTracking = '', idOrder = '', c = core.data[core.compName].name;
 
             let updateMessage = ( callback ) => {
                 body.innerHTML = getTemplate();
@@ -763,28 +766,25 @@ class CblTrackingApp
             };
 
             let p = new LX.Panel( { className: 'bg-none bg-primary border-none p-2' } );
-            p.addSelect( 'Empresa', companyOptions, c, ( value, event ) => {
-                c = value;
-                updateMessage();
-            }, { nameWidth: '35%', skipReset: true } );
-            p.addSelect( 'Transporte', core.transportOptions, t, ( value, event ) => {
-                t = value;
-                updateMessage();
-            }, { nameWidth: '35%', skipReset: true } );
-            p.addText( 'Número seguimiento', id, ( value, event ) => {
-                id = value;
-                updateMessage();
-            }, { nameWidth: '35%', skipReset: true, placeholder: '0A00MD00' } );
+
             p.addText( 'Número de pedido', idOrder, ( value, event ) => {
                 idOrder = value;
                 updateMessage();
             }, { nameWidth: '35%', skipReset: true, placeholder: '00000' } );
             p.addSeparator();
-
-            p.sameLine( 2 );
-
+            p.sameLine(2);
+            p.addLabel( 'Nota de pedido' );
             const sendNoteButtonWidget = p.addButton( null, 'SendNoteButton', async () => {
+
                 const compName = c.toLowerCase();
+
+                if ( !idOrder.length || !idTracking.length )
+                {
+                    sendNoteButtonWidget.swap();
+                    LX.toast( 'Error', `❌ Rellena todos campos necesarios.`, { timeout: -1, position: 'top-center' } );
+                    return;
+                }
+
                 const wcc = core.data[compName].wcc;
                 if ( !wcc.connected )
                 {
@@ -829,27 +829,94 @@ class CblTrackingApp
 
                     console.log( 'Nota creada para pedido #' + idOrder );
                 }
-            }, { icon: 'PaperPlane', swap: 'Check', title: 'Enviar Mensaje', tooltip: true, width: '50%',
+            }, { icon: 'PaperPlane', swap: 'Check', title: 'Enviar Mensaje', tooltip: true, width: '48px', className: "ml-auto",
                 mustConfirm: true, confirmSide: 'right', // confirmAlign: "start",
                 confirmText: 'Continuar', confirmCancelText: 'Cancelar', confirmTitle: 'Confirmar acción',
                 confirmContent: `Se va a enviar un mensaje al cliente. ¿Quieres continuar?` } );
 
-            const copyButtonWidget = p.addButton( null, 'CopyButton', async () => {
-                navigator.clipboard.writeText( body.innerHTML ).then( () => {
-                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
-                        position: 'top-center' } );
-                } ).catch( ( err ) => {
-                    console.error( 'Error copying text: ', err );
-                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
-                } );
-                copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
+            p.addSelect( 'Empresa', companyOptions, c, ( value, event ) => {
+                c = value;
+                updateMessage();
+            }, { nameWidth: '35%', skipReset: true } );
+            p.addSelect( 'Transporte', core.transportOptions, t, ( value, event ) => {
+                t = value;
+                updateMessage();
+            }, { nameWidth: '35%', skipReset: true } );
+            p.addText( 'Número seguimiento', idTracking, ( value, event ) => {
+                idTracking = value;
+                updateMessage();
+            }, { nameWidth: '35%', skipReset: true, placeholder: '0A00MD00', trigger: "input" } );
+            
+            p.addSeparator();
+            p.sameLine(2);
+            p.addLabel( 'Factura' );
+            const makeInvoiceButtonWidget = p.addButton( null, 'InvoiceButton', async () => {
+                if ( !idOrder.length )
+                {
+                    makeInvoiceButtonWidget.swap();
+                    return;
+                }
 
-                LX.doAsync( () => {
-                    copyButtonWidget.swap( true );
-                    copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
-                }, 3000 );
-            }, { swap: 'Check', icon: 'Copy', title: 'Copiar Mensaje', tooltip: true, width: '50%' } );
-            copyButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+                const compName = c.toLowerCase();
+                const compData = core.data[compName];
+                const wcc = compData.wcc;
+                if ( !wcc.connected )
+                {
+                    core.openWooCommerceLogin( null, compName );
+                    makeInvoiceButtonWidget.swap();
+                    return;
+                }
+
+                makeInvoiceButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
+                makeInvoiceButtonWidget.root.querySelector( '.swap-on' ).classList.add( 'hidden' );
+                const spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
+                makeInvoiceButtonWidget.root.querySelector( 'button' ).appendChild( spinner );
+
+                {
+                    const iD = `${convertDateDMYtoMDY( invoiceDate )} ${date.getHours()}:${date.getMinutes()}`;
+                    let r = await wcc.updateInvoice( idOrder, invoiceNumber, iD, compData.prefix, compData.suffix,
+                                    compData.padding );
+                    if ( !r.ok )
+                    {
+                        LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
+
+                        makeInvoiceButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-error' );
+
+                        spinner.remove();
+                        makeInvoiceButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
+                        LX.doAsync( () => {
+                            makeInvoiceButtonWidget.swap( true );
+                            makeInvoiceButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents =
+                                'auto';
+                        }, 2000 );
+
+                        return;
+                    }
+
+                    makeInvoiceButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+
+                    spinner.remove();
+                    makeInvoiceButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
+                    LX.doAsync( () => {
+                        makeInvoiceButtonWidget.swap( true );
+                        makeInvoiceButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents =
+                            'auto';
+                    }, 2000 );
+
+                    console.log( 'Facturado pedido #' + idOrder );
+                }
+            }, { icon: 'FilePlusCorner', swap: 'Check', title: 'Facturar', tooltip: true, width: '48px', className: "ml-auto",
+                mustConfirm: true, confirmSide: 'right', // confirmAlign: "start",
+                confirmText: 'Continuar', confirmCancelText: 'Cancelar', confirmTitle: 'Confirmar acción',
+                confirmContent:
+                    `Se va a facturar el pedido. ¿Quieres continuar?` } );
+
+            p.addText( 'Número de factura', invoiceNumber, ( value, event ) => {
+                invoiceNumber = value;
+            }, { nameWidth: '35%', skipReset: true, placeholder: '000000' } );
+            p.addDate( 'Fecha de Factura', invoiceDate, ( v ) => {
+                invoiceDate = v;
+            }, { nameWidth: '35%', className: '' } );
 
             left.attach( p.root );
 
@@ -868,12 +935,34 @@ class CblTrackingApp
                 }
 
                 const template = core.data[comp].template;
-                return template( id, url, t );
+                return template( idTracking, url, t );
             };
 
-            const body = LX.makeContainer( [ null, 'auto' ], 'p-4 items-center', '', right );
+            const body = LX.makeContainer( [ null, '100%' ], 'p-4 mt-8 items-center content-center', '', right );
             body.innerHTML = getTemplate();
-        }, { modal: true, size: [ 'min(100%, 900px)', null ], closable: true, draggable: false } );
+
+            let templatePanel = new LX.Panel( { className: 'bg-none bg-primary border-none p-2' } );
+
+            const copyButtonWidget = templatePanel.addButton( null, 'CopyButton', async () => {
+                navigator.clipboard.writeText( body.innerHTML ).then( () => {
+                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
+                        position: 'top-center' } );
+                } ).catch( ( err ) => {
+                    console.error( 'Error copying text: ', err );
+                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
+                } );
+                copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
+
+                LX.doAsync( () => {
+                    copyButtonWidget.swap( true );
+                    copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
+                }, 3000 );
+            }, { swap: 'Check', icon: 'Copy', title: 'Copiar Mensaje', tooltip: true, width: '100%' } );
+            copyButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+
+            right.attach( templatePanel.root );
+
+        }, { size: [ 'min(100%, 900px)', null ], closable: true, draggable: false } );
     }
 
     openSelectedOrders()
