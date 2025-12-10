@@ -437,10 +437,10 @@ class TransportCalculatorApp
                     const textToCopy = roundedTotalPrice;
                     navigator.clipboard.writeText( textToCopy ).then( () => {
                         LX.toast( 'Hecho!', `✅ ${textToCopy} Copiado al portapapeles.`, { timeout: 5000,
-                            position: 'top-left' } );
+                            position: 'top-center' } );
                     } ).catch( ( err ) => {
                         console.error( 'Error copying text: ', err );
-                        LX.toast( 'Error', '❌ No se pudo copiar.', { timeout: -1, position: 'top-left' } );
+                        LX.toast( 'Error', '❌ No se pudo copiar.', { timeout: -1, position: 'top-center' } );
                     } );
                     copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
 

@@ -282,11 +282,11 @@ class CblTrackingApp
                             const data = rowData[tableData.head.indexOf( 'NOMBRE' )];
                             navigator.clipboard.writeText( data ).then( () => {
                                 LX.toast( 'Hecho!', `✅ "${data}" copiado al portapapeles.`, { timeout: 5000,
-                                    position: 'top-left' } );
+                                    position: 'top-center' } );
                             } ).catch( ( err ) => {
                                 console.error( 'Error copying text: ', err );
                                 LX.toast( 'Error', '❌ No se pudo copiar el nombre.', { timeout: -1,
-                                    position: 'top-left' } );
+                                    position: 'top-center' } );
                             } );
                         }
                     }
@@ -322,18 +322,21 @@ class CblTrackingApp
             return;
         }
 
-        const selectedOrders = this.dataTable.getSelectedRows();
-        if ( !selectedOrders.length )
-        {
-            return;
-        }
-
         const newStatus = 'completed';
+        const selectedOrders = this.dataTable.getSelectedRows();
         const orderUpdates = selectedOrders.map( ( row ) => {
-            const orderNumber = row[0] ?? '';
-            if ( !orderNumber.length ) return;
+            const orderNumber = row[this.dataTable.data.head.indexOf( 'NPEDIDO' )] ?? '';
+            const status = LX.stripTags( row[this.dataTable.data.head.indexOf( 'SITUACIÓN' )] ) ?? '';
+            if ( ( !orderNumber.length ) || ( this.orders[orderNumber]?.status !== 'processing' )
+                || ( status !== 'Entregada' ) ) return;
             return { id: orderNumber, status: newStatus };
         } ).filter( ( l ) => l !== undefined );
+
+        if ( !orderUpdates.length )
+        {
+            LX.toast( 'Error', '❌ No hay pedidos por completar.', { timeout: -1, position: 'top-center' } );
+            return;
+        }
 
         const dialogClosable = new LX.Dialog( 'Completar Pedido', ( dialogPanel ) => {
             let spinner = null;
@@ -353,7 +356,7 @@ class CblTrackingApp
 
                 if ( !r.ok )
                 {
-                    LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-left' } );
+                    LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
                     return;
                 }
 
@@ -379,7 +382,7 @@ class CblTrackingApp
                 LX.toast( `Hecho!`,
                     `✅ Pedidos ${orderUpdates.map( ( v ) => v.id ).join( ', ' )} completados con éxito.`, {
                     timeout: 5000,
-                    position: 'top-left'
+                    position: 'top-center'
                 } );
 
                 dialogClosable.close();
@@ -412,7 +415,7 @@ class CblTrackingApp
 
                 if ( !r.ok )
                 {
-                    LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-left' } );
+                    LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
                     return;
                 }
 
@@ -424,7 +427,7 @@ class CblTrackingApp
                 this.dataTable.root.querySelector( 'table' ).scrollLeft = scrollLeft;
 
                 LX.toast( `Hecho!`, `✅ Pedido ${orderNumber} completado con éxito.`, { timeout: 5000,
-                    position: 'top-left' } );
+                    position: 'top-center' } );
             }, { buttonClass: 'contrast' } );
         }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true,
             draggable: false } );
@@ -515,10 +518,10 @@ class CblTrackingApp
             {
                 navigator.clipboard.writeText( nPedidoH2.innerText ).then( () => {
                     LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
-                        position: 'top-left' } );
+                        position: 'top-center' } );
                 } ).catch( ( err ) => {
                     console.error( 'Error copying text: ', err );
-                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-left' } );
+                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
                 } );
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
 
@@ -550,7 +553,7 @@ class CblTrackingApp
         if ( hasOrderNumber && !this.orders[orderNumber] )
         {
             hasOrderNumber = false;
-            LX.toast( 'Error', `❌ Número de pedido ${orderNumber} inválido.`, { timeout: -1, position: 'top-left' } );
+            LX.toast( 'Error', `❌ Número de pedido ${orderNumber} inválido.`, { timeout: -1, position: 'top-center' } );
         }
 
         if ( hasOrderNumber )
@@ -619,7 +622,7 @@ class CblTrackingApp
                                 if ( !r.ok )
                                 {
                                     LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1,
-                                        position: 'top-left' } );
+                                        position: 'top-center' } );
                                     dialog.destroy();
                                     return;
                                 }
@@ -633,7 +636,7 @@ class CblTrackingApp
                                 if ( !r.ok )
                                 {
                                     LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1,
-                                        position: 'top-left' } );
+                                        position: 'top-center' } );
                                     dialog.destroy();
                                     return;
                                 }
@@ -646,7 +649,7 @@ class CblTrackingApp
                             LX.toast( 'Hecho!', '✅ Pulsa <span>Ver</span> para comprobar los datos en la plataforma.',
                                 {
                                     timeout: 5000,
-                                    position: 'top-left',
+                                    position: 'top-center',
                                     action: {
                                         name: 'Ver',
                                         callback: () => {
@@ -692,10 +695,10 @@ class CblTrackingApp
 
         const copyButtonWidget = footerPanel.addButton( null, 'CopyButton', async () => {
             navigator.clipboard.writeText( templateString ).then( () => {
-                LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000, position: 'top-left' } );
+                LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000, position: 'top-center' } );
             } ).catch( ( err ) => {
                 console.error( 'Error copying text: ', err );
-                LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-left' } );
+                LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
             } );
             copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
 
@@ -799,7 +802,7 @@ class CblTrackingApp
                     let r = await wcc.createOrderNote( idOrder, getTemplate() );
                     if ( !r.ok )
                     {
-                        LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-left' } );
+                        LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
 
                         sendNoteButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-error' );
 
@@ -834,10 +837,10 @@ class CblTrackingApp
             const copyButtonWidget = p.addButton( null, 'CopyButton', async () => {
                 navigator.clipboard.writeText( body.innerHTML ).then( () => {
                     LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
-                        position: 'top-left' } );
+                        position: 'top-center' } );
                 } ).catch( ( err ) => {
                     console.error( 'Error copying text: ', err );
-                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-left' } );
+                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
                 } );
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
 
@@ -944,7 +947,7 @@ class CblTrackingApp
         const r = await wcc.getOrdersByIds( ids );
         if ( !r.ok )
         {
-            LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-left' } );
+            LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
             return;
         }
 

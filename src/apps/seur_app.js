@@ -248,11 +248,11 @@ class SeurApp
                         const tsv = colData.map( ( r ) => r.join( '\t' ) ).join( '\n' );
                         navigator.clipboard.writeText( tsv ).then( () => {
                             LX.toast( 'Hecho!', '✅ Columna copiada al portapapeles.', { timeout: 5000,
-                                position: 'top-left' } );
+                                position: 'top-center' } );
                         } ).catch( ( err ) => {
                             console.error( 'Error copying text: ', err );
                             LX.toast( 'Error', '❌ No se pudo copiar la columna.', { timeout: -1,
-                                position: 'top-left' } );
+                                position: 'top-center' } );
                         } );
                     }
                 }
@@ -346,10 +346,10 @@ class SeurApp
                 const textToCopy = this.root.parentElement.childNodes[1].innerText;
                 navigator.clipboard.writeText( textToCopy ).then( () => {
                     LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
-                        position: 'top-left' } );
+                        position: 'top-center' } );
                 } ).catch( ( err ) => {
                     console.error( 'Error copying text: ', err );
-                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-left' } );
+                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
                 } );
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
 
@@ -370,10 +370,10 @@ class SeurApp
                 const textToCopy = nPedidoH2.innerText.substring( nPedidoH2.innerText.indexOf( ': ' ) + 2 );
                 navigator.clipboard.writeText( textToCopy ).then( () => {
                     LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
-                        position: 'top-left' } );
+                        position: 'top-center' } );
                 } ).catch( ( err ) => {
                     console.error( 'Error copying text: ', err );
-                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-left' } );
+                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
                 } );
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
 
@@ -499,7 +499,7 @@ class SeurApp
         let errorFn = () => {
             LX.toast( 'Error de exportación', `❌ No se pudo exportar el archivo "${filename}. ${errMsg}`, {
                 timeout: -1,
-                position: 'top-left'
+                position: 'top-center'
             } );
         };
 
@@ -590,7 +590,7 @@ class SeurApp
         if ( !( data?.length ) )
         {
             LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1,
-                position: 'top-left' } );
+                position: 'top-center' } );
             return;
         }
 
@@ -602,7 +602,7 @@ class SeurApp
         if ( !ignoreErrors )
         {
             LX.toast( 'Hecho!', `✅ Datos exportados correctamente: ${filename}`, { timeout: 5000,
-                position: 'top-left' } );
+                position: 'top-center' } );
         }
     }
 

@@ -177,7 +177,7 @@ const core = {
                         if ( core.processData( XLSX.utils.sheet_to_json( sheet, { raw: false } ) ) )
                         {
                             LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000,
-                                position: 'top-left' } );
+                                position: 'top-center' } );
                         }
                     };
 
@@ -278,7 +278,7 @@ const core = {
 
         if ( err !== null )
         {
-            LX.toast( 'Error', `❌ ${err}`, { position: 'top-left' } );
+            LX.toast( 'Error', `❌ ${err}`, { position: 'top-center' } );
             return false;
         }
 
@@ -405,7 +405,7 @@ const core = {
         const r = await wcc.configure( store, ck, cs );
         if ( r.ok )
         {
-            LX.toast( 'Hecho!', `✅ Has iniciado sesión en ${store}`, { timeout: 5000, position: 'top-left' } );
+            LX.toast( 'Hecho!', `✅ Has iniciado sesión en ${store}`, { timeout: 5000, position: 'top-center' } );
 
             // Store in localStorage
             localStorage.setItem( compName + '_wooc_ck', ck );
