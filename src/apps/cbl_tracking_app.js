@@ -609,7 +609,6 @@ class CblTrackingApp {
                 sendNoteButtonWidget.root.querySelector("button").appendChild( spinner );
 
                 {
-                    idOrder = "4529";
                     let r = await wcc.createOrderNote(idOrder, getTemplate());
                     if (!r.ok) {
                         LX.toast("WooCommerce Error", `❌ ${r.error}`, { timeout: -1, position: "top-left" });
