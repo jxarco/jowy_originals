@@ -244,8 +244,7 @@ const core = {
 
                 if ( !ref )
                 {
-                    err = 'No existe ninguna columna _REFERENCIA_ en el xlsx.';
-                    break;
+                    err = 'Filas sin _REFERENCIA_ en el xlsx.';
                 }
 
                 switch ( ref[0] )
@@ -265,10 +264,7 @@ const core = {
                 }
             }
 
-            if ( err === null )
-            {
-                this.cblTrackingApp.showList( 'jowy', true, true );
-            }
+            this.cblTrackingApp.showList( 'jowy', true, true );
         }
         else if ( this.tool == 'Shein-seur' )
         {
@@ -278,8 +274,7 @@ const core = {
 
         if ( err !== null )
         {
-            LX.toast( 'Error', `❌ ${err}`, { position: 'top-center' } );
-            return false;
+            LX.toast( 'Aviso', `⚠️ ${err}`, { position: 'top-center' } );
         }
 
         return true;
