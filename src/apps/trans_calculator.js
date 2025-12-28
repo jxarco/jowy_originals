@@ -101,14 +101,12 @@ class TransportCalculatorApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto',
-            className: 'bg-none bg-primary border-bottom p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-bottom p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
         // utilButtonsPanel.addButton(null, "ClearButton", core.clearData.bind(core), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
         utilButtonsPanel.addSelect( 'Ref', Object.keys( Data.sku ), this.sku, ( v ) => {
             this.sku = v;
-        }, { className: 'w-full', filter: true, overflowContainer: null, skipReset: true,
-            emptyMsg: 'No hay resultados.' } );
+        }, { className: 'w-full', filter: true, overflowContainer: null, skipReset: true, emptyMsg: 'No hay resultados.' } );
         utilButtonsPanel.addText( 'Unidades', this.quantity, ( v ) => {
             this.quantity = v;
         }, { trigger: 'input', className: 'w-full', nameWidth: '50%', placeholder: '0', skipReset: true } );
@@ -144,8 +142,7 @@ class TransportCalculatorApp
         // // center tabs
         // tabs.root.parentElement.classList.add("flex", "justify-center");
 
-        this.resultArea = new LX.Area( { skipAppend: true,
-            className: 'flex justify-center p-4 gap-2 overflow-scroll' } );
+        this.resultArea = new LX.Area( { skipAppend: true, className: 'flex justify-center p-4 gap-2 overflow-scroll' } );
         this.area.attach( this.resultArea );
         const [ left, right ] = this.resultArea.split( { type: 'horizontal', sizes: [ '50%', '50%' ], resize: false } );
         left.root.classList.add( 'flex', 'flex-col', 'gap-2' );
@@ -328,8 +325,7 @@ class TransportCalculatorApp
             // const totalPackagesDiff = packaging.count - lastTotalPackages;
             const finalFormatted = NumberFormatter.format( finalPrice );
 
-            const packagingModeContainer = LX.makeContainer( [ '100%', 'auto' ],
-                'flex flex-col p-1 rounded-xl bg-secondary', ``, area );
+            const packagingModeContainer = LX.makeContainer( [ '100%', 'auto' ], 'flex flex-col p-1 rounded-xl bg-secondary', ``, area );
 
             // <span class="w-3 h-3 ${ transportName == "CBL" ? "bg-error" : "bg-accent"} rounded-full"></span>
             LX.makeContainer( [ '100%', 'auto' ],
@@ -343,9 +339,9 @@ class TransportCalculatorApp
                     <span class="fg-tertiary">Resumen</span> <span class="font-semibold fg-primary">${transportName}: ${finalFormatted}</span>
                     ${
                 transportName == 'SEUR'
-                    ? `<span class="text-xl ${totalPriceDiff > 0 ? 'fg-error' : 'fg-success'}">(${
-                        totalPriceDiff > 0 ? '+' : ''
-                    }${NumberFormatter.format( totalPriceDiff )})</span>
+                    ? `<span class="text-xl ${totalPriceDiff > 0 ? 'fg-error' : 'fg-success'}">(${totalPriceDiff > 0 ? '+' : ''}${
+                        NumberFormatter.format( totalPriceDiff )
+                    })</span>
                     `
                     : ''
             }
@@ -353,8 +349,7 @@ class TransportCalculatorApp
                 `, packagingModeContainer );
 
             {
-                const resultsContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-4 p-4', ``,
-                    packagingModeContainer );
+                const resultsContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-4 p-4', ``, packagingModeContainer );
                 LX.makeContainer( [ '100%', 'auto' ], 'flex flex-row gap-8', `
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Altura</span><span class="font-semibold">${
                     LX.round( height, 2 )
@@ -369,8 +364,7 @@ class TransportCalculatorApp
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Peso</span><span class="font-semibold">${weight}kg</span></div>
             `, resultsContainer );
 
-                const bultos = LX.makeContainer( [ '100%', 'auto' ],
-                    'flex flex-row gap-8 p-2 px-3 bg-tertiary rounded-lg cursor-pointer', `
+                const bultos = LX.makeContainer( [ '100%', 'auto' ], 'flex flex-row gap-8 p-2 px-3 bg-tertiary rounded-lg cursor-pointer', `
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Bultos</span><span class="font-semibold">${packaging.count}</span><span class="text-xl">(${packaging.type}s)</span></div>
             `, resultsContainer );
                 const collapsed = true; // (packaging.count > 5) && (r.length == 1);
@@ -378,8 +372,8 @@ class TransportCalculatorApp
                 {
                     this.querySelector( '.collapser' ).click();
                 } );
-                const packagesContainer = LX.makeContainer( [ '100%', '100%' ],
-                    'flex flex-col gap-2 py-3 pl-8 bg-tertiary rounded-b-lg', ``, resultsContainer, {
+                const packagesContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-2 py-3 pl-8 bg-tertiary rounded-b-lg',
+                    ``, resultsContainer, {
                     display: collapsed ? 'none' : '',
                     marginTop: '-1.25rem'
                 } );
@@ -418,8 +412,8 @@ class TransportCalculatorApp
             }
 
             {
-                const resultsContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-4 p-4 items-center',
-                    ``, packagingModeContainer );
+                const resultsContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-4 p-4 items-center', ``,
+                    packagingModeContainer );
                 LX.makeContainer( [ '100%', 'auto' ], 'flex flex-row gap-8', `
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Zona</span><span class="font-semibold">${zoneNumber}</span></div>
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Ciudad/Provincia</span><span class="font-semibold">${city}</span></div>
@@ -436,8 +430,7 @@ class TransportCalculatorApp
                 {
                     const textToCopy = roundedTotalPrice;
                     navigator.clipboard.writeText( textToCopy ).then( () => {
-                        LX.toast( 'Hecho!', `✅ ${textToCopy} Copiado al portapapeles.`, { timeout: 5000,
-                            position: 'top-center' } );
+                        LX.toast( 'Hecho!', `✅ ${textToCopy} Copiado al portapapeles.`, { timeout: 5000, position: 'top-center' } );
                     } ).catch( ( err ) => {
                         console.error( 'Error copying text: ', err );
                         LX.toast( 'Error', '❌ No se pudo copiar.', { timeout: -1, position: 'top-center' } );

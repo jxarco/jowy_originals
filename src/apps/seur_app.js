@@ -12,14 +12,13 @@ class SeurApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto',
-            className: 'bg-none bg-primary border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine( 3 );
         utilButtonsPanel.addButton( null, 'StartButton', this.showSingleSheinData.bind( this ), { icon: 'Eye',
             title: 'Ver información detallada', tooltip: true } );
-        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), { icon: 'Trash2',
-            title: 'Limpiar datos anteriores', tooltip: true } );
-        utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSheinData ), {
+        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), { icon: 'Trash2', title: 'Limpiar datos anteriores',
+            tooltip: true } );
+        utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
             icon: 'Download',
             title: 'Exportar datos',
             tooltip: true
@@ -30,9 +29,8 @@ class SeurApp
         // this.sheinTabs = tabs.root;
 
         // SEUR
-        const seurContainer = LX.makeContainer( [ null, 'auto' ],
-            'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Todo', seurContainer, { selected: true, onSelect: ( event, name ) => this.showSheinList() } );
+        const seurContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+        tabs.add( 'Todo', seurContainer, { selected: true, onSelect: ( event, name ) => this.openData() } );
 
         const seurArea = new LX.Area( { className: 'rounded-lg' } );
         seurContainer.appendChild( seurArea.root );
@@ -40,8 +38,7 @@ class SeurApp
         // Groups List
         const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
             'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Por cantidad', groupsListContainer, { xselected: true,
-            onSelect: ( event, name ) => this.showGroupsByCountryList() } );
+        tabs.add( 'Por cantidad', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
 
         const groupsListArea = new LX.Area( { className: 'rounded-lg' } );
         groupsListContainer.appendChild( groupsListArea.root );
@@ -56,9 +53,153 @@ class SeurApp
         this.clear();
     }
 
+    openData( fileData )
+    {
+        fileData = fileData ?? this.lastSeurData;
+
+        if ( !fileData.length )
+        {
+            return;
+        }
+
+        const numCols = Object.keys( fileData[0] ).length;
+
+        // 27 -> shein. 80 -> decathlon
+        if ( numCols < 40 )
+        {
+            this.showSheinList( fileData );
+            this.showGroupsByCountryList( fileData );
+        }
+        else
+        {
+            this.showDecathlonList( fileData );
+        }
+    }
+
+    showDecathlonList( data )
+    {
+        data = data ?? this.lastSeurData;
+
+        this.vendor = 'Decathlon';
+
+        const dom = this.seurDataArea.root;
+        while ( dom.children.length > 0 )
+        {
+            dom.removeChild( dom.children[0] );
+        }
+
+        // Sort by ref
+        {
+            data = data.sort( ( a, b ) => {
+                return ( a['SKU del vendedor'] ?? '?' ).localeCompare( b['SKU del vendedor'] ?? '?' );
+            } );
+        }
+
+        const columnData = [
+            [ 'Número de pedido', 'Número del pedido' ],
+            [ 'SKU del producto', 'ID del artículo' ],
+            [ 'SKU de Tienda', 'SKU del vendedor', ( str, row ) => {
+                const qnt = row['Cantidad'];
+                return `${row['SKU de Tienda']} x ${qnt}`;
+            } ],
+            [ 'Dirección de entrega: código postal', 'Código Postal' ],
+            [ 'Dirección de entrega: país', 'País', ( str, row ) => {
+                const ctr = row['Dirección de entrega: país'];
+                return this.core.countryFormat[ctr] ?? ctr;
+            } ],
+            [ 'Provincia', null, ( str, row ) => row['Dirección de entrega: provincia'] ?? '' ],
+            [ 'Dirección de entrega: ciudad', 'Ciudad' ],
+            [ 'Dirección de entrega: calle 1+Dirección de entrega: calle 2', 'Dirección' ],
+            [ 'Dirección de entrega: nombre de pila+Dirección de entrega: apellido', 'Nombre de usuario completo' ],
+            [ 'Dirección de entrega: teléfono', 'Número de Teléfono' ],
+            [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
+        ];
+
+        // exclude
+        // const EXCLUDE = [ 'JW-DT40', 'JW-DF40', 'HG-AD24', 'HG-AD40' ];
+        // const EXCLUDE_IF = [ 'JW-DT20', 'JW-DT25', 'JW-DF20', 'JW-DF25', 'JW-DF30', 'JW-DS25', 'HG-BPB02' ];
+        // data = data.filter( ( row ) => {
+        //     const qnt = row['Cantidad'];
+        //     const sku = row['SKU de Tienda'];
+
+        //     let e = EXCLUDE.filter( v => sku.startsWith( v ) );
+        //     if( e.length )
+        //     {
+        //         console.log( `${ sku } excluded` );
+        //         return false;
+        //     }
+
+        //     e = EXCLUDE_IF.filter( v => sku.startsWith( v ) && qnt > 2 );
+        //     if( e.length )
+        //     {
+        //         console.log( `${ sku } excluded` );
+        //         return false;
+        //     }
+
+        //     return true;
+        // } );
+
+        // Create table data from the list
+        const tableData = data.map( ( row ) => {
+            const lRow = [];
+            const qnt = row['Cantidad'];
+            const sku = row['SKU de Tienda'];
+
+            let e = EXCLUDE.filter( ( v ) => sku.startsWith( v ) );
+            if ( e.length )
+            {
+                console.log( `${sku} excluded` );
+                return;
+            }
+
+            e = EXCLUDE_IF.filter( ( v ) => sku.startsWith( v ) && qnt > 2 );
+            if ( e.length )
+            {
+                console.log( `${sku} excluded` );
+                return;
+            }
+
+            for ( let c of columnData )
+            {
+                const ogColName = c[0];
+                if ( ogColName.includes( '+' ) )
+                {
+                    const tks = ogColName.split( '+' );
+                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
+                }
+                else
+                {
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row ) );
+                }
+            }
+            return lRow;
+        } ).filter( ( v ) => v !== undefined );
+
+        const tableWidget = new LX.Table( null, {
+            head: columnData.map( ( c ) => {
+                return c[1] ?? c[0];
+            } ),
+            body: tableData
+        }, {
+            selectable: false,
+            sortable: false,
+            toggleColumns: true,
+            filter: 'SKU del vendedor'
+        } );
+
+        dom.appendChild( tableWidget.root );
+
+        this.lastSeurColumnData = tableWidget.data.head;
+        this.lastShownSeurData = tableWidget.data.body;
+        this.lastSeurData = data;
+    }
+
     showSheinList( data )
     {
-        data = data ?? this.lastSheinData;
+        data = data ?? this.lastSeurData;
+
+        this.vendor = 'Shein';
 
         const dom = this.seurDataArea.root;
         while ( dom.children.length > 0 )
@@ -125,12 +266,12 @@ class SeurApp
 
         this.lastSeurColumnData = tableWidget.data.head;
         this.lastShownSeurData = tableWidget.data.body;
-        this.lastSheinData = data;
+        this.lastSeurData = data;
     }
 
     showGroupsByCountryList( ogData )
     {
-        ogData = ogData ?? this.lastSheinData;
+        ogData = ogData ?? this.lastSeurData;
 
         let data = LX.deepCopy( ogData );
 
@@ -182,7 +323,7 @@ class SeurApp
                     }
                 }
 
-                let value = colName == 'País' ? core.countryFormat[row[colName]] : row[colName];
+                let value = colName == 'País' ? this.core.countryFormat[row[colName]] : row[colName];
                 lRow.push( value ?? '' );
             }
             return lRow;
@@ -247,12 +388,10 @@ class SeurApp
                         }
                         const tsv = colData.map( ( r ) => r.join( '\t' ) ).join( '\n' );
                         navigator.clipboard.writeText( tsv ).then( () => {
-                            LX.toast( 'Hecho!', '✅ Columna copiada al portapapeles.', { timeout: 5000,
-                                position: 'top-center' } );
+                            LX.toast( 'Hecho!', '✅ Columna copiada al portapapeles.', { timeout: 5000, position: 'top-center' } );
                         } ).catch( ( err ) => {
                             console.error( 'Error copying text: ', err );
-                            LX.toast( 'Error', '❌ No se pudo copiar la columna.', { timeout: -1,
-                                position: 'top-center' } );
+                            LX.toast( 'Error', '❌ No se pudo copiar la columna.', { timeout: -1, position: 'top-center' } );
                         } );
                     }
                 }
@@ -281,21 +420,19 @@ class SeurApp
             el.remove();
         } );
 
-        if ( !this.lastSheinData || !this.lastSheinData.length )
+        if ( !this.lastSeurData || !this.lastSeurData.length )
         {
-            const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6',
-                `
+            const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6', `
                     <h1>No hay datos de SHEIN</h1>
                 `, dom );
             return;
         }
 
-        const row = this.lastSheinData[rowOffset];
+        const row = this.lastSeurData[rowOffset];
 
         if ( !row )
         {
-            const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6',
-                `
+            const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6', `
                     <h1>No hay más datos</h1>
                 `, dom );
             return;
@@ -303,9 +440,7 @@ class SeurApp
 
         const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6', `
                 <h2 class="flex flex-row items-center gap-1">Número del pedido: ${row['Número del pedido']}</h2>
-                <p class="font-light fg-tertiary" style="height:auto"><strong>${
-            row['Nombre del producto'] ?? 'Vacío'
-        }</strong></p>
+                <p class="font-light fg-tertiary" style="height:auto"><strong>${row['Nombre del producto'] ?? 'Vacío'}</strong></p>
                 <p class="font-light"><strong>SKU: ${row['SKU del vendedor'] ?? 'Vacío'}</strong> / <strong>${
             row['Especificación']
         }</strong></p>
@@ -345,8 +480,7 @@ class SeurApp
             {
                 const textToCopy = this.root.parentElement.childNodes[1].innerText;
                 navigator.clipboard.writeText( textToCopy ).then( () => {
-                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
-                        position: 'top-center' } );
+                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000, position: 'top-center' } );
                 } ).catch( ( err ) => {
                     console.error( 'Error copying text: ', err );
                     LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
@@ -369,8 +503,7 @@ class SeurApp
             {
                 const textToCopy = nPedidoH2.innerText.substring( nPedidoH2.innerText.indexOf( ': ' ) + 2 );
                 navigator.clipboard.writeText( textToCopy ).then( () => {
-                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000,
-                        position: 'top-center' } );
+                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000, position: 'top-center' } );
                 } ).catch( ( err ) => {
                     console.error( 'Error copying text: ', err );
                     LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
@@ -391,19 +524,19 @@ class SeurApp
         footerPanel.addButton( null, 'PrevButton', () => {
             this.showSingleSheinData( rowOffset - 1 );
         }, { width: '100px', icon: 'ArrowLeft', title: 'Anterior', tooltip: true, disabled: ( rowOffset === 0 ) } );
-        footerPanel.addText( null, `${( rowOffset + 1 )} / ${this.lastSheinData.length}`, null, { inputClass: 'bg-none',
-            width: '100px', disabled: true } );
+        footerPanel.addText( null, `${( rowOffset + 1 )} / ${this.lastSeurData.length}`, null, { inputClass: 'bg-none', width: '100px',
+            disabled: true } );
         footerPanel.addButton( null, 'NextButton', () => {
             this.showSingleSheinData( rowOffset + 1 );
         }, { width: '100px', icon: 'ArrowRight', title: 'Siguiente', tooltip: true,
-            disabled: ( rowOffset === ( this.lastSheinData.length - 1 ) ) } );
+            disabled: ( rowOffset === ( this.lastSeurData.length - 1 ) ) } );
 
         dom.appendChild( footerPanel.root );
     }
 
     exportSEUR( ignoreErrors = false, sheinData )
     {
-        const columnData = [
+        let columnData = [
             [ 'Número del pedido', null ],
             [ 'ID del artículo', null ],
             [ 'SKU del vendedor', null ],
@@ -417,7 +550,31 @@ class SeurApp
             [ 'Correo electrónico de usuario', null ]
         ];
 
-        const currentSheinData = sheinData ?? this.lastSheinData;
+        if ( this.vendor === 'Decathlon' )
+        {
+            columnData = [
+                [ 'Número de pedido', 'Número del pedido' ],
+                [ 'SKU del producto', 'ID del artículo' ],
+                [ 'SKU de Tienda', 'SKU del vendedor', ( str, row ) => {
+                    const qnt = row['Cantidad'];
+                    return `${row['SKU de Tienda']} x ${qnt}`;
+                } ],
+                [ 'Dirección de entrega: código postal', 'Código Postal' ],
+                [ 'Dirección de entrega: país', 'País', ( str, row ) => {
+                    const ctr = row['Dirección de entrega: país'];
+                    return this.core.countryFormat[ctr] ?? ctr;
+                } ],
+                [ 'Provincia', null, ( str, row ) => row['Dirección de entrega: provincia'] ?? '' ],
+                [ 'Dirección de entrega: ciudad', 'Ciudad' ],
+                [ 'Dirección de entrega: calle 1+Dirección de entrega: calle 2', 'Dirección' ],
+                [ 'Dirección de entrega: nombre de pila+Dirección de entrega: apellido', 'Nombre de usuario completo' ],
+                [ 'Dirección de entrega: teléfono', 'Número de Teléfono' ],
+                [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
+            ];
+        }
+
+        const currentSheinData = sheinData ?? this.lastSeurData;
+        const uid = columnData[0][0];
 
         // Process the xlsx first to detect empty fields
         if ( !ignoreErrors )
@@ -446,7 +603,10 @@ class SeurApp
             if ( errorFields.length )
             {
                 const dialog = new LX.Dialog( '❌ Solucionar errores', ( p ) => {
-                    p.root.classList.add( 'p-2' );
+                    p.root.classList.add( 'p-2', 'flex', 'flex-col' );
+
+                    const pTop = new LX.Panel();
+                    p.attach( pTop );
 
                     let columns = columnData.map( ( c ) => {
                         return c[0].split( '+' )[0];
@@ -456,24 +616,26 @@ class SeurApp
 
                     for ( const [ errIndex, errName ] of errorFields )
                     {
-                        p.addLabel( `No existe ${errName} (${fixedData[errIndex]['Número del pedido']})` );
+                        pTop.addLabel( `No existe ${errName} (${fixedData[errIndex][uid]})` );
                         const possibleIndex = columns.indexOf( errName );
-                        p.addSelect( errName, columns, columns[possibleIndex], ( v ) => {
+                        pTop.addSelect( errName, columns, columns[possibleIndex], ( v ) => {
                             fixedData[errIndex][errName] = fixedData[errIndex][v];
                         } );
                     }
 
-                    p.addSeparator();
-                    p.sameLine( 2 );
-                    p.addButton( null, 'Ignorar', () => {
+                    const pBottom = new LX.Panel( { height: 'auto' } );
+                    p.attach( pBottom );
+
+                    pBottom.sameLine( 2 );
+                    pBottom.addButton( null, 'Ignorar', () => {
                         dialog.close();
                         this.exportSEUR( true );
                     }, { width: '50%', buttonClass: 'bg-error fg-white' } );
-                    p.addButton( null, 'Exportar', () => {
+                    pBottom.addButton( null, 'Exportar', () => {
                         dialog.close();
                         this.exportSEUR( false, fixedData );
                     }, { width: '50%', buttonClass: 'contrast' } );
-                }, { modal: true } );
+                }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
 
                 return;
             }
@@ -483,12 +645,8 @@ class SeurApp
         const day = `${date.getDate()}`;
         const month = `${date.getMonth() + 1}`;
         const year = `${date.getFullYear()}`;
-        const todayStringDate = `${'0'.repeat( 2 - day.length )}${day}_${
-            '0'.repeat( 2 - month.length )
-        }${month}_${year}`;
-        const filename = `SEUR_${
-            core.tool.substring( 0, core.tool.indexOf( '-' ) ).toUpperCase()
-        }_${todayStringDate}.xlsx`;
+        const todayStringDate = `${'0'.repeat( 2 - day.length )}${day}_${'0'.repeat( 2 - month.length )}${month}_${year}`;
+        const filename = `SEUR_${this.core.tool.substring( 0, this.core.tool.indexOf( '-' ) ).toUpperCase()}_${todayStringDate}.xlsx`;
 
         let err = 0;
         let errMsg = '';
@@ -518,7 +676,7 @@ class SeurApp
             {
                 const ogColName = c[0];
 
-                if ( ogColName === 'Número del pedido' )
+                if ( ogColName === uid )
                 {
                     const orderNumber = row[ogColName];
 
@@ -540,7 +698,7 @@ class SeurApp
                     if ( !ignoreErrors && !row[tks[0]] )
                     {
                         err = 1;
-                        errMsg = `No existen direcciones válidas (${row['Número del pedido']}).`;
+                        errMsg = `No existen direcciones válidas (${row[uid]}).`;
                         return;
                     }
 
@@ -551,16 +709,16 @@ class SeurApp
                     if ( !ignoreErrors && !row[ogColName] )
                     {
                         err = 1;
-                        errMsg = `No existen datos de "${ogColName} (${row['Número del pedido']})".`;
+                        errMsg = `No existen datos de "${ogColName} (${row[uid]})".`;
                         return;
                     }
 
                     const fn = c[2] ?? ( ( str ) => str );
-                    lRow.push( fn( row[ogColName] ?? '' ) );
+                    lRow.push( fn( row[ogColName] ?? '', row ) );
                 }
             }
             return lRow;
-        } );
+        } ).filter( ( v ) => v !== undefined );
 
         if ( err === 1 )
         {
@@ -572,12 +730,13 @@ class SeurApp
 
         for ( const repeats of multipleItemsOrderNames )
         {
+            const skuIdx = data.indexOf( 'SKU del vendedor' );
             const rest = repeats.slice( 1 );
-            const trail = rest.reduce( ( p, c ) => p + ` + ${rows[c][2]}`, '' );
+            const trail = rest.reduce( ( p, c ) => p + ` + ${rows[c][skuIdx]}`, '' );
             rest.forEach( ( r ) => {
                 rows[r] = undefined;
             } );
-            rows[repeats[0]][2] += trail;
+            rows[repeats[0]][skuIdx] += trail;
         }
 
         rows = rows.filter( ( r ) => r !== undefined );
@@ -596,27 +755,26 @@ class SeurApp
 
         const worksheet = XLSX.utils.aoa_to_sheet( data );
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet( workbook, worksheet, core.sheetName ?? 'Sheet1' );
+        XLSX.utils.book_append_sheet( workbook, worksheet, this.core.sheetName ?? 'Sheet1' );
         XLSX.writeFile( workbook, filename );
 
         if ( !ignoreErrors )
         {
-            LX.toast( 'Hecho!', `✅ Datos exportados correctamente: ${filename}`, { timeout: 5000,
-                position: 'top-center' } );
+            LX.toast( 'Hecho!', `✅ Datos exportados correctamente: ${filename}`, { timeout: 5000, position: 'top-center' } );
         }
     }
 
     open( params )
     {
-        this.core.tool = params + '-seur';
-        this.core.setHeaderTitle( `Envíos SEUR: <i>${params}</i>`,
+        this.core.tool = 'seur';
+        this.core.setHeaderTitle( `Envíos SEUR: <i>Exportador Etiquetas</i>`,
             'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Truck' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 
     clear()
     {
-        delete this.lastSheinData;
+        delete this.lastSeurData;
         this.showSheinList( [] );
     }
 }

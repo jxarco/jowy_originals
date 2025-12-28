@@ -41,16 +41,19 @@ const core = {
         'pending': 'Pendiente de pago',
         'processing': 'Procesando',
         'on-hold': 'En espera',
+        'enviado': 'Enviado',
         'completed': 'Completado',
         'cancelled': 'Cancelado',
         'refunded': 'Reembolsado',
         'failed': 'Fallido',
-        'trash': 'Borrador'
+        'trash': 'Borrador',
+        'recordatorio-rese': '1a Reseña'
     },
     orderStatusColors: {
         'Pendiente de pago': { icon: 'HandCoins', bg: '#2563eb' },
         'Procesando': { icon: 'Loader', bg: '#272c31ff' },
         'En espera': { icon: 'Clock3', bg: '#ca8a04' },
+        'Enviado': { icon: 'PlaneTakeoff', bg: '#d5d5d5', fg: '#222' },
         'Completado': { icon: 'CheckCircle', bg: '#218118' },
         'Cancelado': { icon: 'Ban', bg: '#dc2626' },
         'Reembolsado': { icon: 'CircleDollarSign', bg: '#a21caf' },
@@ -106,9 +109,9 @@ const core = {
             {
                 this.openApp( this.cblTrackingApp );
             }
-            else if ( lastTool.includes( '-seur' ) )
+            else if ( lastTool.includes( 'seur' ) )
             {
-                this.openApp( this.seurApp, lastTool.substring( 0, lastTool.indexOf( '-' ) ) );
+                this.openApp( this.seurApp );
             }
             else if ( lastTool.includes( 'orders' ) )
             {
@@ -171,22 +174,65 @@ const core = {
                     reader.onload = function( e )
                     {
                         const data = e.target.result;
-                        const workbook = XLSX.read( data, { type: 'binary' } );
-                        core.sheetName = workbook.SheetNames[0];
-                        const sheet = workbook.Sheets[core.sheetName];
-                        if ( core.processData( XLSX.utils.sheet_to_json( sheet, { raw: false } ) ) )
+
+                        try
                         {
-                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000,
-                                position: 'top-center' } );
+                            const workbook = XLSX.read( data, { type: 'binary' } );
+                            core.sheetName = workbook.SheetNames[0];
+                            const sheet = workbook.Sheets[core.sheetName];
+                            if ( core.processData( XLSX.utils.sheet_to_json( sheet, { raw: false } ) ) )
+                            {
+                                LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
+                            }
+                        }
+                        catch ( e )
+                        {
+                            LX.toast( 'Error', '❌ No se pudo leer el archivo.', { timeout: -1, position: 'top-center' } );
                         }
                     };
 
                     // Read the data as binary
                     reader.readAsArrayBuffer( file );
                 }
+                else if ( file.name.endsWith( '.csv' ) )
+                {
+                    const reader = new FileReader();
+                    reader.onload = function( e )
+                    {
+                        const data = e.target.result.split( '\n' );
+                        const colData = data[0].split( ';' );
+                        const sheetData = [];
+
+                        for ( const l of data.slice( 1 ) )
+                        {
+                            if ( !l || !l.length )
+                            {
+                                continue;
+                            }
+
+                            const json = {};
+
+                            const rowData = l.split( ';' );
+
+                            colData.forEach( ( v, i ) => {
+                                json[v] = rowData[i];
+                            } );
+
+                            sheetData.push( json );
+                        }
+
+                        if ( core.processData( sheetData ) )
+                        {
+                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
+                        }
+                    };
+
+                    // Read the data as binary
+                    reader.readAsText( file );
+                }
                 else
                 {
-                    alert( 'Please drop a valid .xlsx file.' );
+                    alert( 'Please drop a valid .xlsx or .csv file.' );
                 }
             }
         } );
@@ -266,10 +312,9 @@ const core = {
 
             this.cblTrackingApp.showList( 'jowy', true, true );
         }
-        else if ( this.tool == 'Shein-seur' )
+        else if ( this.tool == 'seur' )
         {
-            this.seurApp.showSheinList( fileData );
-            this.seurApp.showGroupsByCountryList( fileData );
+            this.seurApp.openData( fileData );
         }
 
         if ( err !== null )
@@ -361,8 +406,7 @@ const core = {
             let store = this.data[compName].store;
             let spinner = null;
 
-            p.addText( 'URL Tienda', store, ( value, event ) => {}, { disabled: true, nameWidth: '30%',
-                skipReset: true } );
+            p.addText( 'URL Tienda', store, ( value, event ) => {}, { disabled: true, nameWidth: '30%', skipReset: true } );
             p.addText( 'Clave cliente', ck, ( value, event ) => {
                 ck = value;
             }, { nameWidth: '30%', skipReset: true, type: 'password' } );
@@ -390,8 +434,7 @@ const core = {
             }, { buttonClass: 'flex flex-row justify-center gap-2', skipReset: true } );
             p.addSeparator();
             p.addTextArea( null, '', null, { disabled: true, fitHeight: true, signal: '@login_errors' } );
-        }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true,
-            draggable: false } );
+        }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
     },
 
     async configureWooCommerce( compName, store, ck, cs )
@@ -415,8 +458,7 @@ const core = {
         return new LX.Dialog( title ?? 'Acción en curso, espere...', ( p ) => {
             let spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex p-2', svgClass: 'xxl animate-spin' } );
             p.attach( spinner );
-        }, { modal: true, position: [ 'calc(50% - 150px)', '250px' ], size: [ '300px', null ], closable: false,
-            draggable: false } );
+        }, { modal: true, position: [ 'calc(50% - 150px)', '250px' ], size: [ '300px', null ], closable: false, draggable: false } );
     },
 
     _request: function( request )
@@ -586,18 +628,18 @@ core.data['bathby'].template = ( id, url, transport ) => {
         { name: 'Seguimiento', callback: ( v, e ) => core.openApp( core.cblTrackingApp, v ) },
         {
             name: 'Seur',
-            submenu: [
-                { name: 'Shein', callback: ( v, e ) => core.openApp( core.seurApp, v ), icon: 'Strikethrough' },
-                { name: 'Decathlon', disabled: true, callback: ( v, e ) => core.openApp( core.seurApp, v ),
-                    icon: 'Volleyball' }
-            ]
+            callback: ( v, e ) => core.openApp( core.seurApp )
+            // submenu: [
+            //     { name: 'Shein', callback: ( v, e ) => core.openApp( core.seurApp, v ), icon: 'Strikethrough' },
+            //     { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.seurApp, v ),
+            //         icon: 'Volleyball' }
+            // ]
         },
         { name: 'Pedidos Web', callback: ( v, e ) => core.openApp( core.ordersApp, v ) },
         {
             name: 'Calculadoras',
             submenu: [
-                { name: 'Transporte', callback: ( v, e ) => core.openApp( core.transportCalculatorApp, v ),
-                    icon: 'Truck' },
+                { name: 'Transporte', callback: ( v, e ) => core.openApp( core.transportCalculatorApp, v ), icon: 'Truck' },
                 { name: 'Stock', disabled: true, callback: core.redirectToOAuth.bind( core ), icon: 'Boxes' }
             ]
         }

@@ -446,6 +446,13 @@ async function init( options = { } )
     this.modal.classList.add( 'hidden-opacity' );
     this.modal.toggle = function( force ) { this.classList.toggle( 'hidden-opacity', force ); };
 
+    function blockScroll(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    this.modal.addEventListener('wheel', blockScroll, { passive: false });
+    this.modal.addEventListener('touchmove', blockScroll, { passive: false });
+
     this.root = root;
     this.container = document.body;
 

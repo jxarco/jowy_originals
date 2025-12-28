@@ -18,11 +18,10 @@ class OrdersApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto',
-            className: 'bg-none bg-primary border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine( 3 );
-        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), { icon: 'Trash2',
-            title: 'Limpiar datos anteriores', tooltip: true } );
+        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), { icon: 'Trash2', title: 'Limpiar datos anteriores',
+            tooltip: true } );
         utilButtonsPanel.addNumber( null, this.ordersBeforeDays, ( v ) => {
             this.ordersBeforeDays = v;
         }, { step: 1, min: 1, max: 120, units: 'días', skipSlider: true } );
@@ -37,8 +36,7 @@ class OrdersApp
         {
             const jowyContainer = LX.makeContainer( [ null, 'auto' ],
                 'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'Jowy', jowyContainer, { selected: true,
-                onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
+            tabs.add( 'Jowy', jowyContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
             jowyContainer.appendChild( jowyArea.root );
@@ -49,8 +47,7 @@ class OrdersApp
         {
             const hxgContainer = LX.makeContainer( [ null, 'auto' ],
                 'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'HxG', hxgContainer, { xselected: true,
-                onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
+            tabs.add( 'HxG', hxgContainer, { xselected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const hxgArea = new LX.Area( { className: 'rounded-lg' } );
             hxgContainer.appendChild( hxgArea.root );
@@ -61,8 +58,7 @@ class OrdersApp
         {
             const bathbyContainer = LX.makeContainer( [ null, 'auto' ],
                 'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'Bathby', bathbyContainer, { xselected: true,
-                onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
+            tabs.add( 'Bathby', bathbyContainer, { xselected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const bathbyArea = new LX.Area( { className: 'rounded-lg' } );
             bathbyContainer.appendChild( bathbyArea.root );
@@ -112,8 +108,8 @@ class OrdersApp
         const r = await wcc.getAllOrdersByFilter( after, before, [ 'processing', 'on-hold' ] );
         console.log( r );
 
-        core.setHeaderTitle( `Salida Stock (Web): <i>${name}</i>`,
-            `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`, 'PackagePlus' );
+        core.setHeaderTitle( `Salida Stock (Web): <i>${name}</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`,
+            'PackagePlus' );
 
         dialog.destroy();
 
@@ -223,8 +219,7 @@ class OrdersApp
                         const tsv = data.join( '\t' );
                         // console.log(tsv)
                         navigator.clipboard.writeText( tsv ).then( () => {
-                            LX.toast( 'Hecho!', `✅ "${tsv}" copiado al portapapeles.`, { timeout: 5000,
-                                position: 'top-center' } );
+                            LX.toast( 'Hecho!', `✅ "${tsv}" copiado al portapapeles.`, { timeout: 5000, position: 'top-center' } );
                         } ).catch( ( err ) => {
                             console.error( 'Error copying text: ', err );
                             LX.toast( 'Error', '❌ No se pudo copiar.', { timeout: -1, position: 'top-center' } );
