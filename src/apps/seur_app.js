@@ -73,6 +73,7 @@ class SeurApp
         else
         {
             this.showDecathlonList( fileData );
+            this.showGroupsByCountryList( fileData );
         }
     }
 
@@ -274,7 +275,7 @@ class SeurApp
             } );
         }
 
-        const columnData = [
+        let columnData = [
             [ 'SKU del vendedor', null ],
             [ 'Cantidad', null ],
             [ 'País', null ],
@@ -282,6 +283,21 @@ class SeurApp
             [ 'Número del pedido', null ]
         ];
 
+        if ( this.vendor === 'Decathlon' )
+        {
+            columnData = [
+                [ 'SKU de Tienda', 'SKU del vendedor' ],
+                [ 'Cantidad', null ],
+                [ 'Dirección de entrega: país', 'País', ( str, row ) => {
+                    const ctr = row['Dirección de entrega: país'];
+                    return this.core.countryFormat[ctr] ?? ctr;
+                } ],
+                [ 'Observaciones', null ],
+                [ 'Número de pedido', 'Número del pedido' ],
+            ];
+        }
+
+        const uid = columnData[4][0];
         const orderNumbers = new Map();
 
         // Create table data from the list
@@ -291,7 +307,7 @@ class SeurApp
             {
                 let colName = c[0];
 
-                if ( colName === 'Número del pedido' )
+                if ( colName === uid )
                 {
                     const orderNumber = row[colName];
 
@@ -306,8 +322,8 @@ class SeurApp
                     }
                 }
 
-                let value = colName == 'País' ? this.core.countryFormat[row[colName]] : row[colName];
-                lRow.push( value ?? '' );
+                const fn = c[2] ?? ( ( str ) => str );
+                lRow.push( fn( row[colName] ?? '', row ) ?? '' );
             }
             return lRow;
         } );
@@ -759,6 +775,7 @@ class SeurApp
     {
         delete this.lastSeurData;
         this.showSheinList( [] );
+        this.showDecathlonList( [] );
     }
 }
 
