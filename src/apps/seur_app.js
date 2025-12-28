@@ -142,23 +142,6 @@ class SeurApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            const qnt = row['Cantidad'];
-            const sku = row['SKU de Tienda'];
-
-            let e = EXCLUDE.filter( ( v ) => sku.startsWith( v ) );
-            if ( e.length )
-            {
-                console.log( `${sku} excluded` );
-                return;
-            }
-
-            e = EXCLUDE_IF.filter( ( v ) => sku.startsWith( v ) && qnt > 2 );
-            if ( e.length )
-            {
-                console.log( `${sku} excluded` );
-                return;
-            }
-
             for ( let c of columnData )
             {
                 const ogColName = c[0];
