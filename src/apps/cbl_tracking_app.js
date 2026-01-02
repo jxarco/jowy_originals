@@ -778,6 +778,11 @@ class CblTrackingApp
             }
             this.showMessages( compName, nRo );
         }, { width: '100px', icon: 'ArrowRightToLine', title: 'Siguiente (con #Pedido)', tooltip: true } );
+
+        const currentMsg = `${rowOffset + 1}/${list.length}`;
+        footerPanel.addText( null, currentMsg, null, { disabled: true, inputClass: 'w-fit bg-none' } );
+        dom.appendChild( footerPanel.root );
+
         dom.appendChild( footerPanel.root );
 
         footerPanel.endLine();
