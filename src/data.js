@@ -46,15 +46,15 @@ export const Data = {
         'RT15A': { 'height': 0.50, 'width': 0.50, 'depth': 0.15, 'weight': 5 },
         'RT15LA': { 'height': 0.100, 'width': 0.100, 'depth': 0.15, 'weight': 14 },
         'T60': { 'height': 0.61, 'width': 0.61, 'depth': 0.04, 'weight': 2 },
-        'DF20': { 'height': 1.07, 'width': 1.07, 'depth': 0.02, 'weight': 2 },
-        'DF25': { 'height': 1.07, 'width': 1.07, 'depth': 0.025, 'weight': 3 },
-        'DF30': { 'height': 1.07, 'width': 1.07, 'depth': 0.03, 'weight': 3 },
-        'DF40': { 'height': 1.07, 'width': 1.07, 'depth': 0.04, 'weight': 4 },
-        'DS25': { 'height': 1.07, 'width': 1.07, 'depth': 0.025, 'weight': 3 },
+        'DF20': { 'height': 1.06, 'width': 1.06, 'depth': 0.02, 'weight': 2 },
+        'DF25': { 'height': 1.06, 'width': 1.06, 'depth': 0.025, 'weight': 3 },
+        'DF30': { 'height': 1.06, 'width': 1.06, 'depth': 0.03, 'weight': 3 },
+        'DF40': { 'height': 1.06, 'width': 1.06, 'depth': 0.04, 'weight': 4 },
+        'DS25': { 'height': 1.06, 'width': 1.06, 'depth': 0.025, 'weight': 3 },
 
-        'DT20': { 'height': 1.07, 'width': 1.07, 'depth': 0.02, 'weight': 2 },
-        'DT25': { 'height': 1.07, 'width': 1.07, 'depth': 0.025, 'weight': 3 },
-        'DT40': { 'height': 1.07, 'width': 1.07, 'depth': 0.04, 'weight': 4 },
+        'DT20': { 'height': 1.06, 'width': 1.06, 'depth': 0.02, 'weight': 2 },
+        'DT25': { 'height': 1.06, 'width': 1.06, 'depth': 0.025, 'weight': 3 },
+        'DT40': { 'height': 1.06, 'width': 1.06, 'depth': 0.04, 'weight': 4 },
 
         'SM75A': { 'height': 0.75, 'width': 0.08, 'depth': 0.08, 'weight': 1 },
         'BBS': { 'height': 0.22, 'width': 0.22, 'depth': 0.34, 'weight': 1 },
@@ -71,7 +71,8 @@ export const Data = {
         'TK05B': { 'height': 0.16, 'width': 0.10, 'depth': 0.3, 'weight': 0 },
         'JR179': { 'height': 0.19, 'width': 0.13, 'depth': 0.1, 'weight': 0 },
         'JR180': { 'height': 0.19, 'width': 0.13, 'depth': 0.1, 'weight': 0 },
-        'FFS30M': { 'height': 0.20, 'width': 0.8, 'depth': 0.3, 'weight': 0 }
+        'FFS30M': { 'height': 0.020, 'width': 0.08, 'depth': 0.03, 'weight': 0 },
+
     },
     'zoneRules': {
         'España': [
