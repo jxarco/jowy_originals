@@ -58,7 +58,8 @@ const core = {
         'Cancelado': { icon: 'Ban', bg: '#dc2626' },
         'Reembolsado': { icon: 'CircleDollarSign', bg: '#a21caf' },
         'Fallido': { icon: 'CircleX', bg: '#dc2626' },
-        'Borrador': { icon: 'FileText', bg: '#0d9488' }
+        'Borrador': { icon: 'FileText', bg: '#0d9488' },
+        '1a Reseña': { icon: 'Star', bg: '#FFC844', fg: '#222' },
     },
     trackStatusColors: {
         'Documentada': { icon: 'File', bg: '#272c31ff' },

@@ -46,7 +46,12 @@ class CblTrackingApp
                     callback: () => this.openSelectedOrders()
                 },
                 {
-                    name: 'Completar pedidos',
+                    name: 'Marcar como Enviado',
+                    icon: 'PlaneTakeoff',
+                    callback: () => this.markSelectedOrdersAsSent()
+                },
+                {
+                    name: 'Marcar como Completado',
                     icon: 'CheckCircle',
                     callback: () => this.markSelectedOrdersAsCompleted()
                 },
@@ -291,14 +296,25 @@ class CblTrackingApp
                     }
                 ];
 
+                if ( ( orderNumber !== '' ) && ( this.orders[orderNumber]?.status === 'processing' || this.orders[orderNumber]?.status === 'on-hold' ) )
+                {
+                    options.push( null, {
+                        icon: 'PlaneTakeoff',
+                        name: 'Marcar como Enviado',
+                        callback: ( name ) => {
+                            this.updateOrderStatus( index, wcc, orderNumber, 'enviado' );
+                        }
+                    } );
+                }
+
                 if ( ( orderNumber !== '' ) && ( status == 'Entregada' )
-                    && ( this.orders[orderNumber]?.status === 'processing' ) )
+                    && ( this.orders[orderNumber]?.status === 'enviado' || this.orders[orderNumber]?.status === 'recordatorio-rese' ) )
                 {
                     options.push( null, {
                         icon: 'CheckCircle',
-                        name: 'Completar Pedido',
+                        name: 'Marcar como Completado',
                         callback: ( name ) => {
-                            this.markOrderAsCompleted( this.dataTable, index, wcc, orderNumber );
+                            this.updateOrderStatus( index, wcc, orderNumber, 'completed' );
                         }
                     } );
                 }
@@ -310,7 +326,7 @@ class CblTrackingApp
         dom.appendChild( this.dataTable.root );
     }
 
-    async markSelectedOrdersAsCompleted()
+    async markSelectedOrdersAsSent()
     {
         const core = this.core;
         const compData = core.data[core.compName];
@@ -321,26 +337,24 @@ class CblTrackingApp
             return;
         }
 
-        const newStatus = 'completed';
+        const newStatus = 'enviado';
         const selectedOrders = this.dataTable.getSelectedRows();
         const orderUpdates = selectedOrders.map( ( row ) => {
             const orderNumber = row[this.dataTable.data.head.indexOf( 'NPEDIDO' )] ?? '';
-            const status = LX.stripTags( row[this.dataTable.data.head.indexOf( 'SITUACIÓN' )] ) ?? '';
-            if ( ( !orderNumber.length ) || ( this.orders[orderNumber]?.status !== 'processing' )
-                || ( status !== 'Entregada' ) ) return;
+            if ( ( !orderNumber.length ) || ( this.orders[orderNumber]?.status !== 'processing' && this.orders[orderNumber]?.status !== 'on-hold' ) ) return;
             return { id: orderNumber, status: newStatus };
         } ).filter( ( l ) => l !== undefined );
 
         if ( !orderUpdates.length )
         {
-            LX.toast( 'Error', '❌ No hay pedidos por completar.', { timeout: -1, position: 'top-center' } );
+            LX.toast( 'Error', '❌ No hay pedidos para actualizar.', { timeout: -1, position: 'top-center' } );
             return;
         }
 
-        const dialogClosable = new LX.Dialog( 'Completar Pedido', ( dialogPanel ) => {
+        const dialogClosable = new LX.Dialog( 'Actualizar estado de pedidos', ( dialogPanel ) => {
             let spinner = null;
             dialogPanel.addTextArea( null,
-                `Vas a completar los siguientes pedido en WooCommerce:\n\n${
+                `Vas a marcar como Enviados los siguientes pedidos en WooCommerce:\n\n${
                     orderUpdates.map( ( v ) => v.id ).join( '\n' )
                 }\n\n¿Quieres continuar?`, null, { fitHeight: true, disabled: true } );
             dialogPanel.addSeparator();
@@ -380,7 +394,7 @@ class CblTrackingApp
 
                 this.dataTable.refresh();
 
-                LX.toast( `Hecho!`, `✅ Pedidos ${orderUpdates.map( ( v ) => v.id ).join( ', ' )} completados con éxito.`, {
+                LX.toast( `Hecho!`, `✅ Pedidos ${orderUpdates.map( ( v ) => v.id ).join( ', ' )} actualizados con éxito.`, {
                     timeout: 5000,
                     position: 'top-center'
                 } );
@@ -390,11 +404,92 @@ class CblTrackingApp
         }, { position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
     }
 
-    async markOrderAsCompleted( index, wcc, orderNumber )
+    async markSelectedOrdersAsCompleted()
     {
         const core = this.core;
-        const dialogClosable = new LX.Dialog( 'Completar Pedido', ( dialogPanel ) => {
-            dialogPanel.addTextArea( null, `Vas a completar el pedido ${orderNumber} en WooCommerce. ¿Quieres continuar?`, null, {
+        const compData = core.data[core.compName];
+        const wcc = compData.wcc;
+        if ( !wcc.connected )
+        {
+            core.openWooCommerceLogin();
+            return;
+        }
+
+        const newStatus = 'completed';
+        const selectedOrders = this.dataTable.getSelectedRows();
+        const orderUpdates = selectedOrders.map( ( row ) => {
+            const orderNumber = row[this.dataTable.data.head.indexOf( 'NPEDIDO' )] ?? '';
+            const status = LX.stripTags( row[this.dataTable.data.head.indexOf( 'SITUACIÓN' )] ) ?? '';
+            if ( ( !orderNumber.length ) || ( this.orders[orderNumber]?.status !== 'enviado' && this.orders[orderNumber]?.status !== 'recordatorio-rese' )
+                || ( status !== 'Entregada' ) ) return;
+            return { id: orderNumber, status: newStatus };
+        } ).filter( ( l ) => l !== undefined );
+
+        if ( !orderUpdates.length )
+        {
+            LX.toast( 'Error', '❌ No hay pedidos para actualizar.', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
+        const dialogClosable = new LX.Dialog( 'Actualizar estado de pedidos', ( dialogPanel ) => {
+            let spinner = null;
+            dialogPanel.addTextArea( null,
+                `Vas a marcar como Completados los siguientes pedidos en WooCommerce:\n\n${
+                    orderUpdates.map( ( v ) => v.id ).join( '\n' )
+                }\n\n¿Quieres continuar?`, null, { fitHeight: true, disabled: true } );
+            dialogPanel.addSeparator();
+            dialogPanel.sameLine( 2, 'justify-right mt-2' );
+            dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'fg-error' } );
+            const continueButton = dialogPanel.addButton( null, 'Continuar', async () => {
+                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'fg-contrast md animate-spin' } );
+                continueButton.root.querySelector( 'button' ).prepend( spinner );
+                const r = await wcc.batchUpdateOrders( orderUpdates );
+
+                dialogClosable.close();
+
+                if ( !r.ok )
+                {
+                    LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
+                    return;
+                }
+
+                selectedOrders.forEach( ( row ) => {
+                    const id = row[0];
+                    const index = this.dataTable.data.body.indexOf( row );
+                    this.orders[id].status = newStatus;
+
+                    const str = core.orderStatus[newStatus];
+                    const status = core.orderStatusColors[str] ?? {};
+                    let iconStr = status.icon
+                        ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
+                            .innerHTML
+                        : '';
+                    const newData = `${
+                        LX.badge( iconStr + str, 'text-sm font-bold border-none ', {
+                            style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
+                        } )
+                    }`;
+                    this.dataTable.data.body[index][this.dataTable.data.head.indexOf( 'ESTADO' )] = newData;
+                } );
+
+                this.dataTable.refresh();
+
+                LX.toast( `Hecho!`, `✅ Pedidos ${orderUpdates.map( ( v ) => v.id ).join( ', ' )} actualizados con éxito.`, {
+                    timeout: 5000,
+                    position: 'top-center'
+                } );
+
+                dialogClosable.close();
+            }, { buttonClass: 'contrast flex flex-row justify-center gap-2' } );
+        }, { position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
+    }
+
+    async updateOrderStatus( index, wcc, orderNumber, newStatus )
+    {
+        const core = this.core;
+        const statusName = core.orderStatus[newStatus] ?? 'ERROR';
+        const dialogClosable = new LX.Dialog( 'Actualizar Pedido', ( dialogPanel ) => {
+            dialogPanel.addTextArea( null, `Vas a marcar el pedido ${orderNumber} como ${statusName} en WooCommerce. ¿Quieres continuar?`, null, {
                 fitHeight: true,
                 disabled: true
             } );
@@ -404,15 +499,10 @@ class CblTrackingApp
             dialogPanel.addButton( null, 'Continuar', async () => {
                 dialogClosable.close();
 
-                // orderNumber = 4529;
-
-                const newStatus = 'completed';
                 const dialog = core.makeLoadingDialog();
                 const r = await wcc.updateOrderStatus( orderNumber, newStatus );
 
                 dialog.destroy();
-
-                // console.log(r)
 
                 if ( !r.ok )
                 {
@@ -422,11 +512,22 @@ class CblTrackingApp
 
                 const scrollLeft = this.dataTable.root.querySelector( 'table' ).scrollLeft;
                 this.orders[orderNumber].status = newStatus;
-                this.dataTable.data.body[index][this.dataTable.data.head.indexOf( 'ESTADO' )] = core.orderStatus[newStatus];
+
+                const status = core.orderStatusColors[statusName] ?? {};
+                let iconStr = status.icon
+                    ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
+                        .innerHTML
+                    : '';
+                const newData = `${
+                    LX.badge( iconStr + statusName, 'text-sm font-bold border-none ', {
+                        style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
+                    } )
+                }`;
+                this.dataTable.data.body[index][this.dataTable.data.head.indexOf( 'ESTADO' )] = newData;
                 this.dataTable.refresh();
                 this.dataTable.root.querySelector( 'table' ).scrollLeft = scrollLeft;
 
-                LX.toast( `Hecho!`, `✅ Pedido ${orderNumber} completado con éxito.`, { timeout: 5000, position: 'top-center' } );
+                LX.toast( `Hecho!`, `✅ Pedido ${orderNumber} actualizado con éxito.`, { timeout: 5000, position: 'top-center' } );
             }, { buttonClass: 'contrast' } );
         }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
     }
