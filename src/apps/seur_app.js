@@ -1,5 +1,41 @@
 import { LX } from 'lexgui';
 
+const SHEIN_COLUMN_DATA = [
+    [ 'Número del pedido', null ],
+    [ 'ID del artículo', null ],
+    [ 'SKU del vendedor', null ],
+    [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
+    [ 'País', null, ( str, row ) => {
+        return core.countryFormat[str] ?? str;
+    } ],
+    [ 'Provincia', null ],
+    [ 'Ciudad', null ],
+    [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
+    [ 'Nombre de usuario completo', null ],
+    [ 'Número de Teléfono', null ],
+    [ 'Correo electrónico de usuario', null ]
+];
+
+const DECATHLON_COLUMN_DATA = [
+    [ 'Número de pedido', 'Número del pedido' ],
+    [ 'SKU del producto', 'ID del artículo' ],
+    [ 'SKU de Tienda', 'SKU del vendedor', ( str, row ) => {
+        const qnt = row['Cantidad'];
+        return `${row['SKU de Tienda']} x ${qnt}`;
+    } ],
+    [ 'Dirección de entrega: código postal', 'Código Postal' ],
+    [ 'Dirección de entrega: país', 'País', ( str, row ) => {
+        const ctr = row['Dirección de entrega: país'];
+        return core.countryFormat[ctr] ?? ctr;
+    } ],
+    [ 'Provincia', null, ( str, row ) => row['Dirección de entrega: provincia'] ?? '' ],
+    [ 'Dirección de entrega: ciudad', 'Ciudad' ],
+    [ 'Dirección de entrega: calle 1+Dirección de entrega: calle 2', 'Dirección' ],
+    [ 'Dirección de entrega: nombre de pila+Dirección de entrega: apellido', 'Nombre de usuario completo' ],
+    [ 'Dirección de entrega: teléfono', 'Número de Teléfono' ],
+    [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
+];
+
 class SeurApp
 {
     constructor( core )
@@ -96,54 +132,10 @@ class SeurApp
             } );
         }
 
-        const columnData = [
-            [ 'Número de pedido', 'Número del pedido' ],
-            [ 'SKU del producto', 'ID del artículo' ],
-            [ 'SKU de Tienda', 'SKU del vendedor', ( str, row ) => {
-                const qnt = row['Cantidad'];
-                return `${row['SKU de Tienda']} x ${qnt}`;
-            } ],
-            [ 'Dirección de entrega: código postal', 'Código Postal' ],
-            [ 'Dirección de entrega: país', 'País', ( str, row ) => {
-                const ctr = row['Dirección de entrega: país'];
-                return this.core.countryFormat[ctr] ?? ctr;
-            } ],
-            [ 'Provincia', null, ( str, row ) => row['Dirección de entrega: provincia'] ?? '' ],
-            [ 'Dirección de entrega: ciudad', 'Ciudad' ],
-            [ 'Dirección de entrega: calle 1+Dirección de entrega: calle 2', 'Dirección' ],
-            [ 'Dirección de entrega: nombre de pila+Dirección de entrega: apellido', 'Nombre de usuario completo' ],
-            [ 'Dirección de entrega: teléfono', 'Número de Teléfono' ],
-            [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
-        ];
-
-        // exclude
-        // const EXCLUDE = [ 'JW-DT40', 'JW-DF40', 'HG-AD24', 'HG-AD40' ];
-        // const EXCLUDE_IF = [ 'JW-DT20', 'JW-DT25', 'JW-DF20', 'JW-DF25', 'JW-DF30', 'JW-DS25', 'HG-BPB02' ];
-        // data = data.filter( ( row ) => {
-        //     const qnt = row['Cantidad'];
-        //     const sku = row['SKU de Tienda'];
-
-        //     let e = EXCLUDE.filter( v => sku.startsWith( v ) );
-        //     if( e.length )
-        //     {
-        //         console.log( `${ sku } excluded` );
-        //         return false;
-        //     }
-
-        //     e = EXCLUDE_IF.filter( v => sku.startsWith( v ) && qnt > 2 );
-        //     if( e.length )
-        //     {
-        //         console.log( `${ sku } excluded` );
-        //         return false;
-        //     }
-
-        //     return true;
-        // } );
-
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of columnData )
+            for ( let c of DECATHLON_COLUMN_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -161,12 +153,12 @@ class SeurApp
         } ).filter( ( v ) => v !== undefined );
 
         const tableWidget = new LX.Table( null, {
-            head: columnData.map( ( c ) => {
+            head: DECATHLON_COLUMN_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
         }, {
-            selectable: false,
+            selectable: true,
             sortable: false,
             toggleColumns: true,
             filter: 'SKU del vendedor'
@@ -198,29 +190,10 @@ class SeurApp
             } );
         }
 
-        const columnData = [
-            [ 'Número del pedido', null ],
-            [ 'ID del artículo', null ],
-            [ 'SKU del vendedor', null ],
-            // [ "Nombre del producto", null ],
-            // [ "Especificación", null ],
-            // [ "precio de los productos básicos", null ],
-            [ 'Código Postal', null ],
-            [ 'País', null, ( str, row ) => {
-                return this.core.countryFormat[str] ?? str;
-            } ],
-            [ 'Provincia', null ],
-            [ 'Ciudad', null ],
-            [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
-            [ 'Nombre de usuario completo', null ],
-            [ 'Número de Teléfono', null ],
-            [ 'Correo electrónico de usuario', null ]
-        ];
-
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of columnData )
+            for ( let c of SHEIN_COLUMN_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -238,12 +211,12 @@ class SeurApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: columnData.map( ( c ) => {
+            head: SHEIN_COLUMN_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
         }, {
-            selectable: false,
+            selectable: true,
             sortable: false,
             toggleColumns: true,
             filter: 'SKU del vendedor'
@@ -298,7 +271,7 @@ class SeurApp
                     return this.core.countryFormat[ctr] ?? ctr;
                 } ],
                 [ 'Observaciones', null ],
-                [ 'Número de pedido', 'Número del pedido' ],
+                [ 'Número de pedido', 'Número del pedido' ]
             ];
         }
 
@@ -368,6 +341,15 @@ class SeurApp
             {
                 const idx = skus[sku][0];
                 listSKU[idx][1] += 1;
+            }
+        }
+
+        for ( let row of listSKU )
+        {
+            const sku = row[0];
+            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) && row[3] !== 'Mismo pedido' )
+            {
+                row[1] *= 4;
             }
         }
 
@@ -540,44 +522,7 @@ class SeurApp
 
     exportSEUR( ignoreErrors = false, sheinData )
     {
-        let columnData = [
-            [ 'Número del pedido', null ],
-            [ 'ID del artículo', null ],
-            [ 'SKU del vendedor', null ],
-            [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-            [ 'País', null, ( str, row ) => {
-                return this.core.countryFormat[str] ?? str;
-            } ],
-            [ 'Provincia', null ],
-            [ 'Ciudad', null ],
-            [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
-            [ 'Nombre de usuario completo', null ],
-            [ 'Número de Teléfono', null ],
-            [ 'Correo electrónico de usuario', null ]
-        ];
-
-        if ( this.vendor === 'Decathlon' )
-        {
-            columnData = [
-                [ 'Número de pedido', 'Número del pedido' ],
-                [ 'SKU del producto', 'ID del artículo' ],
-                [ 'SKU de Tienda', 'SKU del vendedor', ( str, row ) => {
-                    const qnt = row['Cantidad'];
-                    return `${row['SKU de Tienda']} x ${qnt}`;
-                } ],
-                [ 'Dirección de entrega: código postal', 'Código Postal' ],
-                [ 'Dirección de entrega: país', 'País', ( str, row ) => {
-                    const ctr = row['Dirección de entrega: país'];
-                    return this.core.countryFormat[ctr] ?? ctr;
-                } ],
-                [ 'Provincia', null, ( str, row ) => row['Dirección de entrega: provincia'] ?? '' ],
-                [ 'Dirección de entrega: ciudad', 'Ciudad' ],
-                [ 'Dirección de entrega: calle 1+Dirección de entrega: calle 2', 'Dirección' ],
-                [ 'Dirección de entrega: nombre de pila+Dirección de entrega: apellido', 'Nombre de usuario completo' ],
-                [ 'Dirección de entrega: teléfono', 'Número de Teléfono' ],
-                [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
-            ];
-        }
+        let columnData = ( this.vendor === 'Decathlon' ) ? DECATHLON_COLUMN_DATA : SHEIN_COLUMN_DATA;
 
         const currentSheinData = sheinData ?? this.lastSeurData;
         const uid = columnData[0][0];

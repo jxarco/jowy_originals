@@ -103,7 +103,8 @@ class TransportCalculatorApp
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-bottom p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
-        utilButtonsPanel.addButton(null, "AddCalc", this.openNewCalcDialog.bind( this ), { className: 'w-fit', icon: "Plus", title: "Cálculo personalizado", tooltip: true });
+        utilButtonsPanel.addButton( null, 'AddCalc', this.openNewCalcDialog.bind( this ), { className: 'w-fit', icon: 'Plus',
+            title: 'Cálculo personalizado', tooltip: true } );
         utilButtonsPanel.addSelect( 'Ref', Object.keys( Data.sku ), this.sku, ( v ) => {
             this.sku = v;
         }, { xclassName: 'w-full', filter: true, overflowContainer: null, skipReset: true, emptyMsg: 'No hay resultados.' } );
@@ -594,7 +595,6 @@ class TransportCalculatorApp
     {
         const core = this.core;
         const dialogClosable = new LX.Dialog( 'Nuevo cálculo personalizado', ( dialogPanel ) => {
-            
             dialogPanel.root.className += ' bg-primary border-none p-2';
 
             let height = 0, width = 0, depth = 0, weight = 0;
@@ -602,21 +602,21 @@ class TransportCalculatorApp
             dialogPanel.sameLine();
             dialogPanel.addText( 'Alto', height, ( value, event ) => {
                 height = value;
-               this.updateTransports( width, height, depth, weight, left, right );
+                this.updateTransports( width, height, depth, weight, left, right );
             }, { skipReset: true, trigger: 'input', placeholder: '0' } );
             dialogPanel.addText( 'Ancho', width, ( value, event ) => {
                 width = value;
-               this.updateTransports( width, height, depth, weight, left, right );
+                this.updateTransports( width, height, depth, weight, left, right );
             }, { skipReset: true, trigger: 'input', placeholder: '0' } );
             dialogPanel.addText( 'Largo', depth, ( value, event ) => {
                 depth = value;
-               this.updateTransports( width, height, depth, weight, left, right );
+                this.updateTransports( width, height, depth, weight, left, right );
             }, { skipReset: true, trigger: 'input', placeholder: '0' } );
             dialogPanel.addText( 'Peso', weight, ( value, event ) => {
                 weight = value;
-               this.updateTransports( width, height, depth, weight, left, right );
+                this.updateTransports( width, height, depth, weight, left, right );
             }, { skipReset: true, trigger: 'input', placeholder: '0' } );
-            dialogPanel.addButton( null, "RefreshButton", () => {
+            dialogPanel.addButton( null, 'RefreshButton', () => {
                 this.updateTransports( width, height, depth, weight, left, right );
             }, { icon: 'RefreshCw', title: 'Actualizar cálculo', className: 'self-center' } );
             dialogPanel.endLine();
@@ -625,8 +625,6 @@ class TransportCalculatorApp
             const dialogArea = new LX.Area( { className: 'mt-2 gap-2' } );
             dialogPanel.attach( dialogArea.root );
             const [ left, right ] = dialogArea.split( { type: 'horizontal', sizes: [ '50%', '50%' ], resize: false } );
-
-           
         }, { position: [ '10%', '250px' ], size: [ '80%', null ], closable: true, draggable: false } );
     }
 

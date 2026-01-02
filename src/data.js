@@ -72,8 +72,7 @@ export const Data = {
         'TK05B': { 'height': 0.16, 'width': 0.10, 'depth': 0.3, 'weight': 0 },
         'JR179': { 'height': 0.19, 'width': 0.13, 'depth': 0.1, 'weight': 0 },
         'JR180': { 'height': 0.19, 'width': 0.13, 'depth': 0.1, 'weight': 0 },
-        'FFS30M': { 'height': 0.020, 'width': 0.08, 'depth': 0.03, 'weight': 0 },
-
+        'FFS30M': { 'height': 0.020, 'width': 0.08, 'depth': 0.03, 'weight': 0 }
     },
     'zoneRules': {
         'España': [

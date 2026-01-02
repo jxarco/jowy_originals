@@ -187,7 +187,7 @@ const core = {
                         }
                         catch ( e )
                         {
-                            LX.toast( 'Error', '❌ No se pudo leer el archivo.', { timeout: -1, position: 'top-center' } );
+                            LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
                         }
                     };
 
