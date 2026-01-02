@@ -206,7 +206,9 @@ class SeurApp
             // [ "Especificación", null ],
             // [ "precio de los productos básicos", null ],
             [ 'Código Postal', null ],
-            [ 'País', null ],
+            [ 'País', null, ( str, row ) => {
+                return this.core.countryFormat[str] ?? str;
+            } ],
             [ 'Provincia', null ],
             [ 'Ciudad', null ],
             [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
@@ -228,7 +230,8 @@ class SeurApp
                 }
                 else
                 {
-                    lRow.push( row[ogColName] ?? '?' );
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row ) );
                 }
             }
             return lRow;
@@ -278,7 +281,9 @@ class SeurApp
         let columnData = [
             [ 'SKU del vendedor', null ],
             [ 'Cantidad', null ],
-            [ 'País', null ],
+            [ 'País', null, ( str, row ) => {
+                return this.core.countryFormat[str] ?? str;
+            } ],
             [ 'Observaciones', null ],
             [ 'Número del pedido', null ]
         ];
@@ -540,7 +545,9 @@ class SeurApp
             [ 'ID del artículo', null ],
             [ 'SKU del vendedor', null ],
             [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-            [ 'País', null ],
+            [ 'País', null, ( str, row ) => {
+                return this.core.countryFormat[str] ?? str;
+            } ],
             [ 'Provincia', null ],
             [ 'Ciudad', null ],
             [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
