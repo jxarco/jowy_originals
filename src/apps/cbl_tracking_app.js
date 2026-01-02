@@ -600,7 +600,9 @@ class CblTrackingApp
 
         // Invoice data
 
-        if ( hasOrderNumber && !this.orders[orderNumber] )
+        const order = this.orders[orderNumber];
+
+        if ( hasOrderNumber && !order )
         {
             hasOrderNumber = false;
             LX.toast( 'Error', `❌ Número de pedido ${orderNumber} inválido.`, { timeout: -1, position: 'top-center' } );
@@ -612,7 +614,7 @@ class CblTrackingApp
             const invoicePanel = new LX.Panel( { width: '50%', className: 'p-0' } );
             invoiceContainer.appendChild( invoicePanel.root );
 
-            const orderInvoice = await wcc.getInvoice( orderNumber, this.orders[orderNumber] );
+            const orderInvoice = await wcc.getInvoice( orderNumber, order );
             const date = new Date();
             let invoiceNumber = '', invoiceDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
             let customerNote = true;
@@ -651,7 +653,7 @@ class CblTrackingApp
                         dialogPanel.addSeparator();
                         dialogPanel.addCheckbox( 'Añadir nota de seguimiento', customerNote, ( v ) => {
                             customerNote = v;
-                        }, { disabled: false, nameWidth: '60%', className: 'text-lg fg-tertiary' } );
+                        }, { disabled: false, nameWidth: '60%', className: 'contrast text-lg' } );
                         dialogPanel.sameLine( 2, 'justify-right mt-2' );
                         dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), {
                             buttonClass: 'fg-error'
@@ -686,6 +688,9 @@ class CblTrackingApp
                                     return;
                                 }
 
+                                // store new returned order
+                                this.orders[orderNumber] = r.data;
+
                                 console.log( `Factura actualizada (${iN}, ${iD}) para pedido #${oN}` );
                             }
 
@@ -703,9 +708,6 @@ class CblTrackingApp
                                     }
                                 }
                             } );
-
-                            // store new returned order
-                            this.orders[orderNumber] = r.data;
 
                             // refresh
                             this.showMessages( compName, rowOffset );
@@ -781,7 +783,6 @@ class CblTrackingApp
 
         const currentMsg = `${rowOffset + 1}/${list.length}`;
         footerPanel.addText( null, currentMsg, null, { disabled: true, inputClass: 'w-fit bg-none' } );
-        dom.appendChild( footerPanel.root );
 
         dom.appendChild( footerPanel.root );
 
