@@ -164,6 +164,7 @@ class TransportCalculatorApp
         }
 
         let fullHeight,
+            fullDepth,
             fullWeight,
             totalVolume,
             totalVolumeKgs,
@@ -192,7 +193,7 @@ class TransportCalculatorApp
 
         const product = Object.assign( { height: 0, weight: 0, width: 0, depth: 0 }, Data['sku'][this.sku] );
         const { height, weight, width, depth } = product;
-        const packagingOptions = width === 1.07 && height === 1.07 ? this.getPackaging( depth, q ) : [
+        const packagingOptions = width === 1.06 && depth === 1.06 ? this.getPackaging( height, q ) : [
             { type: 'Pallet', count: 1, unitsPerPackage: [ q ] }
         ];
 
@@ -211,8 +212,9 @@ class TransportCalculatorApp
             price = 0;
 
             // - Altura: grosor (en m) × nº de piezas.
-            fullHeight = q * depth;
+            fullHeight = q * height;
             fullWeight = q * weight;
+            fullDepth = q * depth;
 
             // - Si va en pallet: sumar 0,15 m por cada pallet.
             if ( packaging.type == 'Pallet' )
@@ -220,7 +222,7 @@ class TransportCalculatorApp
                 fullHeight += 0.15 * packaging.count;
             }
 
-            totalVolume = fullHeight * width * height;
+            totalVolume = fullHeight * width * depth;
 
             // 3. Obtener los kg volumétricos
             // - 220 → Península
@@ -352,7 +354,7 @@ class TransportCalculatorApp
                 const resultsContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-4 p-4', ``, packagingModeContainer );
                 LX.makeContainer( [ '100%', 'auto' ], 'flex flex-row gap-8', `
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Altura</span><span class="font-semibold">${
-                    LX.round( height, 2 )
+                    LX.round( height, 3 )
                 }m</span></div>
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Ancho</span><span class="font-semibold">${width}m</span></div>
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Largo</span><span class="font-semibold">${depth}m</span></div>
@@ -428,7 +430,7 @@ class TransportCalculatorApp
 
                 const copyButtonWidget = new LX.Button( null, 'CopyButton', async function()
                 {
-                    const textToCopy = roundedTotalPrice;
+                    const textToCopy = finalFormatted.replace( '€', '' ).trim();
                     navigator.clipboard.writeText( textToCopy ).then( () => {
                         LX.toast( 'Hecho!', `✅ ${textToCopy} Copiado al portapapeles.`, { timeout: 5000, position: 'top-center' } );
                     } ).catch( ( err ) => {
