@@ -45,7 +45,8 @@ export const Data = {
         'W815': { 'height': 0.6, 'width': 0.29, 'depth': 0.10, 'weight': 4 },
         'RT15A': { 'height': 0.50, 'width': 0.50, 'depth': 0.15, 'weight': 5 },
         'RT15LA': { 'height': 0.100, 'width': 0.100, 'depth': 0.15, 'weight': 14 },
-        'T60': { 'height': 0.61, 'width': 0.61, 'depth': 0.04, 'weight': 2 },
+
+        'T60': { 'height': 0.04, 'width': 0.61, 'depth': 0.61, 'weight': 2 },
         'DF20': { 'height': 0.02, 'width': 1.06, 'depth': 1.06, 'weight': 2 },
         'DF25': { 'height': 0.025, 'width': 1.06, 'depth': 1.06, 'weight': 3 },
         'DF30': { 'height': 0.03, 'width': 1.06, 'depth': 1.06, 'weight': 3 },

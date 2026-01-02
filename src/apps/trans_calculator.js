@@ -103,19 +103,19 @@ class TransportCalculatorApp
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-bottom p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
-        // utilButtonsPanel.addButton(null, "ClearButton", core.clearData.bind(core), { icon: "Trash2", title: "Limpiar datos anteriores", tooltip: true });
+        utilButtonsPanel.addButton(null, "AddCalc", this.openNewCalcDialog.bind( this ), { className: 'w-fit', icon: "Plus", title: "Cálculo personalizado", tooltip: true });
         utilButtonsPanel.addSelect( 'Ref', Object.keys( Data.sku ), this.sku, ( v ) => {
             this.sku = v;
-        }, { className: 'w-full', filter: true, overflowContainer: null, skipReset: true, emptyMsg: 'No hay resultados.' } );
+        }, { xclassName: 'w-full', filter: true, overflowContainer: null, skipReset: true, emptyMsg: 'No hay resultados.' } );
         utilButtonsPanel.addText( 'Unidades', this.quantity, ( v ) => {
             this.quantity = v;
-        }, { trigger: 'input', className: 'w-full', nameWidth: '50%', placeholder: '0', skipReset: true } );
+        }, { trigger: 'input', xclassName: 'w-full', nameWidth: '50%', placeholder: '0', skipReset: true } );
         utilButtonsPanel.addText( 'CP', this.cp, ( v ) => {
             this.cp = v;
-        }, { trigger: 'input', className: 'w-full', placeholder: '00000', skipReset: true } );
+        }, { trigger: 'input', xclassName: 'w-full', placeholder: '00000', skipReset: true } );
         utilButtonsPanel.addSelect( 'País', 'España Francia Portugal'.split( ' ' ), this.country, ( v ) => {
             this.country = v;
-        }, { className: 'w-full', overflowContainer: null, skipReset: true } );
+        }, { xclassName: 'w-full', overflowContainer: null, skipReset: true } );
         utilButtonsPanel.endLine( 'w-full' );
         this.area.attach( utilButtonsPanel.root );
 
@@ -156,7 +156,7 @@ class TransportCalculatorApp
         this.updateTransports();
     }
 
-    execute( transportName )
+    execute( transportName, customWidth, customHeight, customDepth, customWeight )
     {
         if ( this.sku == 'Vacío' || !this.quantity.length || !this.cp.length )
         {
@@ -192,9 +192,13 @@ class TransportCalculatorApp
         // - 4 cm: 30 piezas, hasta un máximo de 45.
 
         const product = Object.assign( { height: 0, weight: 0, width: 0, depth: 0 }, Data['sku'][this.sku] );
+        product.width = customWidth ?? product.width;
+        product.height = customHeight ?? product.height;
+        product.depth = customDepth ?? product.depth;
+        product.weight = customWeight ?? product.weight;
         const { height, weight, width, depth } = product;
         const packagingOptions = width === 1.06 && depth === 1.06 ? this.getPackaging( height, q ) : [
-            { type: 'Pallet', count: 1, unitsPerPackage: [ q ] }
+            { type: 'Saca', count: 1, unitsPerPackage: [ q ] }
         ];
 
         // Ciudad
@@ -287,19 +291,19 @@ class TransportCalculatorApp
         return shippingOptions;
     }
 
-    updateTransports()
+    updateTransports( customWidth, customHeight, customDepth, customWeight, pArea, sArea )
     {
-        this.update( 'CBL' );
-        this.update( 'SEUR' );
+        this.update( 'CBL', customWidth, customHeight, customDepth, customWeight, pArea );
+        this.update( 'SEUR', customWidth, customHeight, customDepth, customWeight, sArea ?? pArea );
     }
 
-    update( transportName = 'CBL' )
+    update( transportName = 'CBL', customWidth, customHeight, customDepth, customWeight, area )
     {
         const transportIdx = TRANSPORT_NAMES.indexOf( transportName );
-        const area = this.resultArea.sections[transportIdx];
+        area = area ?? this.resultArea.sections[transportIdx];
         area.root.innerHTML = '';
 
-        const r = this.execute( transportName );
+        const r = this.execute( transportName, customWidth, customHeight, customDepth, customWeight );
         if ( !r ) return;
 
         for ( let i = 0; i < r.length; ++i )
@@ -353,7 +357,7 @@ class TransportCalculatorApp
             {
                 const resultsContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-4 p-4', ``, packagingModeContainer );
                 LX.makeContainer( [ '100%', 'auto' ], 'flex flex-row gap-8', `
-                <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Altura</span><span class="font-semibold">${
+                <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Alto</span><span class="font-semibold">${
                     LX.round( height, 3 )
                 }m</span></div>
                 <div class="flex flex-row gap-2"><span class="flex fg-secondary text-lg font-light items-center">Ancho</span><span class="font-semibold">${width}m</span></div>
@@ -584,6 +588,46 @@ class TransportCalculatorApp
         }
 
         return options;
+    }
+
+    openNewCalcDialog()
+    {
+        const core = this.core;
+        const dialogClosable = new LX.Dialog( 'Nuevo cálculo personalizado', ( dialogPanel ) => {
+            
+            dialogPanel.root.className += ' bg-primary border-none p-2';
+
+            let height = 0, width = 0, depth = 0, weight = 0;
+
+            dialogPanel.sameLine();
+            dialogPanel.addText( 'Alto', height, ( value, event ) => {
+                height = value;
+               this.updateTransports( width, height, depth, weight, left, right );
+            }, { skipReset: true, trigger: 'input', placeholder: '0' } );
+            dialogPanel.addText( 'Ancho', width, ( value, event ) => {
+                width = value;
+               this.updateTransports( width, height, depth, weight, left, right );
+            }, { skipReset: true, trigger: 'input', placeholder: '0' } );
+            dialogPanel.addText( 'Largo', depth, ( value, event ) => {
+                depth = value;
+               this.updateTransports( width, height, depth, weight, left, right );
+            }, { skipReset: true, trigger: 'input', placeholder: '0' } );
+            dialogPanel.addText( 'Peso', weight, ( value, event ) => {
+                weight = value;
+               this.updateTransports( width, height, depth, weight, left, right );
+            }, { skipReset: true, trigger: 'input', placeholder: '0' } );
+            dialogPanel.addButton( null, "RefreshButton", () => {
+                this.updateTransports( width, height, depth, weight, left, right );
+            }, { icon: 'RefreshCw', title: 'Actualizar cálculo', className: 'self-center' } );
+            dialogPanel.endLine();
+            dialogPanel.addSeparator();
+
+            const dialogArea = new LX.Area( { className: 'mt-2 gap-2' } );
+            dialogPanel.attach( dialogArea.root );
+            const [ left, right ] = dialogArea.split( { type: 'horizontal', sizes: [ '50%', '50%' ], resize: false } );
+
+           
+        }, { position: [ '10%', '250px' ], size: [ '80%', null ], closable: true, draggable: false } );
     }
 
     open( params )
