@@ -36,7 +36,7 @@ class CblTrackingApp
 
         const messageFromTrackIdButton = utilButtonsPanel.addButton( null, 'NewCustomMessage', () => {
             this.openMessageDialog();
-        }, { icon: 'Plus', title: 'Nuevo mensaje', tooltip: true } );
+        }, { icon: 'Plus', title: 'Nuevo Pedido', tooltip: true } );
 
         const moreOptionsButton = utilButtonsPanel.addButton( null, 'MoreOptionsButton', ( value, event ) => {
             LX.addDropdownMenu( event.target, [
@@ -439,7 +439,7 @@ class CblTrackingApp
         }, { position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
     }
 
-    async updateOrderStatus( index, wcc, orderNumber, newStatus )
+    async updateOrderStatus( index, wcc, orderNumber, newStatus, onComplete )
     {
         const core = this.core;
         const statusName = core.orderStatus[newStatus] ?? 'ERROR';
@@ -452,7 +452,7 @@ class CblTrackingApp
             dialogPanel.sameLine( 2, 'justify-right mt-2' );
             dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'fg-error' } );
             dialogPanel.addButton( null, 'Continuar', async () => {
-                dialogClosable.close();
+                dialogClosable.destroy();
 
                 const dialog = core.makeLoadingDialog();
                 const r = await wcc.updateOrderStatus( orderNumber, newStatus );
@@ -462,29 +462,39 @@ class CblTrackingApp
                 if ( !r.ok )
                 {
                     LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
+                    if( onComplete ) onComplete(1);
                     return;
                 }
 
-                const scrollLeft = this.dataTable.root.querySelector( 'table' ).scrollLeft;
-                this.orders[orderNumber].status = newStatus;
+                if( index !== null )
+                {
+                    const scrollLeft = this.dataTable.root.querySelector( 'table' ).scrollLeft;
+                    this.orders[orderNumber].status = newStatus;
 
-                const status = core.orderStatusColors[statusName] ?? {};
-                let iconStr = status.icon
-                    ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
-                        .innerHTML
-                    : '';
-                const newData = `${
-                    LX.badge( iconStr + statusName, 'text-sm font-bold border-none ', {
-                        style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
-                    } )
-                }`;
-                this.dataTable.data.body[index][this.dataTable.data.head.indexOf( 'ESTADO' )] = newData;
-                this.dataTable.refresh();
-                this.dataTable.root.querySelector( 'table' ).scrollLeft = scrollLeft;
+                    const status = core.orderStatusColors[statusName] ?? {};
+                    let iconStr = status.icon
+                        ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
+                            .innerHTML
+                        : '';
+                    const newData = `${
+                        LX.badge( iconStr + statusName, 'text-sm font-bold border-none ', {
+                            style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
+                        } )
+                    }`;
+                
+                    this.dataTable.data.body[index][this.dataTable.data.head.indexOf( 'ESTADO' )] = newData;
+                    this.dataTable.refresh();
+                    this.dataTable.root.querySelector( 'table' ).scrollLeft = scrollLeft;
+                }
 
                 LX.toast( `Hecho!`, `✅ Pedido ${orderNumber} actualizado con éxito.`, { timeout: 5000, position: 'top-center' } );
+
+                if( onComplete ) onComplete(2);
+
             }, { buttonClass: 'contrast' } );
-        }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
+        }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false,
+            onBeforeClose: () => { if( onComplete ) onComplete() }
+         } );
     }
 
     async showMessages( compName, rowOffset = 0 )
@@ -803,7 +813,7 @@ class CblTrackingApp
 
             const date = new Date();
             let invoiceNumber = '', invoiceDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-            let t = 'SEUR', idTracking = '', idOrder = '', c = core.data[core.compName].name;
+            let t = 'SEUR', idTracking = '', idOrder = '', c = core.data[core.compName].name, status = 'enviado';
 
             let updateMessage = ( callback ) => {
                 body.innerHTML = getTemplate();
@@ -872,6 +882,8 @@ class CblTrackingApp
                         sendNoteButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
                     }, 2000 );
 
+                    trackingNumberTextWidget.set( '' );
+
                     console.log( 'Nota creada para pedido #' + idOrder );
                 }
             }, { icon: 'PaperPlane', swap: 'Check', title: 'Enviar Mensaje', tooltip: true, width: '48px', className: 'ml-auto',
@@ -887,7 +899,7 @@ class CblTrackingApp
                 t = value;
                 updateMessage();
             }, { nameWidth: '35%', skipReset: true } );
-            p.addText( 'Número seguimiento', idTracking, ( value, event ) => {
+            const trackingNumberTextWidget = p.addText( 'Número seguimiento', idTracking, ( value, event ) => {
                 idTracking = value;
                 updateMessage();
             }, { nameWidth: '35%', skipReset: true, placeholder: '0A00MD00', trigger: 'input' } );
@@ -945,6 +957,8 @@ class CblTrackingApp
                         makeInvoiceButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
                     }, 2000 );
 
+                    invoiceNumberTextWidget.set( '' );
+
                     console.log( 'Facturado pedido #' + idOrder );
                 }
             }, { icon: 'FilePlusCorner', swap: 'Check', title: 'Facturar', tooltip: true, width: '48px', className: 'ml-auto',
@@ -952,12 +966,34 @@ class CblTrackingApp
                 confirmText: 'Continuar', confirmCancelText: 'Cancelar', confirmTitle: 'Confirmar acción',
                 confirmContent: `Se va a facturar el pedido. ¿Quieres continuar?` } );
 
-            p.addText( 'Número de factura', invoiceNumber, ( value, event ) => {
+            const invoiceNumberTextWidget = p.addText( 'Número de factura', invoiceNumber, ( value, event ) => {
                 invoiceNumber = value;
             }, { nameWidth: '35%', skipReset: true, placeholder: '000000' } );
             p.addDate( 'Fecha de Factura', invoiceDate, ( v ) => {
                 invoiceDate = v;
             }, { nameWidth: '35%', className: '' } );
+
+            p.addSeparator();
+            p.sameLine( 2 );
+            p.addLabel( 'Estado' );
+            const markasSentButtonWidget = p.addButton( null, 'MarkasSentButton', async () => {
+
+                const compName = c.toLowerCase();
+                const compData = core.data[compName];
+                const wcc = compData.wcc;
+                if ( !wcc.connected )
+                {
+                    core.openWooCommerceLogin( null, compName );
+                    return;
+                }
+
+                await this.updateOrderStatus( null, wcc, idOrder, status );
+
+            }, { icon: 'Save', title: 'Guardar estado', tooltip: true, width: '48px', className: 'ml-auto' } );
+            p.addSelect( 'Actualizar estado', Object.values( core.orderStatus ), core.orderStatus[ status ], (v) => {
+                const k = Object.keys( core.orderStatus ).find( key => core.orderStatus[ key ] === v );
+                status = k;
+            }, {} );
 
             left.attach( p.root );
 
