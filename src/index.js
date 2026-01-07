@@ -1,9 +1,10 @@
 import { LX } from 'lexgui';
 import { CblTrackingApp } from './apps/cbl_tracking_app.js';
+import { ChillApp } from './apps/chill_app.js';
+import { LabelsApp } from './apps/labels_app.js';
 import { OrdersApp } from './apps/orders_app.js';
 import { SeurApp } from './apps/seur_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
-import { ChillApp } from './apps/chill_app.js';
 import { WooCommerceClient } from './woocomerce.js';
 
 window.LX = LX;
@@ -60,7 +61,7 @@ const core = {
         'Reembolsado': { icon: 'CircleDollarSign', bg: '#a21caf' },
         'Fallido': { icon: 'CircleX', bg: '#dc2626' },
         'Borrador': { icon: 'FileText', bg: '#0d9488' },
-        '1a Reseña': { icon: 'Star', bg: '#FFC844', fg: '#222' },
+        '1a Reseña': { icon: 'Star', bg: '#FFC844', fg: '#222' }
     },
     trackStatusColors: {
         'Documentada': { icon: 'File', bg: '#272c31ff' },
@@ -92,6 +93,7 @@ const core = {
         this.ordersApp = new OrdersApp( this );
         this.transportCalculatorApp = new TransportCalculatorApp( this );
         this.chillApp = new ChillApp( this );
+        this.labelsApp = new LabelsApp( this );
 
         // Footer
         this.createFooterHtml();
@@ -127,6 +129,10 @@ const core = {
             else if ( lastTool.includes( 'chill' ) )
             {
                 this.openApp( this.chillApp );
+            }
+            else if ( lastTool.includes( 'labels' ) )
+            {
+                this.openApp( this.labelsApp );
             }
         }
 
@@ -274,6 +280,7 @@ const core = {
         this.ordersArea.root.classList.toggle( 'hidden', true );
         this.transCalculatorArea.root.classList.toggle( 'hidden', true );
         this.chillAppArea.root.classList.toggle( 'hidden', true );
+        this.labelsAppArea.root.classList.toggle( 'hidden', true );
 
         app.open( params );
 
@@ -644,6 +651,7 @@ core.data['bathby'].template = ( id, url, transport ) => {
             // ]
         },
         { name: 'Pedidos Web', callback: ( v, e ) => core.openApp( core.ordersApp, v ) },
+        { name: 'Etiquetas', callback: ( v, e ) => core.openApp( core.labelsApp ) },
         {
             name: 'Calculadoras',
             submenu: [
@@ -651,7 +659,7 @@ core.data['bathby'].template = ( id, url, transport ) => {
                 { name: 'Stock', disabled: true, callback: core.redirectToOAuth.bind( core ), icon: 'Boxes' }
             ]
         },
-        { name: "Chill", callback: ( v, e ) => core.openApp( core.chillApp ) }
+        { name: 'Chill', callback: ( v, e ) => core.openApp( core.chillApp ) }
         // { name: "Calculadora", callback: core.redirectToOAuth.bind( core ) }
     ] );
 

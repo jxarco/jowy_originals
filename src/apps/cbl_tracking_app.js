@@ -52,25 +52,30 @@ class CblTrackingApp
                         {
                             name: 'Enviado',
                             icon: 'PlaneTakeoff',
-                            callback: () => this.markSelectedOrdersAs( 'enviado', ( order ) => {
-                                return order?.wpo_wcpdf_invoice_number !== '' && ( order?.status === 'processing' || order?.status === 'on-hold' );
-                            } )
+                            callback: () =>
+                                this.markSelectedOrdersAs( 'enviado', ( order ) => {
+                                    return order?.wpo_wcpdf_invoice_number !== ''
+                                        && ( order?.status === 'processing' || order?.status === 'on-hold' );
+                                } )
                         },
                         {
                             name: '1a Reseña',
                             icon: 'Star',
-                            callback: () => this.markSelectedOrdersAs( 'recordatorio-rese', ( order, status ) => {
-                                return status === 'Entregada' &&
-                                    ( order?.status === 'processing' || order?.status === 'on-hold' || order?.status === 'enviado' );
-                            } )
+                            callback: () =>
+                                this.markSelectedOrdersAs( 'recordatorio-rese', ( order, status ) => {
+                                    return status === 'Entregada'
+                                        && ( order?.status === 'processing' || order?.status === 'on-hold' || order?.status === 'enviado' );
+                                } )
                         },
                         {
                             name: 'Completado',
                             icon: 'CheckCircle',
-                            callback: () => this.markSelectedOrdersAs( 'completed', ( order, status ) => {
-                                return status === 'Entregada' && ( order?.status === 'enviado' || order?.status === 'recordatorio-rese' );
-                            } )
-                        },
+                            callback: () =>
+                                this.markSelectedOrdersAs( 'completed', ( order, status ) => {
+                                    return status === 'Entregada'
+                                        && ( order?.status === 'enviado' || order?.status === 'recordatorio-rese' );
+                                } )
+                        }
                     ]
                 },
                 null,
@@ -327,9 +332,9 @@ class CblTrackingApp
                             }
                         } );
                     }
-    
-                    if ( ( status == 'Entregada' ) &&
-                        ( order?.status === 'processing' || order?.status === 'on-hold' || order?.status === 'enviado' ) )
+
+                    if ( ( status == 'Entregada' )
+                        && ( order?.status === 'processing' || order?.status === 'on-hold' || order?.status === 'enviado' ) )
                     {
                         options.push( null, {
                             icon: 'Star',
@@ -339,7 +344,7 @@ class CblTrackingApp
                             }
                         } );
                     }
-    
+
                     if ( ( status == 'Entregada' )
                         && ( order?.status === 'enviado' || order?.status === 'recordatorio-rese' ) )
                     {
@@ -376,7 +381,7 @@ class CblTrackingApp
         const orderUpdates = selectedOrders.map( ( row ) => {
             const orderNumber = row[this.dataTable.data.head.indexOf( 'NPEDIDO' )] ?? '';
             const status = LX.stripTags( row[this.dataTable.data.head.indexOf( 'SITUACIÓN' )] ) ?? '';
-            if( !orderNumber.length || ( filterFn && !filterFn( this.orders[orderNumber], status ) ) ) return;
+            if ( !orderNumber.length || ( filterFn && !filterFn( this.orders[orderNumber], status ) ) ) return;
             return { id: orderNumber, status: newStatus };
         } ).filter( ( l ) => l !== undefined );
 
@@ -444,7 +449,8 @@ class CblTrackingApp
         const core = this.core;
         const statusName = core.orderStatus[newStatus] ?? 'ERROR';
         const dialogClosable = new LX.Dialog( 'Actualizar Pedido', ( dialogPanel ) => {
-            dialogPanel.addTextArea( null, `Vas a marcar el pedido ${orderNumber} como ${statusName} en WooCommerce. ¿Quieres continuar?`, null, {
+            dialogPanel.addTextArea( null, `Vas a marcar el pedido ${orderNumber} como ${statusName} en WooCommerce. ¿Quieres continuar?`,
+                null, {
                 fitHeight: true,
                 disabled: true
             } );
@@ -462,11 +468,11 @@ class CblTrackingApp
                 if ( !r.ok )
                 {
                     LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
-                    if( onComplete ) onComplete(1);
+                    if ( onComplete ) onComplete( 1 );
                     return;
                 }
 
-                if( index !== null )
+                if ( index !== null )
                 {
                     const scrollLeft = this.dataTable.root.querySelector( 'table' ).scrollLeft;
                     this.orders[orderNumber].status = newStatus;
@@ -481,7 +487,7 @@ class CblTrackingApp
                             style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
                         } )
                     }`;
-                
+
                     this.dataTable.data.body[index][this.dataTable.data.head.indexOf( 'ESTADO' )] = newData;
                     this.dataTable.refresh();
                     this.dataTable.root.querySelector( 'table' ).scrollLeft = scrollLeft;
@@ -489,12 +495,12 @@ class CblTrackingApp
 
                 LX.toast( `Hecho!`, `✅ Pedido ${orderNumber} actualizado con éxito.`, { timeout: 5000, position: 'top-center' } );
 
-                if( onComplete ) onComplete(2);
-
+                if ( onComplete ) onComplete( 2 );
             }, { buttonClass: 'contrast' } );
         }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false,
-            onBeforeClose: () => { if( onComplete ) onComplete() }
-         } );
+            onBeforeClose: () => {
+                if ( onComplete ) onComplete();
+            } } );
     }
 
     async showMessages( compName, rowOffset = 0 )
@@ -977,7 +983,6 @@ class CblTrackingApp
             p.sameLine( 2 );
             p.addLabel( 'Estado' );
             const markasSentButtonWidget = p.addButton( null, 'MarkasSentButton', async () => {
-
                 const compName = c.toLowerCase();
                 const compData = core.data[compName];
                 const wcc = compData.wcc;
@@ -988,10 +993,9 @@ class CblTrackingApp
                 }
 
                 await this.updateOrderStatus( null, wcc, idOrder, status );
-
             }, { icon: 'Save', title: 'Guardar estado', tooltip: true, width: '48px', className: 'ml-auto' } );
-            p.addSelect( 'Actualizar estado', Object.values( core.orderStatus ), core.orderStatus[ status ], (v) => {
-                const k = Object.keys( core.orderStatus ).find( key => core.orderStatus[ key ] === v );
+            p.addSelect( 'Actualizar estado', Object.values( core.orderStatus ), core.orderStatus[status], ( v ) => {
+                const k = Object.keys( core.orderStatus ).find( ( key ) => core.orderStatus[key] === v );
                 status = k;
             }, {} );
 
