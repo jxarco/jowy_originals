@@ -75,6 +75,7 @@ const core = {
     },
     data: {
         'otros': { list: [], dom: null },
+        'decathlon': new Company( 'Decathlon' ),
         'jowy': new Company( 'Jowy', 'https://www.jowyoriginals.com/wp-admin/', 'https://jowyoriginals.com', '2-' ),
         'hxg': new Company( 'HxG', 'https://www.homexgym.com/wp-admin/', 'https://homexgym.com', '3-' ),
         'bathby': new Company( 'Bathby', 'https://www.bathby.com/wp-admin/', 'https://bathby.com', '4-' )
@@ -132,7 +133,7 @@ const core = {
             }
             else if ( lastTool.includes( 'labels' ) )
             {
-                this.openApp( this.labelsApp );
+                this.openApp( this.labelsApp, 'Decathlon' );
             }
         }
 
@@ -650,8 +651,13 @@ core.data['bathby'].template = ( id, url, transport ) => {
             //         icon: 'Volleyball' }
             // ]
         },
-        { name: 'Pedidos Web', callback: ( v, e ) => core.openApp( core.ordersApp, v ) },
-        { name: 'Etiquetas', callback: ( v, e ) => core.openApp( core.labelsApp ) },
+        {
+            name: 'Pedidos',
+            submenu: [
+                { name: 'Web', callback: ( v, e ) => core.openApp( core.ordersApp, v ), icon: 'Monitor' },
+                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.labelsApp, v ), icon: 'Volleyball' }
+            ]
+        },
         {
             name: 'Calculadoras',
             submenu: [

@@ -108,7 +108,7 @@ class OrdersApp
         const r = await wcc.getAllOrdersByFilter( after, before, [ 'processing', 'on-hold' ] );
         console.log( r );
 
-        core.setHeaderTitle( `Salida Stock (Web): <i>${name}</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`,
+        core.setHeaderTitle( `Web (${name}): <i>Pedidos</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`,
             'PackagePlus' );
 
         dialog.destroy();
@@ -243,7 +243,7 @@ class OrdersApp
     open( params )
     {
         this.core.tool = 'orders';
-        this.core.setHeaderTitle( `Salida Stock (Web)`, '', 'PackagePlus' );
+        this.core.setHeaderTitle( `Web: <i>Pedidos</i>`, '', 'PackagePlus' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 

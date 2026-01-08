@@ -2,16 +2,15 @@
 
 export class MiraklClient
 {
-    constructor( { baseUrl, apiKey } )
+    constructor( baseUrl )
     {
-        if ( !baseUrl || !apiKey )
+        if ( !baseUrl )
         {
-            throw new Error( 'MiraklAPI requires baseUrl and apiKey' );
+            throw new Error( 'MiraklAPI requires baseUrl' );
         }
 
         this.baseUrl = baseUrl.replace( /\/+$/, '' );
         this.headers = {
-            'Authorization': apiKey,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
@@ -85,7 +84,7 @@ export class MiraklClient
      */
     listOrders( params = {} )
     {
-        return this._get( '/api/mms/orders', { query: params } );
+        return this._get( '/api/orders', { query: params } );
     }
 
     /**
@@ -93,7 +92,7 @@ export class MiraklClient
      */
     getOrder( orderId, shop_id )
     {
-        return this._get( `/api/mms/orders/${orderId}`, {
+        return this._get( `/api/orders/${orderId}`, {
             query: { shop_id }
         } );
     }
@@ -103,7 +102,7 @@ export class MiraklClient
      */
     acceptOrder( orderId, shop_id )
     {
-        return this._put( `/api/mms/orders/${orderId}/accept`, {
+        return this._put( `/api/orders/${orderId}/accept`, {
             query: { shop_id }
         } );
     }
@@ -118,7 +117,7 @@ export class MiraklClient
      */
     refuseOrder( orderId, body, shop_id )
     {
-        return this._put( `/api/mms/orders/${orderId}/refuse`, {
+        return this._put( `/api/orders/${orderId}/refuse`, {
             query: { shop_id },
             body
         } );
@@ -138,7 +137,7 @@ export class MiraklClient
      */
     consumeOrder( orderId, body, shop_id )
     {
-        return this._put( `/api/mms/orders/${orderId}/consume`, {
+        return this._put( `/api/orders/${orderId}/consume`, {
             query: { shop_id },
             body
         } );
@@ -149,7 +148,7 @@ export class MiraklClient
      */
     refundOrder( orderId, body, shop_id )
     {
-        return this._put( `/api/mms/orders/${orderId}/refund`, {
+        return this._put( `/api/orders/${orderId}/refund`, {
             query: { shop_id },
             body
         } );
