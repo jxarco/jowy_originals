@@ -126,6 +126,11 @@ class ChillApp
                 draw();
             } );
 
+            this.audio.addEventListener( 'ended', function() {
+                this.currentTime = 0;
+                this.play();
+            }, false );
+
             this.audio.play();
         }, { className: 'block z-100 contrast self-center', width: 'fit-content' } );
 
