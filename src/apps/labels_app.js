@@ -519,6 +519,10 @@ class LabelsApp
         // this.showOrders( 'decathlon' );
     }
 
+    close()
+    {
+    }
+
     clear()
     {
         this.updateOrders();

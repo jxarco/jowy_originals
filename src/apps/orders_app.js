@@ -247,6 +247,10 @@ class OrdersApp
         this.area.root.classList.toggle( 'hidden', false );
     }
 
+    close()
+    {
+    }
+
     clear()
     {
         delete this.orders;

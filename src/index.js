@@ -276,6 +276,11 @@ const core = {
 
     openApp: function( app, params )
     {
+        if ( this.currentApp )
+        {
+            this.currentApp.close();
+        }
+
         this.trackingMessagesArea.root.classList.toggle( 'hidden', true );
         this.sheinDataArea.root.classList.toggle( 'hidden', true );
         this.ordersArea.root.classList.toggle( 'hidden', true );
@@ -286,6 +291,8 @@ const core = {
         app.open( params );
 
         localStorage.setItem( 'lastTool', this.tool );
+
+        this.currentApp = app;
     },
 
     processData: function( fileData, local )

@@ -635,6 +635,10 @@ class TransportCalculatorApp
         this.area.root.classList.toggle( 'hidden', false );
     }
 
+    close()
+    {
+    }
+
     clear()
     {
     }
