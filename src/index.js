@@ -152,7 +152,7 @@ const core = {
     {
         const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-8 py-8', `
             <div class="flex flex-row gap-2 items-center">${
-            LX.makeIcon( 'Info', { svgClass: '2xl' } ).innerHTML
+            LX.makeIcon( 'Info', { svgClass: '2xl  scale-350 p-2' } ).innerHTML
         }<span class="text-3xl font-semibold">Jowy Originals</span></div>
             <p class="font-light" style="max-width:32rem">Elige una de las herramientas para empezar.</p>
         `, this.area );
@@ -257,7 +257,7 @@ const core = {
     setHeaderTitle: function( title, subtitle, icon )
     {
         this.header.querySelector( 'div' ).innerHTML = `${
-            LX.makeIcon( icon ?? 'Info', { svgClass: '2xl mr-2' } ).innerHTML
+            LX.makeIcon( icon ?? 'Info', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML
         }<span class="text-3xl font-semibold">${title}</span>`;
         this.header.querySelector( 'p' ).innerHTML = subtitle ?? '';
     },
@@ -649,19 +649,25 @@ core.data['bathby'].template = ( id, url, transport ) => {
 
     LX.setThemeColor( 'teal' );
 
+    LX.registerIcon( 'TikTok', '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16.6 5.82s.51.5 0 0A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64c0 3.33 2.76 5.7 5.69 5.7c3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88-.09-3 .8"></path></svg>' );
+    LX.registerIcon( 'Decathlon', `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.68 20.946c-4.68 5.509-2.254 16.552 5.334 12.2c1.887-.978 6.31-5.03 14.76-17.551v20.761c-2.421 1.654-16.97 8.473-22.928 1.003c-2.492-3.4-2.492-7.986.186-12.455H6.03q4.005-7.215 12.408-12.36C36.408 1.792 43.6 9.87 43.95 14.5c.72 8.497-6.495 14.875-10.289 18.577v-6.333c9.195-9.054 4.795-14.035 3.794-14.85c-2.047-2.37-7.865-4.53-13.13-2.392" stroke-width="1" /></svg>` );
+    LX.registerIcon( 'WooCommerce', `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><path fill="currentColor" d=" M108.6 46.9 c-2.3-.2-6.7 1-8.7 10.8 c0 5.9 1.4 9.5 3.6 10.8 c4.1 1.2 8.9-4.3 8.9-10.2 c.2-4.1.4-9.2-3.8-11.4 M116.3 25.8 H11.7 C5.2 25.8 0 31 0 37.4 v40 c0 6.4 5.2 11.7 11.7 11.7 h104.7 c6.4 0 11.7-5.2 11.7-11.7 v-40 c-.1-6.4-5.3-11.6-11.8-11.6 M44 80 s-6.9-9.1-8.5-16 c-1.6-6.8-2-3.7-2-3.7 S28 72.7 22.3 80.6 s-8.5-3.9-8.5-3.9 c-2-2.4-7.7-37.3-7.7-37.3 c3.2-8.9 8.7-1.6 8.7-1.6 l5.5 28.4 s8.5-17.4 11.4-21.9 c2.8-4.5 7.7-3.2 8.1 1.4 c.4 4.7 5.1 17.4 5.1 17.4 c.4-13.4 5.9-26.2 6.7-28.2 s9.7-4.5 8.1 4.1 C55.8 48.5 52 68.6 53 79.6 c-2.7 8.3-9 .4-9 .4 M79.9 75.5 c-2.6 1.2-12.3 7.9-19.2-7.1 C56.4 53.3 66 42.2 66 42.2 s12.5-10.7 21 3.5 c6.9 15.6-4.5 28.6-7.1 29.8 M111.7 75.5 c-2.6 1.2-12.3 7.9-19.2-7.1 c-4.3-15.1 5.3-26.2 5.3-26.2 s12.6-10.8 21.1 3.4 c6.9 15.7-4.6 28.7-7.2 29.9 M76.7 46.9 c-2.3-.2-6.7 1-8.7 10.8 c0 5.9 1.4 9.5 3.6 10.8 c4.1 1.2 8.9-4.3 8.9-10.2 c.3-4.1.5-9.2-3.8-11.4 M61.3 89.1 l22.3 13.1 l-4.7-13.1 l-12.8-3.6 z "/></svg>` );
+
     const menubar = area.addMenubar( [
         {
             name: 'Web',
             submenu: [
                 { name: 'Seguimiento/Facturas', callback: ( v, e ) => core.openApp( core.cblTrackingApp, v ), icon: 'TextSearch' },
-                { name: 'Pedidos', callback: ( v, e ) => core.openApp( core.ordersApp ), icon: 'Monitor' },
+                { name: 'Pedidos', callback: ( v, e ) => core.openApp( core.ordersApp ), icon: 'WooCommerce' },
             ]
         },
         {
             name: 'Plataformas',
             submenu: [
-                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.labelsApp, v ), icon: 'Volleyball' },
-                { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Handbag' }
+                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.labelsApp, v ), icon: 'Decathlon' },
+                { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Handbag' },
+                { name: 'TikTok', disabled: true, callback: ( v, e ) => core.openApp( core.tiktokApp ), icon: 'TikTok' }
+                
             ]
         },
         {

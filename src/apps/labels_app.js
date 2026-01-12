@@ -55,13 +55,15 @@ class LabelsApp
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
 
-        // const seeMessagesButton = utilButtonsPanel.addButton( null, 'SeeMessagesButton', () => {
-        //     if ( core.compName !== 'otros' ) this.showMessages( core.compName, 0 );
-        // }, { icon: 'Eye', title: 'Ver mensajes', tooltip: true } );
-
         utilButtonsPanel.addButton( null, 'ClearButton', () => {
             core.clearData();
         }, { icon: 'Trash2', title: 'Limpiar datos anteriores', tooltip: true } );
+
+        utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
+            icon: 'Download',
+            title: 'Exportar etiquetas',
+            tooltip: true
+        } );
 
         const moreOptionsButtonComp = utilButtonsPanel.addButton( null, 'MoreOptionsButton', ( value, event ) => {
             LX.addDropdownMenu( moreOptionsButtonComp.root, [
@@ -112,12 +114,6 @@ class LabelsApp
             ], { side: 'bottom', align: 'start' } );
         }, { icon: 'EllipsisVertical', title: 'Más opciones', tooltip: true } );
 
-        utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
-            icon: 'Download',
-            title: 'Exportar etiquetas',
-            tooltip: true
-        } );
-
         utilButtonsPanel.endLine();
 
         this.area.attach( utilButtonsPanel.root );
@@ -129,34 +125,22 @@ class LabelsApp
         {
             const decaContainer = LX.makeContainer( [ null, 'auto' ],
                 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'Decathlon', decaContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
+            tabs.add( 'Pedidos', decaContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( "decathlon" ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
             decaContainer.appendChild( jowyArea.root );
             core.data['decathlon'].domO = decaContainer;
         }
 
-        // // HxG
-        // {
-        //     const hxgContainer = LX.makeContainer( [ null, 'auto' ],
-        //         'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        //     tabs.add( 'HxG', hxgContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
+        // Groups List
+        {
+            const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => {} } );
 
-        //     const hxgArea = new LX.Area( { className: 'rounded-lg' } );
-        //     hxgContainer.appendChild( hxgArea.root );
-        //     core.data['hxg'].domO = hxgContainer;
-        // }
-
-        // // Bathby
-        // {
-        //     const bathbyContainer = LX.makeContainer( [ null, 'auto' ],
-        //         'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        //     tabs.add( 'Bathby', bathbyContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
-
-        //     const bathbyArea = new LX.Area( { className: 'rounded-lg' } );
-        //     bathbyContainer.appendChild( bathbyArea.root );
-        //     core.data['bathby'].domO = bathbyContainer;
-        // }
+            const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+            groupsListContainer.appendChild( groupsListArea.root );
+        }
 
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
@@ -235,7 +219,7 @@ class LabelsApp
                 const ctrCode = r['channel']?.code;
                 return core.countryFormat[ctrCode] ?? ( r['channel']?.label ).toUpperCase();
             } ],
-            [ 'notes', 'OBSERVACIONES', ( r ) => `${r['order_id']}${r['order_state'] == 'on-hold' ? ' TRANSFERENCIA' : ''}` ]
+            [ 'notes', 'OBSERVACIONES', ( r ) => `` ]
         ];
 
         const tableData = [];
@@ -511,7 +495,7 @@ class LabelsApp
     open( params )
     {
         this.core.tool = 'labels';
-        this.core.setHeaderTitle( `${params} (Mirakl): <i>Pedidos</i>`, '', 'PackagePlus' );
+        this.core.setHeaderTitle( `${params} <i>(Mirakl)</i>`, 'Gestión de pedidos a través de la API de Mirakl.', 'Decathlon' );
         this.area.root.classList.toggle( 'hidden', false );
 
         this.clear();

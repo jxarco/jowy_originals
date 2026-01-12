@@ -243,7 +243,7 @@ class OrdersApp
     open( params )
     {
         this.core.tool = 'orders';
-        this.core.setHeaderTitle( `Web: <i>Pedidos</i>`, '', 'PackagePlus' );
+        this.core.setHeaderTitle( `Web: <i>Pedidos</i>`, '', 'WooCommerce' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 

@@ -29,9 +29,7 @@ class SheinApp
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
-        utilButtonsPanel.sameLine( 3 );
-        utilButtonsPanel.addButton( null, 'StartButton', this.showSingleSheinData.bind( this ), { icon: 'Eye',
-            title: 'Ver información detallada', tooltip: true } );
+        utilButtonsPanel.sameLine();
         utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), { icon: 'Trash2', title: 'Limpiar datos anteriores',
             tooltip: true } );
         utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
@@ -39,14 +37,14 @@ class SheinApp
             title: 'Exportar datos',
             tooltip: true
         } );
+        utilButtonsPanel.endLine();
         this.area.attach( utilButtonsPanel.root );
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
-        // this.sheinTabs = tabs.root;
 
         // SEUR
         const seurContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Todo', seurContainer, { selected: true, onSelect: ( event, name ) => this.openData() } );
+        tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.openData() } );
 
         const seurArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         seurContainer.appendChild( seurArea.root );
@@ -54,7 +52,7 @@ class SheinApp
         // Groups List
         const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
             'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Por cantidad', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
+        tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
 
         const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         groupsListContainer.appendChild( groupsListArea.root );
@@ -165,6 +163,8 @@ class SheinApp
         let columnData = [
             [ 'SKU del vendedor', null ],
             [ 'Cantidad', null ],
+            [ 'Transporte', null, () => "SEUR" ],
+            [ 'Plataforma', null, () => "SHEIN" ],
             [ 'País', null, ( str, row ) => {
                 return this.core.countryFormat[str] ?? str;
             } ],
@@ -172,7 +172,7 @@ class SheinApp
             [ 'Número del pedido', null ]
         ];
 
-        const uid = columnData[4][0];
+        const uid = columnData[6][0];
         const orderNumbers = new Map();
 
         // Create table data from the list
@@ -213,7 +213,7 @@ class SheinApp
                 tableData[r] = undefined;
             } );
             tableData[repeats[0]][0] += trail;
-            tableData[repeats[0]][3] = 'Mismo pedido';
+            tableData[repeats[0]][5] = 'Mismo pedido';
         }
 
         tableData = tableData.filter( ( r ) => r !== undefined );
@@ -226,12 +226,12 @@ class SheinApp
 
         for ( let row of tableData )
         {
-            const sku = `${row[0]}_${row[2]}`;
+            const sku = `${row[0]}_${row[4]}`; // SKU _ País
             if ( !skus[sku] )
             {
                 skus[sku] = [ listSKU.length ];
                 row[1] = 1;
-                row.splice( 4, 1 );
+                row.splice( 6, 1 );
                 listSKU.push( row );
             }
             else
@@ -244,7 +244,7 @@ class SheinApp
         for ( let row of listSKU )
         {
             const sku = row[0];
-            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) && row[3] !== 'Mismo pedido' )
+            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) && row[5] !== 'Mismo pedido' )
             {
                 row[1] *= 4;
             }
@@ -286,135 +286,6 @@ class SheinApp
         this.lastShownSeurData = tableWidget.data.body;
 
         dom.appendChild( tableWidget.root );
-    }
-
-    showSingleSheinData( rowOffset )
-    {
-        rowOffset = ( rowOffset.constructor === String ? 0 : rowOffset ) ?? 0;
-
-        const dom = this.seurDataArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
-
-        // hack to remove all tooltips
-        document.querySelectorAll( '.lextooltip' ).forEach( ( el ) => {
-            el.remove();
-        } );
-
-        if ( !this.lastSeurData || !this.lastSeurData.length )
-        {
-            const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6', `
-                    <h1>No hay datos de SHEIN</h1>
-                `, dom );
-            return;
-        }
-
-        const row = this.lastSeurData[rowOffset];
-
-        if ( !row )
-        {
-            const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6', `
-                    <h1>No hay más datos</h1>
-                `, dom );
-            return;
-        }
-
-        const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6', `
-                <p class="orderNumberRow flex flex-row items-center gap-1 text-3xl">Número del pedido: ${row['Número del pedido']}</p>
-                <p class="font-light text-muted-foreground" style="height:auto"><strong>${row['Nombre del producto'] ?? 'Vacío'}</strong></p>
-                <p class="font-light"><strong>SKU: ${row['SKU del vendedor'] ?? 'Vacío'}</strong> / <strong>${
-            row['Especificación']
-        }</strong></p>
-                <p class="font-light">Precio: <strong>${row['precio de los productos básicos']}</strong></p>
-            `, dom );
-
-        const body = LX.makeContainer( [ null, 'auto' ], 'flex flex-col p-8 gap-0.5', `
-                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Nombre Usuario</p><p class="flex flex-row items-center font-medium">${
-            row['Nombre de usuario completo'] ?? 'Vacío'
-        }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Dirección</p><p class="flex flex-row items-center font-medium">${
-            row['dirección de usuario 1'] + ( row['dirección de usuario 2'] ? ' ' + row['dirección de usuario 2'] : '' )
-        }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">CP</p><p class="flex flex-row items-center font-medium">${
-            row['Código Postal'] ?? 'Vacío'
-        }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Ciudad/Población</p><p class="flex flex-row items-center font-medium">${
-            row['Ciudad'] ?? 'Vacío'
-        }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Provincia</p><p class="flex flex-row items-center font-medium">${
-            row['Provincia'] ?? 'Vacío'
-        }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">País</p><p class="flex flex-row items-center font-medium">${
-            row['País'] ?? 'Vacío'
-        }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Teléfono</p><p class="flex flex-row items-center font-medium">${
-            row['Número de Teléfono'] ?? 'Vacío'
-        }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Correo</p><p class="flex flex-row items-center font-medium">${
-            row['Correo electrónico de usuario'] ?? 'Vacío'
-        }</p></div>
-            `, dom );
-
-        for ( let c of body.children )
-        {
-            const copyButtonWidget = new LX.Button( null, 'CopyButton', async function()
-            {
-                const textToCopy = this.root.parentElement.childNodes[1].innerText;
-                navigator.clipboard.writeText( textToCopy ).then( () => {
-                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000, position: 'top-center' } );
-                } ).catch( ( err ) => {
-                    console.error( 'Error copying text: ', err );
-                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
-                } );
-                copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
-
-                LX.doAsync( () => {
-                    copyButtonWidget.swap( true );
-                    copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
-                }, 3000 );
-            }, { swap: 'Check', icon: 'Copy', title: 'Copiar', tooltip: true } );
-            LX.addClass( copyButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
-            c.appendChild( copyButtonWidget.root );
-        }
-
-        // Add button to copy NUMERO PEDIDO
-        {
-            const nPedidoH2 = header.querySelector( '.orderNumberRow' );
-            const copyButtonWidget = new LX.Button( null, 'CopyButton', async function()
-            {
-                const textToCopy = nPedidoH2.innerText.substring( nPedidoH2.innerText.indexOf( ': ' ) + 2 );
-                navigator.clipboard.writeText( textToCopy ).then( () => {
-                    LX.toast( 'Hecho!', '✅ Mensaje copiado al portapapeles.', { timeout: 5000, position: 'top-center' } );
-                } ).catch( ( err ) => {
-                    console.error( 'Error copying text: ', err );
-                    LX.toast( 'Error', '❌ No se pudo copiar el mensaje.', { timeout: -1, position: 'top-center' } );
-                } );
-                copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
-
-                LX.doAsync( () => {
-                    copyButtonWidget.swap( true );
-                    copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
-                }, 3000 );
-            }, { swap: 'Check', icon: 'Copy', title: 'Copiar', tooltip: true } );
-            LX.addClass( copyButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
-            nPedidoH2.appendChild( copyButtonWidget.root );
-        }
-
-        const footerPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2' } );
-        footerPanel.sameLine( 3 );
-        footerPanel.addButton( null, 'PrevButton', () => {
-            this.showSingleSheinData( rowOffset - 1 );
-        }, { width: '100px', icon: 'ArrowLeft', title: 'Anterior', tooltip: true, disabled: ( rowOffset === 0 ) } );
-        footerPanel.addText( null, `${( rowOffset + 1 )} / ${this.lastSeurData.length}`, null, { inputClass: 'bg-none', width: '100px',
-            disabled: true } );
-        footerPanel.addButton( null, 'NextButton', () => {
-            this.showSingleSheinData( rowOffset + 1 );
-        }, { width: '100px', icon: 'ArrowRight', title: 'Siguiente', tooltip: true,
-            disabled: ( rowOffset === ( this.lastSeurData.length - 1 ) ) } );
-
-        dom.appendChild( footerPanel.root );
     }
 
     exportSEUR( ignoreErrors = false, sheinData )
