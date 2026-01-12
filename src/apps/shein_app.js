@@ -219,7 +219,7 @@ class SheinApp
         tableData = tableData.filter( ( r ) => r !== undefined );
 
         // Remove unnecessary
-        columnData.splice( 4, 1 );
+        columnData.splice( 6, 1 );
 
         const listSKU = [];
         const skus = {};
