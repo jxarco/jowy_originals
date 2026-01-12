@@ -136,10 +136,11 @@ class LabelsApp
         {
             const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
                 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => {} } );
+            tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
 
             const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
             groupsListContainer.appendChild( groupsListArea.root );
+            this.groupsListArea = groupsListArea;
         }
 
         // Move up into the panel section
@@ -184,7 +185,7 @@ class LabelsApp
         } );
         console.log( r );
 
-        core.setHeaderTitle( `${name} (Mirakl): <i>Pedidos</i>`, `${r.orders.length} pedidos`, 'PackagePlus' );
+        this.core.setHeaderTitle( `${name} <i>(Mirakl):</i> ${r.orders.length} pedidos`, 'Gestión de pedidos a través de la API de Mirakl.', 'Decathlon' );
 
         dialog.destroy();
 
@@ -207,12 +208,7 @@ class LabelsApp
             [ 'product_shop_sku', 'REFERENCIA' ],
             [ 'quantity', 'UNIDADES' ],
             [ 'transport', 'TRANSPORTE', ( r, i ) => {
-                const q = i['quantity'];
-                const sku = i['product_shop_sku'];
-                if ( ( sku.startsWith( 'JW-D' ) && q > 2 )
-                    || sku.startsWith( 'JW-RT' )
-                    || sku.startsWith( 'HG-AD' ) ) return 'CBL';
-                return 'SEUR';
+                return this.getTransportForItem( i['product_shop_sku'], i['quantity'] );
             } ],
             [ 'platform', 'PLATAFORMA', () => name.toUpperCase() ],
             [ 'country', 'PAÍS', ( r ) => { // TODO: CHECK THIS
@@ -309,6 +305,180 @@ class LabelsApp
         this.lastSeurData = r.orders;
         this.lastSeurColumnData = tableWidget.data.head;
         this.lastShownSeurData = tableWidget.data.body;
+    }
+
+    getTransportForItem( sku, quantity )
+    {
+        if (
+            ( sku.startsWith( 'JW-DF2' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DT2' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DS2' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DF4' ) && quantity > 1 ) ||
+            ( sku.startsWith( 'JW-DT4' ) && quantity > 1 ) ||
+            [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku )
+        ) return 'CBL';
+        return 'SEUR';
+    }
+
+    showGroupsByCountryList( ogData )
+    {
+        ogData = ogData ?? this.lastSeurData;
+
+        let data = LX.deepCopy( ogData );
+
+        const dom = this.groupsListArea.root;
+        while ( dom.children.length > 0 )
+        {
+            dom.removeChild( dom.children[0] );
+        }
+
+        // Sort by ref
+        {
+            data = data.sort( ( a, b ) => {
+                return ( a['SKU del vendedor'] ?? '?' ).localeCompare( b['SKU del vendedor'] ?? '?' );
+            } );
+        }
+
+        let columnData = [
+            [ 'SKU del vendedor', null, ( row, i ) => {
+                return i['product_shop_sku'];
+            } ],
+            [ 'Cantidad', null ],
+            [ 'TRANSPORTE', null, ( r, i ) => {
+                return this.getTransportForItem( i['product_shop_sku'], i['quantity'] );
+            } ],
+            [ 'Plataforma', null, () => this.vendor.toUpperCase() ],
+            [ 'País', null, ( row, i ) => {
+                const ctr = row.customer?.shipping_address?.country;
+                return core.countryFormat[ctr] ?? ctr;
+            } ],
+            [ 'Observaciones', null, () => '' ],
+            [ 'order_id', 'Número del pedido' ],
+        ];
+
+        const uid = columnData[6][0];
+        const orderNumbers = new Map();
+
+        // Create table data from the list
+        let tableData =  [];
+        data.forEach( ( row, index ) => {
+            const items = row['order_lines'];
+            for ( let item of items )
+            {
+                const lRow = [];
+
+                for ( let c of columnData )
+                {
+                    let colName = c[0];
+
+                    // if ( colName === uid )
+                    // {
+                    //     const orderNumber = row[colName];
+
+                    //     if ( orderNumbers.has( orderNumber ) )
+                    //     {
+                    //         const val = orderNumbers.get( orderNumber );
+                    //         orderNumbers.set( orderNumber, [ ...val, index ] );
+                    //     }
+                    //     else
+                    //     {
+                    //         orderNumbers.set( orderNumber, [ index ] );
+                    //     }
+                    // }
+
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row, item ) ?? '' );
+                }
+
+                tableData.push( lRow );
+            }
+        } );
+
+        // const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
+
+        // for ( const repeats of multipleItemsOrderNames )
+        // {
+        //     const rest = repeats.slice( 1 );
+        //     const trail = rest.reduce( ( p, c ) => p + ` + ${tableData[c][0]}`, '' );
+        //     rest.forEach( ( r ) => {
+        //         tableData[r] = undefined;
+        //     } );
+        //     tableData[repeats[0]][0] += trail;
+        //     tableData[repeats[0]][5] = 'Mismo pedido';
+        // }
+
+        // tableData = tableData.filter( ( r ) => r !== undefined );
+
+        // Remove unnecessary
+        columnData.splice( 6, 1 );
+
+        const listSKU = [];
+        const skus = {};
+
+        console.log(tableData)
+
+        // for ( let row of tableData )
+        // {
+        //     const sku = `${row[0]}_${row[4]}`; // SKU _ País
+        //     if ( !skus[sku] )
+        //     {
+        //         skus[sku] = [ listSKU.length ];
+        //         row[1] = 1;
+        //         row.splice( 6, 1 );
+        //         listSKU.push( row );
+        //     }
+        //     else
+        //     {
+        //         const idx = skus[sku][0];
+        //         listSKU[idx][1] += 1;
+        //     }
+        // }
+
+        // for ( let row of listSKU )
+        // {
+        //     const sku = row[0];
+        //     if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) && row[5] !== 'Mismo pedido' )
+        //     {
+        //         row[1] *= 4;
+        //     }
+        // }
+
+        const tableWidget = new LX.Table( null, {
+            head: columnData.map( ( c ) => {
+                return c[1] ?? c[0];
+            } ),
+            body: tableData
+        }, {
+            selectable: false,
+            sortable: false,
+            sortColumns: false,
+            toggleColumns: false,
+            columnActions: [
+                {
+                    icon: 'Copy',
+                    name: 'Copiar',
+                    callback: ( colData ) => {
+                        if ( !this.lastShownSeurData )
+                        {
+                            return;
+                        }
+                        const tsv = colData.map( ( r ) => r.join( '\t' ) ).join( '\n' );
+                        navigator.clipboard.writeText( tsv ).then( () => {
+                            LX.toast( 'Hecho!', '✅ Columna copiada al portapapeles.', { timeout: 5000, position: 'top-center' } );
+                        } ).catch( ( err ) => {
+                            console.error( 'Error copying text: ', err );
+                            LX.toast( 'Error', '❌ No se pudo copiar la columna.', { timeout: -1, position: 'top-center' } );
+                        } );
+                    }
+                }
+            ],
+            filter: 'SKU del vendedor'
+        } );
+
+        this.lastSeurColumnData = tableWidget.data.head;
+        this.lastShownSeurData = tableWidget.data.body;
+
+        dom.appendChild( tableWidget.root );
     }
 
     exportSEUR( ignoreErrors = false, ordersData )
