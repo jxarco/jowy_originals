@@ -3,7 +3,7 @@ import { CblTrackingApp } from './apps/cbl_tracking_app.js';
 import { ChillApp } from './apps/chill_app.js';
 import { LabelsApp } from './apps/labels_app.js';
 import { OrdersApp } from './apps/orders_app.js';
-import { SeurApp } from './apps/seur_app.js';
+import { SheinApp } from './apps/shein_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import { WooCommerceClient } from './woocomerce.js';
 
@@ -90,7 +90,7 @@ const core = {
 
         // Content: create all apps
         this.cblTrackingApp = new CblTrackingApp( this );
-        this.seurApp = new SeurApp( this );
+        this.sheinApp = new SheinApp( this );
         this.ordersApp = new OrdersApp( this );
         this.transportCalculatorApp = new TransportCalculatorApp( this );
         this.chillApp = new ChillApp( this );
@@ -115,9 +115,9 @@ const core = {
             {
                 this.openApp( this.cblTrackingApp );
             }
-            else if ( lastTool.includes( 'seur' ) )
+            else if ( lastTool.includes( 'shein' ) )
             {
-                this.openApp( this.seurApp );
+                this.openApp( this.sheinApp );
             }
             else if ( lastTool.includes( 'orders' ) )
             {
@@ -150,7 +150,7 @@ const core = {
 
     createHeaderHtml: function()
     {
-        const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-6 py-12', `
+        const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-8 py-8', `
             <div style="display:flex;flex-direction:row;gap:0.5rem;align-items:center;">${
             LX.makeIcon( 'Info', { svgClass: 'xxl' } ).innerHTML
         }<h1>Jowy Originals</h1></div>
@@ -208,45 +208,45 @@ const core = {
                     // Read the data as binary
                     reader.readAsArrayBuffer( file );
                 }
-                else if ( file.name.endsWith( '.csv' ) )
-                {
-                    const reader = new FileReader();
-                    reader.onload = function( e )
-                    {
-                        const data = e.target.result.split( '\n' );
-                        const colData = data[0].split( ';' );
-                        const sheetData = [];
+                // else if ( file.name.endsWith( '.csv' ) )
+                // {
+                //     const reader = new FileReader();
+                //     reader.onload = function( e )
+                //     {
+                //         const data = e.target.result.split( '\n' );
+                //         const colData = data[0].split( ';' );
+                //         const sheetData = [];
 
-                        for ( const l of data.slice( 1 ) )
-                        {
-                            if ( !l || !l.length )
-                            {
-                                continue;
-                            }
+                //         for ( const l of data.slice( 1 ) )
+                //         {
+                //             if ( !l || !l.length )
+                //             {
+                //                 continue;
+                //             }
 
-                            const json = {};
+                //             const json = {};
 
-                            const rowData = l.split( ';' );
+                //             const rowData = l.split( ';' );
 
-                            colData.forEach( ( v, i ) => {
-                                json[v] = rowData[i];
-                            } );
+                //             colData.forEach( ( v, i ) => {
+                //                 json[v] = rowData[i];
+                //             } );
 
-                            sheetData.push( json );
-                        }
+                //             sheetData.push( json );
+                //         }
 
-                        if ( core.processData( sheetData ) )
-                        {
-                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
-                        }
-                    };
+                //         if ( core.processData( sheetData ) )
+                //         {
+                //             LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
+                //         }
+                //     };
 
-                    // Read the data as binary
-                    reader.readAsText( file );
-                }
+                //     // Read the data as binary
+                //     reader.readAsText( file );
+                // }
                 else
                 {
-                    alert( 'Please drop a valid .xlsx or .csv file.' );
+                    alert( 'Please drop a valid .xlsx file.' );
                 }
             }
         } );
@@ -335,9 +335,9 @@ const core = {
 
             this.cblTrackingApp.showList( 'jowy', true, true );
         }
-        else if ( this.tool == 'seur' )
+        else if ( this.tool == 'shein' )
         {
-            this.seurApp.openData( fileData );
+            this.sheinApp.openData( fileData );
         }
 
         if ( err !== null )
@@ -369,7 +369,7 @@ const core = {
         this.data['bathby'].list = [];
 
         this.cblTrackingApp.clear();
-        this.seurApp.clear();
+        this.sheinApp.clear();
         this.ordersApp.clear();
     },
 
@@ -650,13 +650,10 @@ core.data['bathby'].template = ( id, url, transport ) => {
     const menubar = area.addMenubar( [
         { name: 'Seguimiento', callback: ( v, e ) => core.openApp( core.cblTrackingApp, v ) },
         {
-            name: 'Seur',
-            callback: ( v, e ) => core.openApp( core.seurApp )
-            // submenu: [
-            //     { name: 'Shein', callback: ( v, e ) => core.openApp( core.seurApp, v ), icon: 'Strikethrough' },
-            //     { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.seurApp, v ),
-            //         icon: 'Volleyball' }
-            // ]
+            name: 'Plataformas',
+            submenu: [
+                { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Handbag' },
+            ]
         },
         {
             name: 'Pedidos',

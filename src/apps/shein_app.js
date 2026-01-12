@@ -16,27 +16,7 @@ const SHEIN_COLUMN_DATA = [
     [ 'Correo electrónico de usuario', null ]
 ];
 
-const DECATHLON_COLUMN_DATA = [
-    [ 'Número de pedido', 'Número del pedido' ],
-    [ 'SKU del producto', 'ID del artículo' ],
-    [ 'SKU de Tienda', 'SKU del vendedor', ( str, row ) => {
-        const qnt = row['Cantidad'];
-        return `${row['SKU de Tienda']} x ${qnt}`;
-    } ],
-    [ 'Dirección de entrega: código postal', 'Código Postal' ],
-    [ 'Dirección de entrega: país', 'País', ( str, row ) => {
-        const ctr = row['Dirección de entrega: país'];
-        return core.countryFormat[ctr] ?? ctr;
-    } ],
-    [ 'Provincia', null, ( str, row ) => row['Dirección de entrega: provincia'] ?? '' ],
-    [ 'Dirección de entrega: ciudad', 'Ciudad' ],
-    [ 'Dirección de entrega: calle 1+Dirección de entrega: calle 2', 'Dirección' ],
-    [ 'Dirección de entrega: nombre de pila+Dirección de entrega: apellido', 'Nombre de usuario completo' ],
-    [ 'Dirección de entrega: teléfono', 'Número de Teléfono' ],
-    [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
-];
-
-class SeurApp
+class SheinApp
 {
     constructor( core )
     {
@@ -98,77 +78,8 @@ class SeurApp
             return;
         }
 
-        const numCols = Object.keys( fileData[0] ).length;
-
-        // 27 -> shein. 80 -> decathlon
-        if ( numCols < 40 )
-        {
-            this.showSheinList( fileData );
-            this.showGroupsByCountryList( fileData );
-        }
-        else
-        {
-            this.showDecathlonList( fileData );
-            this.showGroupsByCountryList( fileData );
-        }
-    }
-
-    showDecathlonList( data )
-    {
-        data = data ?? this.lastSeurData;
-
-        this.vendor = 'Decathlon';
-
-        const dom = this.seurDataArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
-
-        // Sort by ref
-        {
-            data = data.sort( ( a, b ) => {
-                return ( a['SKU del vendedor'] ?? '?' ).localeCompare( b['SKU del vendedor'] ?? '?' );
-            } );
-        }
-
-        // Create table data from the list
-        const tableData = data.map( ( row ) => {
-            const lRow = [];
-            for ( let c of DECATHLON_COLUMN_DATA )
-            {
-                const ogColName = c[0];
-                if ( ogColName.includes( '+' ) )
-                {
-                    const tks = ogColName.split( '+' );
-                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                }
-                else
-                {
-                    const fn = c[2] ?? ( ( str ) => str );
-                    lRow.push( fn( row[ogColName] ?? '?', row ) );
-                }
-            }
-            return lRow;
-        } ).filter( ( v ) => v !== undefined );
-
-        const tableWidget = new LX.Table( null, {
-            head: DECATHLON_COLUMN_DATA.map( ( c ) => {
-                return c[1] ?? c[0];
-            } ),
-            body: tableData
-        }, {
-            selectable: true,
-            sortable: false,
-            toggleColumns: true,
-            filter: 'SKU del vendedor'
-        } );
-
-        dom.appendChild( tableWidget.root );
-
-        this.lastSeurColumnData = tableWidget.data.head;
-        this.lastShownSeurData = tableWidget.data.body;
-        this.lastSeurData = data;
+        this.showSheinList( fileData );
+        this.showGroupsByCountryList( fileData );
     }
 
     showSheinList( data )
@@ -260,20 +171,6 @@ class SeurApp
             [ 'Observaciones', null ],
             [ 'Número del pedido', null ]
         ];
-
-        if ( this.vendor === 'Decathlon' )
-        {
-            columnData = [
-                [ 'SKU de Tienda', 'SKU del vendedor' ],
-                [ 'Cantidad', null ],
-                [ 'Dirección de entrega: país', 'País', ( str, row ) => {
-                    const ctr = row['Dirección de entrega: país'];
-                    return this.core.countryFormat[ctr] ?? ctr;
-                } ],
-                [ 'Observaciones', null ],
-                [ 'Número de pedido', 'Número del pedido' ]
-            ];
-        }
 
         const uid = columnData[4][0];
         const orderNumbers = new Map();
@@ -522,7 +419,7 @@ class SeurApp
 
     exportSEUR( ignoreErrors = false, sheinData )
     {
-        let columnData = ( this.vendor === 'Decathlon' ) ? DECATHLON_COLUMN_DATA : SHEIN_COLUMN_DATA;
+        let columnData = SHEIN_COLUMN_DATA;
 
         const currentSheinData = sheinData ?? this.lastSeurData;
         const uid = columnData[0][0];
@@ -717,9 +614,9 @@ class SeurApp
 
     open( params )
     {
-        this.core.tool = 'seur';
-        this.core.setHeaderTitle( `Envíos SEUR: <i>Exportador Etiquetas</i>`,
-            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Truck' );
+        this.core.tool = 'shein';
+        this.core.setHeaderTitle( `SHEIN`,
+            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Handbag' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 
@@ -731,8 +628,7 @@ class SeurApp
     {
         delete this.lastSeurData;
         this.showSheinList( [] );
-        this.showDecathlonList( [] );
     }
 }
 
-export { SeurApp };
+export { SheinApp };
