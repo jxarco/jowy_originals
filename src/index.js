@@ -648,18 +648,18 @@ core.data['bathby'].template = ( id, url, transport ) => {
     const starterTheme = LX.getTheme();
 
     const menubar = area.addMenubar( [
-        { name: 'Seguimiento', callback: ( v, e ) => core.openApp( core.cblTrackingApp, v ) },
         {
-            name: 'Plataformas',
+            name: 'Web',
             submenu: [
-                { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Handbag' },
+                { name: 'Seguimiento/Facturas', callback: ( v, e ) => core.openApp( core.cblTrackingApp, v ), icon: 'TextSearch' },
+                { name: 'Pedidos', callback: ( v, e ) => core.openApp( core.ordersApp ), icon: 'Monitor' },
             ]
         },
         {
-            name: 'Pedidos',
+            name: 'Plataformas',
             submenu: [
-                { name: 'Web', callback: ( v, e ) => core.openApp( core.ordersApp, v ), icon: 'Monitor' },
-                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.labelsApp, v ), icon: 'Volleyball' }
+                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.labelsApp, v ), icon: 'Volleyball' },
+                { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Handbag' }
             ]
         },
         {
