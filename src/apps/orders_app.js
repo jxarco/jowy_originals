@@ -18,7 +18,7 @@ class OrdersApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine( 3 );
         utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), { icon: 'Trash2', title: 'Limpiar datos anteriores',
             tooltip: true } );
@@ -35,7 +35,7 @@ class OrdersApp
         // Jowy
         {
             const jowyContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Jowy', jowyContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -46,7 +46,7 @@ class OrdersApp
         // HxG
         {
             const hxgContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'HxG', hxgContainer, { xselected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const hxgArea = new LX.Area( { className: 'rounded-lg' } );
@@ -57,7 +57,7 @@ class OrdersApp
         // Bathby
         {
             const bathbyContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Bathby', bathbyContainer, { xselected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const bathbyArea = new LX.Area( { className: 'rounded-lg' } );

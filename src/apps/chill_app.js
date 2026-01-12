@@ -14,7 +14,7 @@ class ChillApp
         this.waves = true;
         this.audio = new Audio( 'data/KATO - Turn The Lights Off (Dany Coast Edit).mp3' );
 
-        this.canvas = LX.makeElement( 'canvas', 'absolute top-0 left-0 w-full opacity-0.5', '', panel );
+        this.canvas = LX.makeElement( 'canvas', 'absolute top-0 left-0 w-full opacity-50', '', panel );
         const ctx = this.canvas.getContext( '2d' );
 
         this.audioCtx = new ( window.AudioContext || window.webkitAudioContext )();
@@ -87,18 +87,18 @@ class ChillApp
             const popPanel = new LX.Panel( { height: 'h-fit', className: '' } );
             popPanel.addRange( 'Volumen', 1, ( v ) => {
                 this.audio.volume = v;
-            }, { className: 'contrast', min: 0, max: 1, step: 0.01, skipReset: true } );
-            popPanel.addToggle( 'Ondas', this.waves, ( v ) => this.waves = v, { className: 'contrast', skipReset: true } );
+            }, { className: 'primary', min: 0, max: 1, step: 0.01, skipReset: true } );
+            popPanel.addToggle( 'Ondas', this.waves, ( v ) => this.waves = v, { className: 'primary', skipReset: true } );
             popPanel.addSeparator();
             popPanel.addButton( null, 'YA ES VIERNES', () => {
                 this.audio.pause();
                 this.audio.src = 'data/OutKast -- Hey Ya Lyrics.mp3';
                 this.audio.play();
-            }, { buttonClass: 'accent' } );
+            }, { buttonClass: 'primary' } );
 
             const optButton = panel.addButton( null, 'OpcionesBtn', () => {
                 new LX.Popover( optButton.root, [ popPanel ], { side: 'bottom', align: 'start' } );
-            }, { icon: 'Menu', width: 'fit-content', className: 'absolute top-0 mt-6 ml-2 z-1000', xbuttonClass: 'bg-contrast fg-black' } );
+            }, { icon: 'Menu', width: 'fit-content', className: 'absolute top-0 mt-6 ml-2 z-1000' } );
 
             const cont = LX.makeElement( 'div', 'relative h-full', '', panel );
 
@@ -132,7 +132,7 @@ class ChillApp
             }, false );
 
             this.audio.play();
-        }, { className: 'block z-100 contrast self-center', width: 'fit-content' } );
+        }, { className: 'block z-100 primary self-center', width: 'fit-content' } );
 
         core.chillAppArea = this.area;
 

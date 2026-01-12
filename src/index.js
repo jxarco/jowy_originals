@@ -52,26 +52,26 @@ const core = {
         'recordatorio-rese': '1a Reseña'
     },
     orderStatusColors: {
-        'Pendiente de pago': { icon: 'HandCoins', bg: '#2563eb' },
-        'Procesando': { icon: 'Loader', bg: '#272c31ff' },
-        'En espera': { icon: 'Clock3', bg: '#ca8a04' },
+        'Pendiente de pago': { icon: 'HandCoins', bg: '#2560da', fg: '#e5e5e5' },
+        'Procesando': { icon: 'Loader', bg: '#272c31', fg: '#e5e5e5' },
+        'En espera': { icon: 'Clock3', bg: '#ca8a04', fg: '#e5e5e5' },
         'Enviado': { icon: 'PlaneTakeoff', bg: '#d5d5d5', fg: '#222' },
-        'Completado': { icon: 'CheckCircle', bg: '#218118' },
-        'Cancelado': { icon: 'Ban', bg: '#dc2626' },
-        'Reembolsado': { icon: 'CircleDollarSign', bg: '#a21caf' },
-        'Fallido': { icon: 'CircleX', bg: '#dc2626' },
-        'Borrador': { icon: 'FileText', bg: '#0d9488' },
+        'Completado': { icon: 'CheckCircle', bg: '#218118', fg: '#e5e5e5' },
+        'Cancelado': { icon: 'Ban', bg: '#dc2626', fg: '#e5e5e5' },
+        'Reembolsado': { icon: 'CircleDollarSign', bg: '#a21caf', fg: '#e5e5e5' },
+        'Fallido': { icon: 'CircleX', bg: '#dc2626', fg: '#e5e5e5' },
+        'Borrador': { icon: 'FileText', bg: '#0c8377', fg: '#e5e5e5' },
         '1a Reseña': { icon: 'Star', bg: '#FFC844', fg: '#222' }
     },
     trackStatusColors: {
-        'Documentada': { icon: 'File', bg: '#272c31ff' },
-        'Entregada': { icon: 'CircleCheck', bg: '#218118' },
-        'Incidencia': { icon: 'CircleAlert', bg: '#dc2626' },
-        'En reparto': { icon: 'Truck', bg: '#0d9488' },
-        'En destino': { icon: 'Warehouse', bg: '#2563eb' },
-        'En tránsito': { icon: 'Package', bg: '#a21caf' },
-        'En gestión': { icon: 'TriangleAlert', bg: '#ca8a04' },
-        'Devuelta': { icon: 'Frown', bg: '#dc2626' }
+        'Documentada': { icon: 'File', bg: '#272c31', fg: '#e5e5e5' },
+        'Entregada': { icon: 'CircleCheck', bg: '#218118', fg: '#e5e5e5' },
+        'Incidencia': { icon: 'CircleAlert', bg: '#dc2626', fg: '#e5e5e5' },
+        'En reparto': { icon: 'Truck', bg: '#0c8377', fg: '#e5e5e5' },
+        'En destino': { icon: 'Warehouse', bg: '#2560da', fg: '#e5e5e5' },
+        'En tránsito': { icon: 'Package', bg: '#a21caf', fg: '#e5e5e5' },
+        'En gestión': { icon: 'TriangleAlert', bg: '#ca8a04', fg: '#e5e5e5' },
+        'Devuelta': { icon: 'Frown', bg: '#dc2626', fg: '#e5e5e5' }
     },
     data: {
         'otros': { list: [], dom: null },
@@ -151,12 +151,12 @@ const core = {
     createHeaderHtml: function()
     {
         const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-8 py-8', `
-            <div style="display:flex;flex-direction:row;gap:0.5rem;align-items:center;">${
-            LX.makeIcon( 'Info', { svgClass: 'xxl' } ).innerHTML
-        }<h1>Jowy Originals</h1></div>
+            <div class="flex flex-row gap-2 items-center">${
+            LX.makeIcon( 'Info', { svgClass: '2xl' } ).innerHTML
+        }<span class="text-3xl font-semibold">Jowy Originals</span></div>
             <p class="font-light" style="max-width:32rem">Elige una de las herramientas para empezar.</p>
         `, this.area );
-        header.style.background = `url('data/banner_${LX.getTheme()}.png') no-repeat center center / cover`;
+        header.style.background = `url('data/banner_${LX.getMode()}.png') no-repeat center center / cover`;
         header.style.transition = 'transform 0.1s ease-in';
         this.header = header;
 
@@ -257,8 +257,8 @@ const core = {
     setHeaderTitle: function( title, subtitle, icon )
     {
         this.header.querySelector( 'div' ).innerHTML = `${
-            LX.makeIcon( icon ?? 'Info', { svgClass: 'xxl mr-2' } ).innerHTML
-        }<h1>${title}</h1>`;
+            LX.makeIcon( icon ?? 'Info', { svgClass: '2xl mr-2' } ).innerHTML
+        }<span class="text-3xl font-semibold">${title}</span>`;
         this.header.querySelector( 'p' ).innerHTML = subtitle ?? '';
     },
 
@@ -452,9 +452,9 @@ const core = {
                 else
                 {
                     spinner.remove();
-                    LX.emit( '@login_errors', '❌ Credenciales no válidas' );
+                    LX.emitSignal( '@login_errors', '❌ Credenciales no válidas' );
                 }
-            }, { buttonClass: 'flex flex-row justify-center gap-2', skipReset: true } );
+            }, { buttonClass: 'primary flex flex-row justify-center gap-2', skipReset: true } );
             p.addSeparator();
             p.addTextArea( null, '', null, { disabled: true, fitHeight: true, signal: '@login_errors' } );
         }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
@@ -479,7 +479,7 @@ const core = {
     makeLoadingDialog( title )
     {
         return new LX.Dialog( title ?? 'Acción en curso, espere...', ( p ) => {
-            let spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex p-2', svgClass: 'xxl animate-spin' } );
+            let spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex p-2', svgClass: '2xl animate-spin' } );
             p.attach( spinner );
         }, { modal: true, position: [ 'calc(50% - 150px)', '250px' ], size: [ '300px', null ], closable: false, draggable: false } );
     },
@@ -645,7 +645,9 @@ core.data['bathby'].template = ( id, url, transport ) => {
     const parallax = LX.makeElement( 'div', 'parallax-bg', '', document.body );
 
     const area = await LX.init( { layoutMode: 'document', rootClass: 'wrapper' } );
-    const starterTheme = LX.getTheme();
+    const starterMode = LX.getMode();
+
+    LX.setThemeColor( 'teal' );
 
     const menubar = area.addMenubar( [
         {
@@ -670,35 +672,34 @@ core.data['bathby'].template = ( id, url, transport ) => {
             ]
         },
         { name: 'Chill', callback: ( v, e ) => core.openApp( core.chillApp ) }
-        // { name: "Calculadora", callback: core.redirectToOAuth.bind( core ) }
     ] );
 
     const separator = LX.makeContainer( [ '1px', '100%' ], 'content-center ml-4 mr-2', '' );
-    LX.makeContainer( [ 'auto', '1.25rem' ], 'bg-quaternary', '', separator );
-    menubar.root.insertChildAtIndex( separator, 0 );
+    LX.makeContainer( [ 'auto', '1.25rem' ], 'bg-muted', '', separator );
+    LX.insertChildAtIndex( menubar.root, separator, 0 );
 
-    menubar.setButtonImage( 'bathby', `data/bathby_${starterTheme}.png`, () => {
+    menubar.setButtonImage( 'bathby', `data/bathby_${starterMode}.png`, () => {
         window.open( 'https://bathby.com/wp-admin/' );
     }, { float: 'left' } );
-    menubar.setButtonImage( 'hxg', `data/hxg_${starterTheme}.png`, () => {
+    menubar.setButtonImage( 'hxg', `data/hxg_${starterMode}.png`, () => {
         window.open( 'https://homexgym.com/wp-admin/' );
     }, { float: 'left' } );
-    menubar.setButtonImage( 'jowy', `data/jowy_${starterTheme}.png`, () => {
+    menubar.setButtonImage( 'jowy', `data/jowy_${starterMode}.png`, () => {
         window.open( 'https://www.jowyoriginals.com/wp-admin/' );
     }, { float: 'left' } );
 
     menubar.addButtons( [
         {
             title: 'Switch Theme',
-            icon: starterTheme == 'dark' ? 'Moon' : 'Sun',
-            swap: starterTheme == 'dark' ? 'Sun' : 'Moon',
+            icon: starterMode == 'dark' ? 'Moon' : 'Sun',
+            swap: starterMode == 'dark' ? 'Sun' : 'Moon',
             callback: ( value, event ) => {
-                LX.switchTheme();
-                const newTheme = LX.getTheme();
-                menubar.setButtonImage( 'bathby', `data/bathby_${newTheme}.png` );
-                menubar.setButtonImage( 'hxg', `data/hxg_${newTheme}.png` );
-                menubar.setButtonImage( 'jowy', `data/jowy_${newTheme}.png` );
-                core.header.style.background = `url('data/banner_${newTheme}.png') no-repeat center center / cover`;
+                LX.switchMode();
+                const newMode = LX.getMode();
+                menubar.setButtonImage( 'bathby', `data/bathby_${newMode}.png` );
+                menubar.setButtonImage( 'hxg', `data/hxg_${newMode}.png` );
+                menubar.setButtonImage( 'jowy', `data/jowy_${newMode}.png` );
+                core.header.style.background = `url('data/banner_${newMode}.png') no-repeat center center / cover`;
             }
         }
     ], { float: 'center' } );

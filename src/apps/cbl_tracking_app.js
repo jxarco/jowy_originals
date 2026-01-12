@@ -23,7 +23,7 @@ class CblTrackingApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine( 4 );
 
         const seeMessagesButton = utilButtonsPanel.addButton( null, 'SeeMessagesButton', () => {
@@ -95,7 +95,7 @@ class CblTrackingApp
         // Jowy
         {
             const jowyContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Jowy', jowyContainer, { selected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -106,7 +106,7 @@ class CblTrackingApp
         // HxG
         {
             const hxgContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'HxG', hxgContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
             const hxgArea = new LX.Area( { className: 'rounded-lg' } );
@@ -117,7 +117,7 @@ class CblTrackingApp
         // Bathby
         {
             const bathbyContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Bathby', bathbyContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
             const bathbyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -128,7 +128,7 @@ class CblTrackingApp
         // Otros
         {
             const miscContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Otros', miscContainer, { xselected: true,
                 onSelect: ( event, name ) => this.showList( name.toLowerCase(), false ) } );
 
@@ -185,12 +185,9 @@ class CblTrackingApp
                     if ( !o )
                     {
                         const status = core.trackStatusColors['Incidencia'];
-                        let iconStr = status.icon
-                            ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
-                                .innerHTML
-                            : '';
+                        let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
                         return `${
-                            LX.badge( iconStr, 'text-sm font-bold border-none ', {
+                            LX.badge( iconStr, 'text-xs font-bold border-none ', {
                                 style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
                                     color: status.fg ?? '' }
                             } )
@@ -198,12 +195,9 @@ class CblTrackingApp
                     }
                     const str = core.orderStatus[o.status];
                     const status = core.orderStatusColors[str] ?? {};
-                    let iconStr = status.icon
-                        ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
-                            .innerHTML
-                        : '';
+                    let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-inherit!' } ).innerHTML : '';
                     return `${
-                        LX.badge( iconStr + str, 'text-sm font-bold border-none ', {
+                        LX.badge( iconStr + str, 'text-xs font-bold border-none ', {
                             style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
                         } )
                     }`;
@@ -224,11 +218,11 @@ class CblTrackingApp
             [ 'CLAVE', 'SITUACIÓN', ( str ) => {
                 const status = core.trackStatusColors[str] ?? {};
                 let iconStr = status.icon
-                    ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
+                    ? LX.makeIcon( status.icon, { svgClass: 'md text-inherit!' } )
                         .innerHTML
                     : '';
                 return `${
-                    LX.badge( iconStr + str, 'text-sm font-bold border-none ', {
+                    LX.badge( iconStr + str, 'text-xs font-bold border-none ', {
                         style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
                     } )
                 }`;
@@ -399,9 +393,9 @@ class CblTrackingApp
                 }\n\n¿Quieres continuar?`, null, { fitHeight: true, disabled: true } );
             dialogPanel.addSeparator();
             dialogPanel.sameLine( 2, 'justify-right mt-2' );
-            dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'fg-error' } );
+            dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'text-destructive' } );
             const continueButton = dialogPanel.addButton( null, 'Continuar', async () => {
-                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'fg-contrast md animate-spin' } );
+                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
                 continueButton.root.querySelector( 'button' ).prepend( spinner );
                 const r = await wcc.batchUpdateOrders( orderUpdates );
 
@@ -421,11 +415,11 @@ class CblTrackingApp
                     const str = core.orderStatus[newStatus];
                     const status = core.orderStatusColors[str] ?? {};
                     let iconStr = status.icon
-                        ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
+                        ? LX.makeIcon( status.icon, { svgClass: 'md text-inherit!' } )
                             .innerHTML
                         : '';
                     const newData = `${
-                        LX.badge( iconStr + str, 'text-sm font-bold border-none ', {
+                        LX.badge( iconStr + str, 'text-xs font-bold border-none ', {
                             style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
                         } )
                     }`;
@@ -440,7 +434,7 @@ class CblTrackingApp
                 } );
 
                 dialogClosable.close();
-            }, { buttonClass: 'contrast flex flex-row justify-center gap-2' } );
+            }, { buttonClass: 'primary flex flex-row justify-center gap-2' } );
         }, { position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
     }
 
@@ -456,19 +450,29 @@ class CblTrackingApp
             } );
             dialogPanel.addSeparator();
             dialogPanel.sameLine( 2, 'justify-right mt-2' );
-            dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'fg-error' } );
+            dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'text-destructive' } );
             dialogPanel.addButton( null, 'Continuar', async () => {
                 dialogClosable.destroy();
 
                 const dialog = core.makeLoadingDialog();
-                const r = await wcc.updateOrderStatus( orderNumber, newStatus );
 
-                dialog.destroy();
+                try {
+                    const r = await wcc.updateOrderStatus( orderNumber, newStatus );
 
-                if ( !r.ok )
-                {
-                    LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
+                    dialog.destroy();
+
+                    if ( !r.ok )
+                    {
+                        LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
+                        if ( onComplete ) onComplete( 1 );
+                        return;
+                    }
+
+                } catch ( error ) {
+
+                    LX.toast( 'WooCommerce Error', `❌ ${error}`, { timeout: -1, position: 'top-center' } );
                     if ( onComplete ) onComplete( 1 );
+                    dialog.destroy();
                     return;
                 }
 
@@ -479,11 +483,11 @@ class CblTrackingApp
 
                     const status = core.orderStatusColors[statusName] ?? {};
                     let iconStr = status.icon
-                        ? LX.makeIcon( status.icon, { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } )
+                        ? LX.makeIcon( status.icon, { svgClass: 'md text-inherit!' } )
                             .innerHTML
                         : '';
                     const newData = `${
-                        LX.badge( iconStr + statusName, 'text-sm font-bold border-none ', {
+                        LX.badge( iconStr + statusName, 'text-xs font-bold border-none ', {
                             style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
                         } )
                     }`;
@@ -496,7 +500,7 @@ class CblTrackingApp
                 LX.toast( `Hecho!`, `✅ Pedido ${orderNumber} actualizado con éxito.`, { timeout: 5000, position: 'top-center' } );
 
                 if ( onComplete ) onComplete( 2 );
-            }, { buttonClass: 'contrast' } );
+            }, { buttonClass: 'primary' } );
         }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false,
             onBeforeClose: () => {
                 if ( onComplete ) onComplete();
@@ -554,26 +558,26 @@ class CblTrackingApp
 
         const hasOrderNumber = !Number.isNaN( orderNumber );
         const status = core.trackStatusColors['Incidencia'] ?? {};
-        let iconStr = LX.makeIcon( 'CircleAlert', { svgClass: 'md ' + ( status.fg ? 'fg-black' : 'fg-white' ) } ).innerHTML;
+        let iconStr = LX.makeIcon( 'CircleAlert', { svgClass: 'md text-inherit!' } ).innerHTML;
         const noOrderStr = `${
-            LX.badge( iconStr + 'Sin número', 'text-lg font-bold border-none ', {
+            LX.badge( iconStr + 'Sin número', 'text-base font-bold border-none ', {
                 style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
             } )
         }`;
 
         const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6 mb-3', `
                 <h2 class="flex flex-row items-center gap-1">${row['NOMCONS']}</h2>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Población</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Población</p><p class="flex flex-row items-center font-medium">${
             row['POBLACION']
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Situación</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Situación</p><p class="flex flex-row items-center font-medium">${
             row['CLAVE']
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de envío</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Número de envío</p><p class="flex flex-row items-center font-medium">${
             row['NENVIO']
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Referencia</p><p class="flex flex-row items-center font-medium">${str}</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Número de pedido</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Referencia</p><p class="flex flex-row items-center font-medium">${str}</p></div>
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Número de pedido</p><p class="flex flex-row items-center font-medium">${
             hasOrderNumber ? orderNumber : noOrderStr
         }</p></div>
             `, dom );
@@ -596,7 +600,7 @@ class CblTrackingApp
                     copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
                 }, 3000 );
             }, { swap: 'Check', icon: 'Copy', title: 'Copiar', tooltip: true } );
-            copyButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+            LX.addClass( copyButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
             nPedidoH2.appendChild( copyButtonWidget.root );
         }
 
@@ -642,17 +646,17 @@ class CblTrackingApp
                 invoicePanel.addText( 'Número de Factura (FT)', orderInvoice.numberFormatted.toString(), null, {
                     disabled: true,
                     nameWidth: '40%',
-                    className: 'text-xl font-light fg-tertiary'
+                    className: 'text-xl font-light text-muted-foreground'
                 } );
             }
 
             invoicePanel.addText( 'Número de Factura', invoiceNumber.toString(), ( v ) => {
                 v = parseInt( v );
                 invoiceNumber = !Number.isNaN( v ) ? v : 0;
-            }, { disabled: orderInvoice !== null, placeholder: '000000', nameWidth: '40%', className: 'text-xl font-light fg-tertiary' } );
+            }, { disabled: orderInvoice !== null, placeholder: '000000', nameWidth: '40%', className: 'text-xl font-light text-muted-foreground' } );
             invoicePanel.addDate( 'Fecha de Factura', invoiceDate, ( v ) => {
                 invoiceDate = v;
-            }, { disabled: orderInvoice !== null, nameWidth: '40%', className: 'text-xl font-light fg-tertiary' } );
+            }, { disabled: orderInvoice !== null, nameWidth: '40%', className: 'text-xl font-light text-muted-foreground' } );
 
             if ( orderInvoice === null )
             {
@@ -663,16 +667,16 @@ class CblTrackingApp
                             null, { fitHeight: true, disabled: true } );
                         dialogPanel.addSeparator();
                         dialogPanel.addNumber( 'Número de Factura', invoiceNumber, () => {}, { disabled: true, nameWidth: '40%',
-                            className: 'text-lg fg-tertiary' } );
+                            className: 'text-lg text-muted-foreground' } );
                         dialogPanel.addText( 'Fecha de Factura', invoiceDate, () => {}, { disabled: true, nameWidth: '40%',
-                            className: 'text-lg fg-tertiary' } );
+                            className: 'text-lg text-muted-foreground' } );
                         dialogPanel.addSeparator();
                         dialogPanel.addCheckbox( 'Añadir nota de seguimiento', customerNote, ( v ) => {
                             customerNote = v;
-                        }, { disabled: false, nameWidth: '60%', className: 'contrast text-lg' } );
+                        }, { disabled: false, nameWidth: '60%', className: 'primary text-lg' } );
                         dialogPanel.sameLine( 2, 'justify-right mt-2' );
                         dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), {
-                            buttonClass: 'fg-error'
+                            buttonClass: 'text-destructive'
                         } );
                         dialogPanel.addButton( null, 'Continuar', async () => {
                             dialogClosable.close();
@@ -727,16 +731,16 @@ class CblTrackingApp
 
                             // refresh
                             this.showMessages( compName, rowOffset );
-                        }, { buttonClass: 'contrast' } );
+                        }, { buttonClass: 'primary' } );
                     }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true,
                         draggable: false } );
-                }, { buttonClass: 'contrast' } );
+                }, { buttonClass: 'primary' } );
             }
         }
 
         const body = LX.makeContainer( [ null, 'auto' ], 'p-2', templateString, dom );
 
-        const footerPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-none p-2' } );
+        const footerPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2' } );
         footerPanel.sameLine();
 
         const openWeCLink = footerPanel.addButton( null, 'OpenWeCLinkButton', () => {
@@ -768,7 +772,7 @@ class CblTrackingApp
                 copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
             }, 3000 );
         }, { width: '100px', swap: 'Check', icon: 'Copy', title: 'Copiar mensaje', tooltip: true } );
-        copyButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+        LX.addClass( copyButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
 
         const nextButtonWidget = footerPanel.addButton( null, 'NextButton', () => {
             this.showMessages( compName, rowOffset + 1 );
@@ -829,7 +833,7 @@ class CblTrackingApp
                 }
             };
 
-            let p = new LX.Panel( { className: 'bg-none bg-primary border-none p-2' } );
+            let p = new LX.Panel( { className: 'bg-none bg-card border-none p-2' } );
 
             p.addText( 'Número de pedido', idOrder, ( value, event ) => {
                 idOrder = value;
@@ -867,7 +871,7 @@ class CblTrackingApp
                     {
                         LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
 
-                        sendNoteButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-error' );
+                        LX.addClass( sendNoteButtonWidget.root.querySelector( '.swap-on svg' ), 'text-destructive' );
 
                         spinner.remove();
                         sendNoteButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
@@ -879,7 +883,7 @@ class CblTrackingApp
                         return;
                     }
 
-                    sendNoteButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+                    LX.addClass( sendNoteButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
 
                     spinner.remove();
                     sendNoteButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
@@ -942,7 +946,7 @@ class CblTrackingApp
                     {
                         LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
 
-                        makeInvoiceButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-error' );
+                        LX.addClass( makeInvoiceButtonWidget.root.querySelector( '.swap-on svg' ), 'text-destructive' );
 
                         spinner.remove();
                         makeInvoiceButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
@@ -954,7 +958,7 @@ class CblTrackingApp
                         return;
                     }
 
-                    makeInvoiceButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+                    LX.addClass( makeInvoiceButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
 
                     spinner.remove();
                     makeInvoiceButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
@@ -1019,10 +1023,10 @@ class CblTrackingApp
                 return template( idTracking, url, t );
             };
 
-            const body = LX.makeContainer( [ null, '100%' ], 'p-4 mt-8 items-center content-center', '', right );
+            const body = LX.makeContainer( [ null, '100%' ], 'p-4 mt-2 items-center content-center place-items-center', '', right );
             body.innerHTML = getTemplate();
 
-            let templatePanel = new LX.Panel( { className: 'bg-none bg-primary border-none p-2' } );
+            let templatePanel = new LX.Panel( { className: 'bg-none bg-card border-none p-2' } );
 
             const copyButtonWidget = templatePanel.addButton( null, 'CopyButton', async () => {
                 navigator.clipboard.writeText( body.innerHTML ).then( () => {
@@ -1038,10 +1042,10 @@ class CblTrackingApp
                     copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
                 }, 3000 );
             }, { swap: 'Check', icon: 'Copy', title: 'Copiar Mensaje', tooltip: true, width: '100%' } );
-            copyButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+            LX.addClass( copyButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
 
             right.attach( templatePanel.root );
-        }, { size: [ 'min(100%, 900px)', null ], closable: true, draggable: false } );
+        }, { position: [ 'calc(50% - min(100%, 900px)*0.5)', '250px' ], size: [ 'min(100%, 900px)', null ], closable: true, draggable: false } );
     }
 
     openSelectedOrders()
@@ -1073,11 +1077,11 @@ class CblTrackingApp
                 } );
                 dialogPanel.addSeparator();
                 dialogPanel.sameLine( 2, 'justify-right' );
-                dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'fg-error' } );
+                dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'text-destructive' } );
                 dialogPanel.addButton( null, 'Continuar', () => {
                     dialogClosable.close();
                     fn();
-                }, { buttonClass: 'contrast' } );
+                }, { buttonClass: 'primary' } );
             }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
         }
         else

@@ -5,54 +5,15 @@
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Jowy - Tools </title>
-    <link rel="stylesheet" href="lexgui.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lexgui@^8.2.1/build/lexgui.css">
+    <link rel="stylesheet" href="css/output.css">
     <link rel="icon" href="data/jowy_dark.png">
-    <style>
-        .animate-spin {
-           animation: var(--animate-spin);
-        }
-        .parallax-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18,18,20,0.75), rgba(18,18,20,0.75)), url("data/parallax.png") no-repeat center center / cover;
-            object-fit: cover;
-            z-index: 0;
-        }
-        :root[data-theme="light"] .parallax-bg {
-            background: linear-gradient(rgba(256, 256, 256,0.4), rgba(256, 256, 256,0.4)), url("data/parallax.png") no-repeat center center / cover;
-            filter: brightness(1.5);
-        }
-        .lextable th, .lextable td {
-            max-width: 256px;
-            text-overflow: ellipsis;
-        }
-        .lextable { overflow-x: scroll }
-        .lextable table { table-layout: auto; }
-        .lextable table th { white-space: nowrap; }
-        /* Hack to shrink Type and Method columns in reference docs */
-        .lextable:has(input) table tbody tr:last-child td:not(:last-child) {
-            width: 1px;
-            white-space: nowrap;
-        }
-        .lexbutton.array {
-            padding: var(--global-padding-xs) 0.75rem;
-        }
-        .notifications ol .lextoast .lextoastcontent .desc { transition: all 0.5s cubic-bezier(.42, .97, .52, 1.19) }
-        .notifications ol.list .lextoast .lextoastcontent .desc {
-            word-wrap: break-word;
-            white-space: normal;
-        }
-        .draggingover{ filter: brightness(1.1); transform: scale(0.975) }
-    </style>
-    <!-- <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script> -->
-     <script src="./src/extra/xlsx.full.min.js"></script>
+    <script src="./src/extra/xlsx.full.min.js"></script>
     <script type="importmap">
         {
           "imports": {
-            "lexgui": "./src/extra/lexgui.module.js"
+            "lexgui": "https://cdn.jsdelivr.net/npm/lexgui@^8.2.1/build/lexgui.module.js",
+            "lexgui/extensions/": "https://cdn.jsdelivr.net/npm/lexgui@^8.2.1/build/extensions/"
           }
         }
     </script>

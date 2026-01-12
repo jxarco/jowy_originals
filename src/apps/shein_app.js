@@ -28,7 +28,7 @@ class SheinApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine( 3 );
         utilButtonsPanel.addButton( null, 'StartButton', this.showSingleSheinData.bind( this ), { icon: 'Eye',
             title: 'Ver información detallada', tooltip: true } );
@@ -45,18 +45,18 @@ class SheinApp
         // this.sheinTabs = tabs.root;
 
         // SEUR
-        const seurContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+        const seurContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
         tabs.add( 'Todo', seurContainer, { selected: true, onSelect: ( event, name ) => this.openData() } );
 
-        const seurArea = new LX.Area( { className: 'rounded-lg' } );
+        const seurArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         seurContainer.appendChild( seurArea.root );
 
         // Groups List
         const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
-            'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+            'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
         tabs.add( 'Por cantidad', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
 
-        const groupsListArea = new LX.Area( { className: 'rounded-lg' } );
+        const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         groupsListContainer.appendChild( groupsListArea.root );
 
         // Move up into the panel section
@@ -322,8 +322,8 @@ class SheinApp
         }
 
         const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6', `
-                <h2 class="flex flex-row items-center gap-1">Número del pedido: ${row['Número del pedido']}</h2>
-                <p class="font-light fg-tertiary" style="height:auto"><strong>${row['Nombre del producto'] ?? 'Vacío'}</strong></p>
+                <p class="orderNumberRow flex flex-row items-center gap-1 text-3xl">Número del pedido: ${row['Número del pedido']}</p>
+                <p class="font-light text-muted-foreground" style="height:auto"><strong>${row['Nombre del producto'] ?? 'Vacío'}</strong></p>
                 <p class="font-light"><strong>SKU: ${row['SKU del vendedor'] ?? 'Vacío'}</strong> / <strong>${
             row['Especificación']
         }</strong></p>
@@ -331,28 +331,28 @@ class SheinApp
             `, dom );
 
         const body = LX.makeContainer( [ null, 'auto' ], 'flex flex-col p-8 gap-0.5', `
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Nombre Usuario</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Nombre Usuario</p><p class="flex flex-row items-center font-medium">${
             row['Nombre de usuario completo'] ?? 'Vacío'
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Dirección</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Dirección</p><p class="flex flex-row items-center font-medium">${
             row['dirección de usuario 1'] + ( row['dirección de usuario 2'] ? ' ' + row['dirección de usuario 2'] : '' )
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">CP</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">CP</p><p class="flex flex-row items-center font-medium">${
             row['Código Postal'] ?? 'Vacío'
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Ciudad/Población</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Ciudad/Población</p><p class="flex flex-row items-center font-medium">${
             row['Ciudad'] ?? 'Vacío'
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Provincia</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Provincia</p><p class="flex flex-row items-center font-medium">${
             row['Provincia'] ?? 'Vacío'
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">País</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">País</p><p class="flex flex-row items-center font-medium">${
             row['País'] ?? 'Vacío'
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Teléfono</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Teléfono</p><p class="flex flex-row items-center font-medium">${
             row['Número de Teléfono'] ?? 'Vacío'
         }</p></div>
-                <div class="flex flex-row items-center gap-1"><p class="font-light fg-tertiary">Correo</p><p class="flex flex-row items-center font-medium">${
+                <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Correo</p><p class="flex flex-row items-center font-medium">${
             row['Correo electrónico de usuario'] ?? 'Vacío'
         }</p></div>
             `, dom );
@@ -375,13 +375,13 @@ class SheinApp
                     copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
                 }, 3000 );
             }, { swap: 'Check', icon: 'Copy', title: 'Copiar', tooltip: true } );
-            copyButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+            LX.addClass( copyButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
             c.appendChild( copyButtonWidget.root );
         }
 
         // Add button to copy NUMERO PEDIDO
         {
-            const nPedidoH2 = header.querySelector( 'h2' );
+            const nPedidoH2 = header.querySelector( '.orderNumberRow' );
             const copyButtonWidget = new LX.Button( null, 'CopyButton', async function()
             {
                 const textToCopy = nPedidoH2.innerText.substring( nPedidoH2.innerText.indexOf( ': ' ) + 2 );
@@ -398,11 +398,11 @@ class SheinApp
                     copyButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'auto';
                 }, 3000 );
             }, { swap: 'Check', icon: 'Copy', title: 'Copiar', tooltip: true } );
-            copyButtonWidget.root.querySelector( '.swap-on svg' ).addClass( 'fg-success' );
+            LX.addClass( copyButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
             nPedidoH2.appendChild( copyButtonWidget.root );
         }
 
-        const footerPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-none p-2' } );
+        const footerPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2' } );
         footerPanel.sameLine( 3 );
         footerPanel.addButton( null, 'PrevButton', () => {
             this.showSingleSheinData( rowOffset - 1 );
@@ -478,11 +478,11 @@ class SheinApp
                     pBottom.addButton( null, 'Ignorar', () => {
                         dialog.close();
                         this.exportSEUR( true );
-                    }, { width: '50%', buttonClass: 'bg-error fg-white' } );
+                    }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
                     pBottom.addButton( null, 'Exportar', () => {
                         dialog.close();
                         this.exportSEUR( false, fixedData );
-                    }, { width: '50%', buttonClass: 'contrast' } );
+                    }, { width: '50%', buttonClass: 'primary' } );
                 }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
 
                 return;

@@ -52,7 +52,7 @@ class LabelsApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-primary border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
 
         // const seeMessagesButton = utilButtonsPanel.addButton( null, 'SeeMessagesButton', () => {
@@ -63,8 +63,8 @@ class LabelsApp
             core.clearData();
         }, { icon: 'Trash2', title: 'Limpiar datos anteriores', tooltip: true } );
 
-        utilButtonsPanel.addButton( null, 'MoreOptionsButton', ( value, event ) => {
-            LX.addDropdownMenu( event.target, [
+        const moreOptionsButtonComp = utilButtonsPanel.addButton( null, 'MoreOptionsButton', ( value, event ) => {
+            LX.addDropdownMenu( moreOptionsButtonComp.root, [
                 // {
                 //     name: 'Abrir pedidos',
                 //     icon: 'ExternalLink',
@@ -128,7 +128,7 @@ class LabelsApp
         // Deca
         {
             const decaContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Decathlon', decaContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -139,7 +139,7 @@ class LabelsApp
         // // HxG
         // {
         //     const hxgContainer = LX.makeContainer( [ null, 'auto' ],
-        //         'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+        //         'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
         //     tabs.add( 'HxG', hxgContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
         //     const hxgArea = new LX.Area( { className: 'rounded-lg' } );
@@ -150,7 +150,7 @@ class LabelsApp
         // // Bathby
         // {
         //     const bathbyContainer = LX.makeContainer( [ null, 'auto' ],
-        //         'flex flex-col relative bg-primary p-1 pt-0 rounded-lg overflow-hidden' );
+        //         'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
         //     tabs.add( 'Bathby', bathbyContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
         //     const bathbyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -398,11 +398,11 @@ class LabelsApp
                     pBottom.addButton( null, 'Ignorar', () => {
                         dialog.close();
                         this.exportSEUR( true );
-                    }, { width: '50%', buttonClass: 'bg-error fg-white' } );
+                    }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
                     pBottom.addButton( null, 'Exportar', () => {
                         dialog.close();
                         this.exportSEUR( false, fixedData );
-                    }, { width: '50%', buttonClass: 'contrast' } );
+                    }, { width: '50%', buttonClass: 'primary' } );
                 }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
 
                 return;

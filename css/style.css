@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
+
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --pad-xs: 0.15rem 0.25rem;
+    --pad-sm: 0.25rem;
+    --pad-md: 0.4rem;
+    --pad-lg: 0.5rem;
+    --pad-xl: 0.75rem;
+    --pad-2xl: 1rem;
+
+    --color-background: var(--background);
+    --color-background-blur: var(--background-blur);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+}
+
+@utility pad-* { padding: --value(--pad-*); }
+
+@layer utilities {
+    .scrollbar-hidden::-webkit-scrollbar { display: none; }
+    .scrollbar-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+* {
+	font-family: "Google Sans", sans-serif;
+}
+
+.parallax-bg {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(rgba(18, 18, 20, 0.75), rgba(18, 18, 20, 0.75)), url("../data/parallax.png") no-repeat center center / cover;
+	object-fit: cover;
+	z-index: 0;
+}
+
+:root[data-theme="light"] .parallax-bg {
+	background: linear-gradient(rgba(256, 256, 256, 0.4), rgba(256, 256, 256, 0.4)), url("../data/parallax.png") no-repeat center center / cover;
+	filter: brightness(1.5);
+}
+
+.lextable th,
+.lextable td {
+	max-width: 256px;
+	text-overflow: ellipsis;
+}
+
+.lextable {
+	overflow-x: scroll
+}
+
+.lextable table {
+	table-layout: auto;
+}
+
+.lextable table th {
+	white-space: nowrap;
+}
+
+/* Hack to shrink Type and Method columns in reference docs */
+.lextable:has(input) table tbody tr:last-child td:not(:last-child) {
+	width: 1px;
+	white-space: nowrap;
+}
+
+.lexbutton.array {
+	padding: var(--global-padding-xs) 0.75rem;
+}
+
+.notifications ol .lextoast .lextoastcontent .desc {
+	transition: all 0.5s cubic-bezier(.42, .97, .52, 1.19)
+}
+
+.notifications ol.list .lextoast .lextoastcontent .desc {
+	word-wrap: break-word;
+	white-space: normal;
+}
+
+.draggingover {
+	filter: brightness(1.1);
+	transform: scale(0.975)
+}
