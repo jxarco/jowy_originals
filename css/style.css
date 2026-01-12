@@ -101,3 +101,7 @@
 	filter: brightness(1.1);
 	transform: scale(0.975)
 }
+
+.lexselect .lexselectoptions {
+    max-height: 400px;
+}
