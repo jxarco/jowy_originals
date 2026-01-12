@@ -588,6 +588,9 @@
 .lexselect .lexselectoptions {
   max-height: 400px;
 }
+.lextoast {
+  background-color: light-dark(var(--card), var(--secondary));
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;
