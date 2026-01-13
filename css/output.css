@@ -594,9 +594,6 @@
 .lexselect .lexselectoptions {
   max-height: 400px;
 }
-.lextoast {
-  background-color: light-dark(var(--card), var(--secondary));
-}
 @property --tw-scale-x {
   syntax: "*";
   inherits: false;
