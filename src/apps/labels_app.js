@@ -45,7 +45,7 @@ class LabelsApp
 {
     constructor( core )
     {
-        this.client = new MiraklClient( 'https://jowy-originals.alexroco-30.workers.dev' );
+        this.mkClient = new MiraklClient();
 
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
@@ -151,11 +151,54 @@ class LabelsApp
         this.clear();
     }
 
+    openMiraklLogin( callback )
+    {
+        const core = this.core;
+        const dialog = new LX.Dialog( 'Decathlon Mirakl Login', ( p ) => {
+            const vendor_lc = this.vendor.toLowerCase();
+            let at = localStorage.getItem( vendor_lc + '_mirakl_access_token' ) ?? '';
+            let store = core.data[vendor_lc].store;
+            let spinner = null;
+
+            p.addText( 'URL Tienda', store, ( value, event ) => {}, { disabled: true, nameWidth: '30%', skipReset: true } );
+            p.addText( 'Clave cliente', at, ( value, event ) => {
+                at = value;
+            }, { nameWidth: '30%', skipReset: true, type: 'password' } );
+            const loginButton = p.addButton( null, 'Login', async ( value, event ) => {
+                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
+                loginButton.root.querySelector( 'button' ).prepend( spinner );
+
+                const r = await this.mkClient.authenticate( store, at );
+                if ( r.ok )
+                {
+                    dialog.close();
+
+                    LX.toast( 'Hecho!', `✅ Has iniciado sesión en ${store}`, { timeout: 5000, position: 'top-center' } );
+
+                    // Store in localStorage
+                    localStorage.setItem( vendor_lc + '_mirakl_access_token', at );
+
+                    if ( callback )
+                    {
+                        callback();
+                    }
+                }
+                else
+                {
+                    spinner.remove();
+                    LX.emitSignal( '@login_errors', '❌ Credenciales no válidas' );
+                }
+            }, { buttonClass: 'primary flex flex-row justify-center gap-2', skipReset: true } );
+            p.addSeparator();
+            p.addTextArea( null, '', null, { disabled: true, fitHeight: true, signal: '@login_errors' } );
+        }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
+    }
+
     async showOrders( compName, clean = false )
     {
         const core = this.core;
         const compData = core.data[compName];
-        const { name } = compData;
+        const { name, url } = compData;
         const dom = compData.domO;
         dom.innerHTML = '';
 
@@ -166,18 +209,19 @@ class LabelsApp
 
         core.compName = compName;
 
-        if ( !this.client )
+        this.vendor = name;
+
+        if ( !this.mkClient.connected )
         {
+            this.openMiraklLogin( () => this.showOrders( compName, clean ) );
             return;
         }
-
-        this.vendor = name;
 
         const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
 
         // const after = getDateNDaysAgo( this.ordersBeforeDays );
         // const before = null;
-        const r = await this.client.listOrders( {
+        const r = await this.mkClient.listOrders( {
             // start_date: after,
             sort: 'dateCreated',
             order: 'desc',
@@ -190,14 +234,14 @@ class LabelsApp
         dialog.destroy();
 
         const columnData = [
-            [ 'paymethod', 'PAGO', ( r ) => {
-                if ( !r['payment_type'] ) return '';
-                const b = new LX.Button( null, 'Payment', null, { buttonClass: 'bg-none', icon: 'CircleDollarSign',
-                    title: r['payment_type'] } );
-                return b.root.innerHTML;
-            } ],
+            // [ 'paymethod', 'PAGO', ( r ) => {
+            //     if ( !r['payment_type'] ) return '';
+            //     const b = new LX.Button( null, 'Payment', null, { buttonClass: 'bg-none', icon: 'CircleDollarSign',
+            //         title: r['payment_type'] } );
+            //     return b.root.innerHTML;
+            // } ],
             [ 'preview', 'PREVIEW', ( r, i ) => {
-                return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${this.client.baseUrl}${
+                return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${
                     i['product_medias'][1]['media_url']
                 }">`;
             } ],
@@ -207,15 +251,19 @@ class LabelsApp
             } ],
             [ 'product_shop_sku', 'REFERENCIA' ],
             [ 'quantity', 'UNIDADES' ],
-            [ 'transport', 'TRANSPORTE', ( r, i ) => {
-                return this.getTransportForItem( i['product_shop_sku'], i['quantity'] );
+            [ 'NOMBRE COMPLETO', null, ( row, i ) => {
+                const customer = row.customer;
+                const str1 = customer?.firstname;
+                const str2 = customer?.lastname;
+                return str1 + ( str2 ? ` ${str2}` : '' );
             } ],
-            [ 'platform', 'PLATAFORMA', () => name.toUpperCase() ],
-            [ 'country', 'PAÍS', ( r ) => { // TODO: CHECK THIS
-                const ctrCode = r['channel']?.code;
-                return core.countryFormat[ctrCode] ?? ( r['channel']?.label ).toUpperCase();
+            [ 'CIUDAD', null, ( row, i ) => {
+                return row.customer?.shipping_address?.city ?? "";
             } ],
-            [ 'notes', 'OBSERVACIONES', ( r ) => `` ]
+            [ 'country', 'PAÍS', ( row ) => {
+                const ctr = row.customer?.shipping_address?.country;
+                return core.countryFormat[ctr] ?? ctr;
+            } ]
         ];
 
         const tableData = [];
@@ -262,8 +310,8 @@ class LabelsApp
             selectable: false,
             sortable: false,
             toggleColumns: false,
-            filter: 'OBSERVACIONES',
-            centered: [ 4, 5, 6, 7, 8 ],
+            filter: 'REFERENCIA',
+            centered: true,
             customFilters: [
                 { name: 'FECHA', type: 'date', default: [ todayStringDate, todayStringDate ] },
                 { name: 'TRANSPORTE', options: [ 'CBL', 'SEUR' ] },
@@ -271,32 +319,13 @@ class LabelsApp
             ],
             rowActions: [
                 {
-                    icon: 'Copy',
-                    title: 'Copiar',
+                    icon: 'ExternalLink',
+                    title: 'Abrir Pedido',
                     callback: ( rowData ) => {
-                        const data = [
-                            ...rowData.slice( 2, 4 ),
-                            '',
-                            ...rowData.slice( 4 )
-                        ];
-                        const tsv = data.join( '\t' );
-                        // console.log(tsv)
-                        navigator.clipboard.writeText( tsv ).then( () => {
-                            LX.toast( 'Hecho!', `✅ "${tsv}" copiado al portapapeles.`, { timeout: 5000, position: 'top-center' } );
-                        } ).catch( ( err ) => {
-                            console.error( 'Error copying text: ', err );
-                            LX.toast( 'Error', '❌ No se pudo copiar.', { timeout: -1, position: 'top-center' } );
-                        } );
+                        const orderNumber = rowData[8].split( ' ' )[0];
+                        if ( orderNumber !== '' ) window.open( `${url}post.php?post=${orderNumber}&action=edit` );
                     }
                 }
-                // {
-                //     icon: 'ExternalLink',
-                //     title: 'Abrir Pedido',
-                //     callback: ( rowData ) => {
-                //         const orderNumber = rowData[8].split( ' ' )[0];
-                //         if ( orderNumber !== '' ) window.open( `${url}post.php?post=${orderNumber}&action=edit` );
-                //     }
-                // }
             ]
         } );
 
@@ -343,8 +372,10 @@ class LabelsApp
             [ 'SKU del vendedor', null, ( row, i ) => {
                 return i['product_shop_sku'];
             } ],
-            [ 'Cantidad', null ],
-            [ 'TRANSPORTE', null, ( r, i ) => {
+            [ 'Cantidad', null, ( row, i ) => {
+                return i['quantity'];
+            } ],
+            [ 'Transporte', null, ( r, i ) => {
                 return this.getTransportForItem( i['product_shop_sku'], i['quantity'] );
             } ],
             [ 'Plataforma', null, () => this.vendor.toUpperCase() ],
@@ -352,7 +383,9 @@ class LabelsApp
                 const ctr = row.customer?.shipping_address?.country;
                 return core.countryFormat[ctr] ?? ctr;
             } ],
-            [ 'Observaciones', null, () => '' ],
+            [ 'Observaciones', null, ( row, i ) => {
+                return i['quantity'] > 1 ? "Mismo pedido" : "";
+            } ],
             [ 'order_id', 'Número del pedido' ],
         ];
 
@@ -371,20 +404,20 @@ class LabelsApp
                 {
                     let colName = c[0];
 
-                    // if ( colName === uid )
-                    // {
-                    //     const orderNumber = row[colName];
+                    if ( colName === uid )
+                    {
+                        const orderNumber = row[colName];
 
-                    //     if ( orderNumbers.has( orderNumber ) )
-                    //     {
-                    //         const val = orderNumbers.get( orderNumber );
-                    //         orderNumbers.set( orderNumber, [ ...val, index ] );
-                    //     }
-                    //     else
-                    //     {
-                    //         orderNumbers.set( orderNumber, [ index ] );
-                    //     }
-                    // }
+                        if ( orderNumbers.has( orderNumber ) )
+                        {
+                            const val = orderNumbers.get( orderNumber );
+                            orderNumbers.set( orderNumber, [ ...val, index ] );
+                        }
+                        else
+                        {
+                            orderNumbers.set( orderNumber, [ index ] );
+                        }
+                    }
 
                     const fn = c[2] ?? ( ( str ) => str );
                     lRow.push( fn( row, item ) ?? '' );
@@ -394,45 +427,63 @@ class LabelsApp
             }
         } );
 
-        // const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
+        const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
 
-        // for ( const repeats of multipleItemsOrderNames )
-        // {
-        //     const rest = repeats.slice( 1 );
-        //     const trail = rest.reduce( ( p, c ) => p + ` + ${tableData[c][0]}`, '' );
-        //     rest.forEach( ( r ) => {
-        //         tableData[r] = undefined;
-        //     } );
-        //     tableData[repeats[0]][0] += trail;
-        //     tableData[repeats[0]][5] = 'Mismo pedido';
-        // }
+        for ( const repeats of multipleItemsOrderNames )
+        {
+            const rest = repeats.slice( 1 );
+            const trail = rest.reduce( ( p, c ) => {
+                const q = tableData[ c ][ 1 ]; // Get quantity
+                return p + ` + ${tableData[c][0]}${ q > 1 ? ` x ${q}` : '' }`;
+            }, '' );
+            rest.forEach( ( r ) => {
+                tableData[r] = undefined;
+            } );
+            const finalIndex = repeats[0];
+            tableData[finalIndex][0] += trail; // Add REF trail
+            tableData[finalIndex][0] = `<span title="${tableData[finalIndex][0]}">${tableData[finalIndex][0]}</span>`;
+            tableData[finalIndex][1] = 1; // Set always 1 UNIT for multiple item orders
+            tableData[finalIndex][5] = 'Mismo pedido'; // Add NOTES
+        }
 
-        // tableData = tableData.filter( ( r ) => r !== undefined );
+        tableData = tableData.filter( ( r ) => r !== undefined );
 
-        // Remove unnecessary
+        // Remove unnecessary headers (order number)
         columnData.splice( 6, 1 );
 
         const listSKU = [];
         const skus = {};
 
-        console.log(tableData)
+        for ( let row of tableData )
+        {
+            const sku = `${row[0]}_${row[4]}`; // SKU _ País
+            const q = row[1];
+            const notes = row[5];
 
-        // for ( let row of tableData )
-        // {
-        //     const sku = `${row[0]}_${row[4]}`; // SKU _ País
-        //     if ( !skus[sku] )
-        //     {
-        //         skus[sku] = [ listSKU.length ];
-        //         row[1] = 1;
-        //         row.splice( 6, 1 );
-        //         listSKU.push( row );
-        //     }
-        //     else
-        //     {
-        //         const idx = skus[sku][0];
-        //         listSKU[idx][1] += 1;
-        //     }
-        // }
+            // Delete order num
+            row.splice( 6, 1 );
+
+            // If same order or more than 1 unit, do not merge items
+            if( notes === "Mismo pedido" || q > 1 )
+            {
+                listSKU.push( row );
+                continue;
+            }
+
+            if ( !skus[sku] )
+            {
+                // Add a row with 1 unit
+                skus[sku] = [ listSKU.length ];
+                row[1] = 1;
+                listSKU.push( row );
+            }
+            else
+            {
+                // merge with the added sku
+                const idx = skus[sku][0];
+                listSKU[idx][1] += 1;
+            }
+        }
 
         // for ( let row of listSKU )
         // {
@@ -443,11 +494,13 @@ class LabelsApp
         //     }
         // }
 
+        console.log(tableData)
+
         const tableWidget = new LX.Table( null, {
             head: columnData.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
-            body: tableData
+            body: listSKU
         }, {
             selectable: false,
             sortable: false,
@@ -472,7 +525,12 @@ class LabelsApp
                     }
                 }
             ],
-            filter: 'SKU del vendedor'
+            filter: 'SKU del vendedor',
+            centered: [ 1, 2, 3, 4 ],
+            customFilters: [
+                { name: 'Transporte', options: [ 'CBL', 'SEUR' ] },
+                { name: 'País', options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
+            ]
         } );
 
         this.lastSeurColumnData = tableWidget.data.head;

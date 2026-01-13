@@ -2,18 +2,16 @@
 
 export class MiraklClient
 {
-    constructor( baseUrl )
+    constructor()
     {
-        if ( !baseUrl )
-        {
-            throw new Error( 'MiraklAPI requires baseUrl' );
-        }
+        this.baseUrl = "";
 
-        this.baseUrl = baseUrl.replace( /\/+$/, '' );
         this.headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
+
+        this.connected = false;
     }
 
     /* ------------------------ */
@@ -57,6 +55,34 @@ export class MiraklClient
 
         if ( res.status === 204 ) return null;
         return res.json();
+    }
+
+    async authenticate( baseUrl, accessToken )
+    {
+        if ( !baseUrl || !accessToken )
+        {
+            throw new Error( 'MiraklAPI requires baseUrl and accessToken' );
+        }
+
+        this.baseUrl = baseUrl.replace( /\/+$/, '' );
+
+        const res = await fetch(
+            this.baseUrl + "/mirakl/auth/test",
+            {
+                headers: {
+                    "X-Access-Token": accessToken
+                }
+            }
+        );
+
+        this.connected = res.ok;
+
+        if( this.connected )
+        {
+            this.headers[ "X-Access-Token" ] = accessToken;
+        }
+
+        return res;
     }
 
     _get( path, options )
