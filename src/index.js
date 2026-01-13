@@ -369,9 +369,12 @@ const core = {
     getTransportForItem( sku, quantity )
     {
         if (
-            ( sku.startsWith( 'JW-DF2' ) && quantity > 2 ) ||
-            ( sku.startsWith( 'JW-DT2' ) && quantity > 2 ) ||
-            ( sku.startsWith( 'JW-DS2' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DF20' ) && quantity > 3 ) ||
+            ( sku.startsWith( 'JW-DT20' ) && quantity > 3 ) ||
+            ( sku.startsWith( 'JW-DF25' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DT25' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DS25' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DF3' ) && quantity > 1 ) ||
             ( sku.startsWith( 'JW-DF4' ) && quantity > 1 ) ||
             ( sku.startsWith( 'JW-DT4' ) && quantity > 1 ) ||
             [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku )
