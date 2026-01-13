@@ -208,7 +208,7 @@ class OrdersApp
                 {
                     icon: 'Copy',
                     title: 'Copiar',
-                    callback: ( rowData ) => {
+                    callback: ( rowIndex, rowData ) => {
                         const data = [
                             ...rowData.slice( 2, 4 ),
                             '',
@@ -227,7 +227,7 @@ class OrdersApp
                 {
                     icon: 'ExternalLink',
                     title: 'Abrir Pedido',
-                    callback: ( rowData ) => {
+                    callback: ( rowIndex, rowData ) => {
                         const orderNumber = rowData[8].split( ' ' )[0];
                         if ( orderNumber !== '' ) window.open( `${url}post.php?post=${orderNumber}&action=edit` );
                     }

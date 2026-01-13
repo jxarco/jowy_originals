@@ -276,8 +276,7 @@ class CblTrackingApp
                     {
                         icon: 'Eye',
                         name: 'Ver mensaje',
-                        callback: ( rowData ) => {
-                            const rowIndex = tableData.indexOf( rowData );
+                        callback: ( rowIndex, rowData, tableDOM, event ) => {
                             this.showMessages( compName, rowIndex );
                         }
                     },
@@ -644,17 +643,17 @@ class CblTrackingApp
                 invoicePanel.addText( 'Número de Factura (FT)', orderInvoice.numberFormatted.toString(), null, {
                     disabled: true,
                     nameWidth: '40%',
-                    className: 'text-xl font-light text-muted-foreground'
+                    className: 'text-base font-light text-muted-foreground'
                 } );
             }
 
             invoicePanel.addText( 'Número de Factura', invoiceNumber.toString(), ( v ) => {
                 v = parseInt( v );
                 invoiceNumber = !Number.isNaN( v ) ? v : 0;
-            }, { disabled: orderInvoice !== null, placeholder: '000000', nameWidth: '40%', className: 'text-xl font-light text-muted-foreground' } );
+            }, { disabled: orderInvoice !== null, placeholder: '000000', nameWidth: '40%', className: 'text-base font-light text-muted-foreground' } );
             invoicePanel.addDate( 'Fecha de Factura', invoiceDate, ( v ) => {
                 invoiceDate = v;
-            }, { disabled: orderInvoice !== null, nameWidth: '40%', className: 'text-xl font-light text-muted-foreground' } );
+            }, { disabled: orderInvoice !== null, nameWidth: '40%', className: 'text-base font-light text-muted-foreground' } );
 
             if ( orderInvoice === null )
             {

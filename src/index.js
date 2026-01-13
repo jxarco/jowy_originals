@@ -76,8 +76,8 @@ const core = {
     },
     data: {
         'otros': { list: [], dom: null },
-        'decathlon': new Company( 'Decathlon', 'https://marketplace-decathlon-eu.mirakl.net', 'https://jowy-originals.alexroco-30.workers.dev' ),// cf worker
-        'carrefour': new Company( 'Carrefour', 'https://marketplace-decathlon-eu.mirakl.net', 'https://jowy-originals.alexroco-30.workers.dev' ),// cf worker
+        'decathlon': new Company( 'Decathlon', 'https://marketplace-decathlon-eu.mirakl.net/', 'https://jowy-originals.alexroco-30.workers.dev' ),// cf worker
+        'carrefour': new Company( 'Carrefour', '........', 'https://jowy-originals.alexroco-30.workers.dev' ),// cf worker
         'jowy': new Company( 'Jowy', 'https://www.jowyoriginals.com/wp-admin/', 'https://jowyoriginals.com', '2-' ),
         'hxg': new Company( 'HxG', 'https://www.homexgym.com/wp-admin/', 'https://homexgym.com', '3-' ),
         'bathby': new Company( 'Bathby', 'https://www.bathby.com/wp-admin/', 'https://bathby.com', '4-' )

@@ -449,7 +449,10 @@ class SheinApp
                     }
                 }
             ],
-            filter: 'SKU del vendedor'
+            filter: 'SKU del vendedor',
+            customFilters: [
+                { name: 'País', options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
+            ]
         } );
 
         this.lastSeurColumnData = tableWidget.data.head;

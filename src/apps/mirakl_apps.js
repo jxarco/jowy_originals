@@ -208,6 +208,7 @@ class LabelsApp
                     i['product_medias'][1]['media_url']
                 }">`;
             } ],
+            [ 'order_id', 'NÚMERO PEDIDO' ],
             [ 'date', 'FECHA', ( r ) => {
                 const d = new Date( r['created_date'] );
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
@@ -251,6 +252,10 @@ class LabelsApp
                     {
                         lRow.push( item[ogColName] );
                     }
+                    else if ( row[ogColName] )
+                    {
+                        lRow.push( row[ogColName] );
+                    }
                     else
                     {
                         lRow.push( '?' );
@@ -277,16 +282,15 @@ class LabelsApp
             centered: true,
             customFilters: [
                 { name: 'FECHA', type: 'date', default: [ todayStringDate, todayStringDate ] },
-                { name: 'TRANSPORTE', options: [ 'CBL', 'SEUR' ] },
                 { name: 'PAÍS', options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
             ],
             rowActions: [
                 {
                     icon: 'ExternalLink',
                     title: 'Abrir Pedido',
-                    callback: ( rowData ) => {
-                        const orderNumber = rowData[8].split( ' ' )[0];
-                        if ( orderNumber !== '' ) window.open( `${url}post.php?post=${orderNumber}&action=edit` );
+                    callback: ( rowIndex, rowData, tableDOM, event ) => {
+                        const orderNumber = rowData[1];
+                        if ( orderNumber !== '' ) window.open( `${url}mmp/shop/order/${orderNumber}` );
                     }
                 }
             ]
@@ -435,16 +439,18 @@ class LabelsApp
             }
         }
 
-        // for ( let row of listSKU )
-        // {
-        //     const sku = row[0];
-        //     if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) && row[5] !== 'Mismo pedido' )
-        //     {
-        //         row[1] *= 4;
-        //     }
-        // }
+        for ( let row of listSKU )
+        {
+            const sku = row[0];
+            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' )
+                // && row[5] !== 'Mismo pedido'
+            )
+            {
+                row[1] *= 4;
+            }
+        }
 
-        console.log(tableData)
+        // console.log(tableData)
 
         const tableWidget = new LX.Table( null, {
             head: columnData.map( ( c ) => {
@@ -456,6 +462,7 @@ class LabelsApp
             sortable: false,
             sortColumns: false,
             toggleColumns: false,
+            centered: true,
             columnActions: [
                 {
                     icon: 'Copy',
@@ -476,7 +483,6 @@ class LabelsApp
                 }
             ],
             filter: 'SKU del vendedor',
-            centered: [ 1, 2, 3, 4 ],
             customFilters: [
                 { name: 'Transporte', options: [ 'CBL', 'SEUR' ] },
                 { name: 'País', options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }

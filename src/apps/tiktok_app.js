@@ -324,9 +324,9 @@ class TikTokApp
 
         let columnData = [
             [ 'Seller SKU', 'SKU del vendedor' ],
-            [ 'Cantidad', null ],
-            [ 'Transporte', null, ( r, i ) => {
-                return core.getTransportForItem( i['Seller SKU'], i['Quantity'] );
+            [ 'Cantidad', null, ( str, row ) => parseInt(row['Quantity']) ],
+            [ 'Transporte', null, ( str, row ) => {
+                return core.getTransportForItem( row['Seller SKU'], parseInt(row['Quantity']) );
             } ],
             [ 'Plataforma', null, () => "TIKTOK" ],
             [ 'Country', 'País', null, ( str, row ) => {
@@ -372,12 +372,18 @@ class TikTokApp
         for ( const repeats of multipleItemsOrderNames )
         {
             const rest = repeats.slice( 1 );
-            const trail = rest.reduce( ( p, c ) => p + ` + ${tableData[c][0]}`, '' );
+            const trail = rest.reduce( ( p, c ) => {
+                const q = tableData[ c ][ 1 ]; // Get quantity
+                return p + ` + ${tableData[c][0]}${ q > 1 ? ` x ${q}` : '' }`;
+            }, '' );
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
             } );
-            tableData[repeats[0]][0] += trail;
-            tableData[repeats[0]][5] = 'Mismo pedido';
+            const finalIndex = repeats[0];
+            tableData[finalIndex][0] += trail; // Add REF trail
+            tableData[finalIndex][0] = `<span title="${tableData[finalIndex][0]}">${tableData[finalIndex][0]}</span>`;
+            tableData[finalIndex][1] = 1; // Set always 1 UNIT for multiple item orders
+            tableData[finalIndex][5] = 'Mismo pedido'; // Add NOTES
         }
 
         tableData = tableData.filter( ( r ) => r !== undefined );
@@ -391,15 +397,29 @@ class TikTokApp
         for ( let row of tableData )
         {
             const sku = `${row[0]}_${row[4]}`; // SKU _ País
+            const q = row[1];
+            const notes = row[5];
+
+            // Delete order num
+            row.splice( 6, 1 );
+
+            // If same order or more than 1 unit, do not merge items
+            if( notes === "Mismo pedido" || q > 1 )
+            {
+                listSKU.push( row );
+                continue;
+            }
+
             if ( !skus[sku] )
             {
+                // Add a row with 1 unit
                 skus[sku] = [ listSKU.length ];
                 row[1] = 1;
-                row.splice( 6, 1 );
                 listSKU.push( row );
             }
             else
             {
+                // merge with the added sku
                 const idx = skus[sku][0];
                 listSKU[idx][1] += 1;
             }
@@ -408,7 +428,9 @@ class TikTokApp
         for ( let row of listSKU )
         {
             const sku = row[0];
-            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) && row[5] !== 'Mismo pedido' )
+            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) 
+                // && row[5] !== 'Mismo pedido' 
+            )
             {
                 row[1] *= 4;
             }
@@ -444,7 +466,11 @@ class TikTokApp
                     }
                 }
             ],
-            filter: 'SKU del vendedor'
+            filter: 'SKU del vendedor',
+            customFilters: [
+                { name: 'Transporte', options: [ 'CBL', 'SEUR' ] },
+                { name: 'País', options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
+            ]
         } );
 
         this.lastSeurColumnData = tableWidget.data.head;
