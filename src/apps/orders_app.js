@@ -106,8 +106,8 @@ class OrdersApp
         const r = await wcc.getAllOrdersByFilter( after, before, [ 'processing', 'on-hold' ] );
         console.log( r );
 
-        core.setHeaderTitle( `Web (${name}): <i>Pedidos</i>`, `${r.length} pedidos (Últimos ${this.ordersBeforeDays} día/s)`,
-            'PackagePlus' );
+        core.setHeaderTitle( `Web (${name}): <i>Pedidos</i>`, `${r.length} pedidos pendientes (Últimos ${this.ordersBeforeDays} día/s)`,
+            'WooCommerce' );
 
         dialog.destroy();
 

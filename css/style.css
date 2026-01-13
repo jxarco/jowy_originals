@@ -44,6 +44,10 @@
 	font-family: "Google Sans", sans-serif;
 }
 
+#lexroot {
+    background: var(--background);
+}
+
 .parallax-bg {
 	position: fixed;
 	top: 0;

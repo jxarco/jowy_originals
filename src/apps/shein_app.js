@@ -19,12 +19,13 @@ const SHEIN_COLUMN_DATA = [
 const SHEIN_TRACKING_COLUMN_DATA = [
     [ 'Número del pedido', 'Order Number' ],
     [ 'ID del artículo', 'Item ID' ],
-    [ 'Tracking Number', null, ( str, row, tdata) => {
+    [ 'Tracking Number', null, ( str, row, tdata, app) => {
         const name = row['Nombre de usuario completo'].toUpperCase();
         const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === name );
         // const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === 'BEATRIZ HAGGE' );
         if( !tentry )
         {
+            app._trackingSyncErrors = true;
             const status = core.trackStatusColors['Incidencia'];
             let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
             return `${
@@ -227,6 +228,8 @@ class SheinApp
             return lRow;
         } );
 
+        this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Handbag' );
+
         const tableWidget = new LX.Table( null, {
             head: SHEIN_COLUMN_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
@@ -245,12 +248,12 @@ class SheinApp
         this.lastShownSeurData = tableWidget.data.body;
         this.lastSeurData = data;
 
-        console.log("shein", this.lastSeurData)
+        // console.log("shein", this.lastSeurData)
     }
 
     showTrackingList( trackingData )
     {
-        console.log(trackingData)
+        // console.log(trackingData)
 
         const data = this.lastSeurData;
 
@@ -261,6 +264,8 @@ class SheinApp
         {
             dom.removeChild( dom.children[0] );
         }
+
+        this._trackingSyncErrors = false;
 
         // Create table data from the list
         const tableData = data.map( ( row ) => {
@@ -276,7 +281,8 @@ class SheinApp
                 else
                 {
                     const fn = c[2] ?? ( ( str ) => str );
-                    lRow.push( fn( row[ogColName] ?? '?', row, trackingData ) );
+                    const val = fn( row[ogColName] ?? '?', row, trackingData, this );
+                    lRow.push( val );
                 }
             }
             return lRow;
@@ -629,8 +635,17 @@ class SheinApp
 
     exportSEURTrackings()
     {
+        const filename = "NUMERODEGUIA.xlsx";
+
+        if( this._trackingSyncErrors )
+        {
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". Faltan datos.`, { timeout: -1,
+                position: 'top-center' } );
+            return;
+        }
+
         const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
-        this.exportXLSXData( data, "NUMERODEGUIA.xlsx" );   
+        this.exportXLSXData( data, filename );   
     }
 
     exportXLSXData( data, filename, ignoreErrors )
