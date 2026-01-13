@@ -62,7 +62,6 @@ class SheinApp
 
         this.seurDataArea = seurArea;
         this.groupsListArea = groupsListArea;
-        core.sheinDataArea = this.area;
 
         this.clear();
     }

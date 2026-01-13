@@ -134,8 +134,6 @@ class ChillApp
             this.audio.play();
         }, { className: 'block z-100 primary self-center', width: 'fit-content' } );
 
-        core.chillAppArea = this.area;
-
         this.clear();
     }
 

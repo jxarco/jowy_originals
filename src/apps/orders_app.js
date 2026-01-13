@@ -68,8 +68,6 @@ class OrdersApp
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
 
-        core.ordersArea = this.area;
-
         this.clear();
     }
 

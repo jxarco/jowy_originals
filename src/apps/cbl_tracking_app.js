@@ -140,8 +140,6 @@ class CblTrackingApp
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
 
-        core.trackingMessagesArea = this.area;
-
         this.clear();
     }
 

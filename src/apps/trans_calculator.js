@@ -152,8 +152,6 @@ class TransportCalculatorApp
         this.leftArea = left;
         this.rightArea = right;
 
-        core.transCalculatorArea = this.area;
-
         this.updateTransports();
     }
 

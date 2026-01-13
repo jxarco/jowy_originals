@@ -1,55 +1,61 @@
 import { LX } from 'lexgui';
 import { MiraklClient } from '../mirakl-api.js';
 
-const DECATHLON_COLUMN_DATA = [
-    [ 'order_id', 'Número del pedido' ],
-    [ 'ID del artículo', null, ( str, row ) => {
-        const items = row['order_lines'];
-        return items[0]['product_sku'];
-    } ],
-    [ 'product_shop_sku', 'SKU del vendedor', ( str, row ) => {
-        const items = row['order_lines'];
-        const skus = items.map( ( i ) => i['product_shop_sku'] );
-        return skus.join( ' + ' );
-    } ],
-    [ 'Código Postal', null, ( str, row ) => {
-        return row.customer?.shipping_address?.zip_code;
-    } ],
-    [ 'País', null, ( str, row ) => {
-        const ctr = row.customer?.shipping_address?.country;
-        return core.countryFormat[ctr] ?? ctr;
-    } ],
-    [ 'Provincia', null, ( str, row ) => '' ],
-    [ 'Ciudad', null, ( str, row ) => {
-        return row.customer?.shipping_address?.city;
-    } ],
-    [ 'Dirección', null, ( str, row ) => {
-        const shipping = row.customer?.shipping_address;
-        const str1 = shipping?.street_1;
-        const str2 = shipping?.street_2;
-        return str1 + ( str2 ? ` ${str2}` : '' );
-    } ],
-    [ 'Nombre de usuario completo', null, ( str, row ) => {
-        const customer = row.customer;
-        const str1 = customer?.firstname;
-        const str2 = customer?.lastname;
-        return str1 + ( str2 ? ` ${str2}` : '' );
-    } ],
-    [ 'Número de Teléfono', null, ( str, row ) => {
-        return row.customer?.shipping_address?.phone;
-    } ],
-    [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
-];
+const COLUMN_TEMPLATES = {
+    "DECATHLON_COLUMN_DATA": [
+        [ 'order_id', 'Número del pedido' ],
+        [ 'ID del artículo', null, ( str, row ) => {
+            const items = row['order_lines'];
+            return items[0]['product_sku'];
+        } ],
+        [ 'product_shop_sku', 'SKU del vendedor', ( str, row ) => {
+            const items = row['order_lines'];
+            const skus = items.map( ( i ) => i['product_shop_sku'] );
+            return skus.join( ' + ' );
+        } ],
+        [ 'Código Postal', null, ( str, row ) => {
+            return row.customer?.shipping_address?.zip_code;
+        } ],
+        [ 'País', null, ( str, row ) => {
+            const ctr = row.customer?.shipping_address?.country;
+            return core.countryFormat[ctr] ?? ctr;
+        } ],
+        [ 'Provincia', null, ( str, row ) => '' ],
+        [ 'Ciudad', null, ( str, row ) => {
+            return row.customer?.shipping_address?.city;
+        } ],
+        [ 'Dirección', null, ( str, row ) => {
+            const shipping = row.customer?.shipping_address;
+            const str1 = shipping?.street_1;
+            const str2 = shipping?.street_2;
+            return str1 + ( str2 ? ` ${str2}` : '' );
+        } ],
+        [ 'Nombre de usuario completo', null, ( str, row ) => {
+            const customer = row.customer;
+            const str1 = customer?.firstname;
+            const str2 = customer?.lastname;
+            return str1 + ( str2 ? ` ${str2}` : '' );
+        } ],
+        [ 'Número de Teléfono', null, ( str, row ) => {
+            return row.customer?.shipping_address?.phone;
+        } ],
+        [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
+    ]
+};
 
 class LabelsApp
 {
-    constructor( core )
+    constructor( core, vendorName )
     {
         this.mkClient = new MiraklClient();
+        this.vendor = vendorName;
+        this.COLUMN_DATA_TEMPLATE = COLUMN_TEMPLATES[ vendorName.toUpperCase() + "_COLUMN_DATA" ];
 
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
         core.area.attach( this.area );
+
+        const vendor_lc = vendorName.toLowerCase();
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
@@ -67,49 +73,10 @@ class LabelsApp
 
         const moreOptionsButtonComp = utilButtonsPanel.addButton( null, 'MoreOptionsButton', ( value, event ) => {
             LX.addDropdownMenu( moreOptionsButtonComp.root, [
-                // {
-                //     name: 'Abrir pedidos',
-                //     icon: 'ExternalLink',
-                //     callback: () => this.openSelectedOrders()
-                // },
-                // {
-                //     name: 'Marcar seleccionados',
-                //     icon: 'Pencil',
-                //     submenu: [
-                //         {
-                //             name: 'Enviado',
-                //             icon: 'PlaneTakeoff',
-                //             callback: () =>
-                //                 this.markSelectedOrdersAs( 'enviado', ( order ) => {
-                //                     return order?.wpo_wcpdf_invoice_number !== ''
-                //                         && ( order?.status === 'processing' || order?.status === 'on-hold' );
-                //                 } )
-                //         },
-                //         {
-                //             name: '1a Reseña',
-                //             icon: 'Star',
-                //             callback: () =>
-                //                 this.markSelectedOrdersAs( 'recordatorio-rese', ( order, status ) => {
-                //                     return status === 'Entregada'
-                //                         && ( order?.status === 'processing' || order?.status === 'on-hold' || order?.status === 'enviado' );
-                //                 } )
-                //         },
-                //         {
-                //             name: 'Completado',
-                //             icon: 'CheckCircle',
-                //             callback: () =>
-                //                 this.markSelectedOrdersAs( 'completed', ( order, status ) => {
-                //                     return status === 'Entregada'
-                //                         && ( order?.status === 'enviado' || order?.status === 'recordatorio-rese' );
-                //                 } )
-                //         }
-                //     ]
-                // },
-                // null,
                 {
                     name: 'Actualizar pedidos',
                     icon: 'RefreshCw',
-                    callback: () => this.showList( core.compName, true, true )
+                    callback: () => this.showOrders( vendor_lc )
                 }
             ], { side: 'bottom', align: 'start' } );
         }, { icon: 'EllipsisVertical', title: 'Más opciones', tooltip: true } );
@@ -121,15 +88,15 @@ class LabelsApp
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
         // core.tabs = tabs.root;
 
-        // Deca
+        // Marketplace orders
         {
-            const decaContainer = LX.makeContainer( [ null, 'auto' ],
+            const ordersContainer = LX.makeContainer( [ null, 'auto' ],
                 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'Pedidos', decaContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( "decathlon" ) } );
+            tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( vendor_lc ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
-            decaContainer.appendChild( jowyArea.root );
-            core.data['decathlon'].domO = decaContainer;
+            ordersContainer.appendChild( jowyArea.root );
+            core.data[vendor_lc].domO = ordersContainer;
         }
 
         // Groups List
@@ -146,15 +113,13 @@ class LabelsApp
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
 
-        core.labelsAppArea = this.area;
-
         this.clear();
     }
 
     openMiraklLogin( callback )
     {
         const core = this.core;
-        const dialog = new LX.Dialog( 'Decathlon Mirakl Login', ( p ) => {
+        const dialog = new LX.Dialog( this.vendor + ' Mirakl Login', ( p ) => {
             const vendor_lc = this.vendor.toLowerCase();
             let at = localStorage.getItem( vendor_lc + '_mirakl_access_token' ) ?? '';
             let store = core.data[vendor_lc].store;
@@ -209,8 +174,6 @@ class LabelsApp
 
         core.compName = compName;
 
-        this.vendor = name;
-
         if ( !this.mkClient.connected )
         {
             this.openMiraklLogin( () => this.showOrders( compName, clean ) );
@@ -229,7 +192,7 @@ class LabelsApp
         } );
         console.log( r );
 
-        this.core.setHeaderTitle( `${name} <i>(Mirakl):</i> ${r.orders.length} pedidos`, 'Gestión de pedidos a través de la API de Mirakl.', 'Decathlon' );
+        this.core.setHeaderTitle( `${name} <i>(Mirakl):</i> ${r.orders.length} pedidos`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
 
         dialog.destroy();
 
@@ -541,7 +504,7 @@ class LabelsApp
 
     exportSEUR( ignoreErrors = false, ordersData )
     {
-        let columnData = ( this.vendor === 'Decathlon' ) ? DECATHLON_COLUMN_DATA : [];
+        let columnData = this.COLUMN_DATA_TEMPLATE;
 
         const currentOrdersData = ordersData ?? this.lastSeurData;
 
@@ -715,29 +678,23 @@ class LabelsApp
         }
     }
 
-    updateOrders()
-    {
-        this.showOrders( 'decathlon', true );
-    }
-
     open( params )
     {
-        this.core.tool = 'labels';
-        this.core.setHeaderTitle( `${params} <i>(Mirakl)</i>`, 'Gestión de pedidos a través de la API de Mirakl.', 'Decathlon' );
+        this.core.tool = this.vendor.toLowerCase();
+        this.core.setHeaderTitle( `${ this.vendor } <i>(Mirakl)</i>`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
         this.area.root.classList.toggle( 'hidden', false );
 
         this.clear();
-
-        // this.showOrders( 'decathlon' );
     }
 
     close()
     {
+
     }
 
     clear()
     {
-        this.updateOrders();
+        this.showOrders( this.vendor.toLowerCase(), true );
     }
 }
 

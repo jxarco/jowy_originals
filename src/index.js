@@ -1,7 +1,7 @@
 import { LX } from 'lexgui';
 import { CblTrackingApp } from './apps/cbl_tracking_app.js';
 import { ChillApp } from './apps/chill_app.js';
-import { LabelsApp } from './apps/labels_app.js';
+import { LabelsApp } from './apps/mirakl_apps.js';
 import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
@@ -76,6 +76,7 @@ const core = {
     data: {
         'otros': { list: [], dom: null },
         'decathlon': new Company( 'Decathlon', 'https://marketplace-decathlon-eu.mirakl.net', 'https://jowy-originals.alexroco-30.workers.dev' ),// cf worker
+        'carrefour': new Company( 'Carrefour', 'https://marketplace-decathlon-eu.mirakl.net', 'https://jowy-originals.alexroco-30.workers.dev' ),// cf worker
         'jowy': new Company( 'Jowy', 'https://www.jowyoriginals.com/wp-admin/', 'https://jowyoriginals.com', '2-' ),
         'hxg': new Company( 'HxG', 'https://www.homexgym.com/wp-admin/', 'https://homexgym.com', '3-' ),
         'bathby': new Company( 'Bathby', 'https://www.bathby.com/wp-admin/', 'https://bathby.com', '4-' )
@@ -94,7 +95,8 @@ const core = {
         this.ordersApp = new OrdersApp( this );
         this.transportCalculatorApp = new TransportCalculatorApp( this );
         this.chillApp = new ChillApp( this );
-        this.labelsApp = new LabelsApp( this );
+        this.decathlonApp = new LabelsApp( this, "Decathlon" );
+        this.carrefourApp = new LabelsApp( this, "Carrefour" );
 
         // Footer
         this.createFooterHtml();
@@ -131,9 +133,13 @@ const core = {
             {
                 this.openApp( this.chillApp );
             }
-            else if ( lastTool.includes( 'labels' ) )
+            else if ( lastTool.includes( 'decathlon' ) )
             {
-                this.openApp( this.labelsApp, 'Decathlon' );
+                this.openApp( this.decathlonApp );
+            }
+            else if ( lastTool.includes( 'carrefour' ) )
+            {
+                this.openApp( this.carrefourApp );
             }
         }
 
@@ -281,12 +287,13 @@ const core = {
             this.currentApp.close();
         }
 
-        this.trackingMessagesArea.root.classList.toggle( 'hidden', true );
-        this.sheinDataArea.root.classList.toggle( 'hidden', true );
-        this.ordersArea.root.classList.toggle( 'hidden', true );
-        this.transCalculatorArea.root.classList.toggle( 'hidden', true );
-        this.chillAppArea.root.classList.toggle( 'hidden', true );
-        this.labelsAppArea.root.classList.toggle( 'hidden', true );
+        this.cblTrackingApp.area.root.classList.toggle( 'hidden', true );
+        this.sheinApp.area.root.classList.toggle( 'hidden', true );
+        this.ordersApp.area.root.classList.toggle( 'hidden', true );
+        this.transportCalculatorApp.area.root.classList.toggle( 'hidden', true );
+        this.chillApp.area.root.classList.toggle( 'hidden', true );
+        this.decathlonApp.area.root.classList.toggle( 'hidden', true );
+        this.carrefourApp.area.root.classList.toggle( 'hidden', true );
 
         app.open( params );
 
@@ -652,6 +659,7 @@ core.data['bathby'].template = ( id, url, transport ) => {
     LX.registerIcon( 'TikTok', '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16.6 5.82s.51.5 0 0A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64c0 3.33 2.76 5.7 5.69 5.7c3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88-.09-3 .8"></path></svg>' );
     LX.registerIcon( 'Decathlon', `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.68 20.946c-4.68 5.509-2.254 16.552 5.334 12.2c1.887-.978 6.31-5.03 14.76-17.551v20.761c-2.421 1.654-16.97 8.473-22.928 1.003c-2.492-3.4-2.492-7.986.186-12.455H6.03q4.005-7.215 12.408-12.36C36.408 1.792 43.6 9.87 43.95 14.5c.72 8.497-6.495 14.875-10.289 18.577v-6.333c9.195-9.054 4.795-14.035 3.794-14.85c-2.047-2.37-7.865-4.53-13.13-2.392" stroke-width="1" /></svg>` );
     LX.registerIcon( 'WooCommerce', `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><path fill="currentColor" d=" M108.6 46.9 c-2.3-.2-6.7 1-8.7 10.8 c0 5.9 1.4 9.5 3.6 10.8 c4.1 1.2 8.9-4.3 8.9-10.2 c.2-4.1.4-9.2-3.8-11.4 M116.3 25.8 H11.7 C5.2 25.8 0 31 0 37.4 v40 c0 6.4 5.2 11.7 11.7 11.7 h104.7 c6.4 0 11.7-5.2 11.7-11.7 v-40 c-.1-6.4-5.3-11.6-11.8-11.6 M44 80 s-6.9-9.1-8.5-16 c-1.6-6.8-2-3.7-2-3.7 S28 72.7 22.3 80.6 s-8.5-3.9-8.5-3.9 c-2-2.4-7.7-37.3-7.7-37.3 c3.2-8.9 8.7-1.6 8.7-1.6 l5.5 28.4 s8.5-17.4 11.4-21.9 c2.8-4.5 7.7-3.2 8.1 1.4 c.4 4.7 5.1 17.4 5.1 17.4 c.4-13.4 5.9-26.2 6.7-28.2 s9.7-4.5 8.1 4.1 C55.8 48.5 52 68.6 53 79.6 c-2.7 8.3-9 .4-9 .4 M79.9 75.5 c-2.6 1.2-12.3 7.9-19.2-7.1 C56.4 53.3 66 42.2 66 42.2 s12.5-10.7 21 3.5 c6.9 15.6-4.5 28.6-7.1 29.8 M111.7 75.5 c-2.6 1.2-12.3 7.9-19.2-7.1 c-4.3-15.1 5.3-26.2 5.3-26.2 s12.6-10.8 21.1 3.4 c6.9 15.7-4.6 28.7-7.2 29.9 M76.7 46.9 c-2.3-.2-6.7 1-8.7 10.8 c0 5.9 1.4 9.5 3.6 10.8 c4.1 1.2 8.9-4.3 8.9-10.2 c.3-4.1.5-9.2-3.8-11.4 M61.3 89.1 l22.3 13.1 l-4.7-13.1 l-12.8-3.6 z "/></svg>` );
+    LX.registerIcon( 'Carrefour', `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12.14 4.045c-2.569 0-3.572 3.64-3.572 7.979s1.003 7.931 3.572 7.931c1.541 0 2.855-.903 2.86-1.645a.63.63 0 0 0-.199-.453c-.73-.706-1.016-1.412-1.018-2.034c-.005-1.189 1.026-2.074 1.977-2.074c1.306 0 2.077 1.027 2.077 2.357c0 1.26-.537 2.31-1.121 3.15a.2.2 0 0 0-.034.107c0 .065.04.12.098.12q.053.001.122-.065l6.561-6.344c.328-.28.537-.608.537-1.073c0-.468-.21-.794-.537-1.073l-6.561-6.346q-.069-.066-.122-.064c-.059 0-.097.055-.098.12q-.001.054.034.107c.584.84 1.12 1.89 1.12 3.15c0 1.329-.77 2.356-2.076 2.356c-.95 0-1.982-.884-1.977-2.073c.002-.622.288-1.328 1.018-2.033A.62.62 0 0 0 15 5.69c-.004-.743-1.319-1.646-2.86-1.646m-5.043.537L.537 10.93C.209 11.207 0 11.534 0 12c0 .465.21.793.537 1.073l6.56 6.345c.042.043.083.06.117.06c.062 0 .105-.057.103-.123a.2.2 0 0 0-.057-.123C5.72 17.32 4.6 15.126 4.6 12.024c0-3.104 1.12-5.341 2.66-7.255a.2.2 0 0 0 .057-.123c.002-.068-.04-.123-.103-.123c-.034 0-.075.017-.117.06"/></svg>` );
 
     const menubar = area.addMenubar( [
         {
@@ -664,9 +672,10 @@ core.data['bathby'].template = ( id, url, transport ) => {
         {
             name: 'Plataformas',
             submenu: [
-                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.labelsApp, v ), icon: 'Decathlon' },
+                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Handbag' },
-                { name: 'TikTok', disabled: true, callback: ( v, e ) => core.openApp( core.tiktokApp ), icon: 'TikTok' }
+                { name: 'TikTok', disabled: true, callback: ( v, e ) => core.openApp( core.tiktokApp ), icon: 'TikTok' },
+                { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' },
                 
             ]
         },
