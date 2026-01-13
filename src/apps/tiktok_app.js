@@ -1,46 +1,45 @@
 import { LX } from 'lexgui';
 
-const SHEIN_COLUMN_DATA = [
-    [ 'Número del pedido', null ],
-    [ 'ID del artículo', null ],
-    [ 'SKU del vendedor', null ],
-    [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-    [ 'País', null, ( str, row ) => {
+const TIKTOK_COLUMN_DATA = [
+    [ 'Order ID', 'Número del pedido' ],
+    [ 'SKU ID', 'ID del artículo' ],
+    [ 'Seller SKU', 'SKU del vendedor' ],
+    [ 'Zipcode', 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
+    [ 'Country', 'País', null, ( str, row ) => {
         return core.countryFormat[str] ?? str;
     } ],
-    [ 'Provincia', null ],
-    [ 'Ciudad', null ],
-    [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
-    [ 'Nombre de usuario completo', null ],
-    [ 'Número de Teléfono', null ],
-    [ 'Correo electrónico de usuario', null ]
+    [ 'Province', 'Provincia' ],
+    [ 'City', 'Ciudad' ],
+    [ 'Street Name', 'Dirección' ],
+    [ 'Recipient', 'Nombre de usuario completo' ],
+    [ 'Phone #', 'Número de Teléfono' ],
+    [ 'Email', 'Correo electrónico de usuario' ]
 ];
 
-const SHEIN_TRACKING_COLUMN_DATA = [
-    [ 'Número del pedido', 'Order Number' ],
-    [ 'ID del artículo', 'Item ID' ],
-    [ 'Tracking Number', null, ( str, row, tdata) => {
-        const name = row['Nombre de usuario completo'].toUpperCase();
-        const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === name );
-        // const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === 'BEATRIZ HAGGE' );
-        if( !tentry )
-        {
-            const status = core.trackStatusColors['Incidencia'];
-            let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
-            return `${
-                LX.badge( iconStr, 'text-xs font-bold border-none ', {
-                    style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
-                        color: status.fg ?? '' }
-                } )
-            }`;
-        }
-        return tentry['LOCALIZADOR'];
-    } ],
-    [ 'Logistics Provider', null, () => 'SEUR' ],
-    [ 'Delete', null, () => '' ]
+const TIKTOK_TRACKING_COLUMN_DATA = [
+    // [ 'Número del pedido', 'Order Number' ],
+    // [ 'ID del artículo', 'Item ID' ],
+    // [ 'Tracking Number', null, ( str, row, tdata) => {
+    //     const name = row['Nombre de usuario completo'].toUpperCase();
+    //     const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === name );
+    //     if( !tentry )
+    //     {
+    //         const status = core.trackStatusColors['Incidencia'];
+    //         let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
+    //         return `${
+    //             LX.badge( iconStr, 'text-xs font-bold border-none ', {
+    //                 style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
+    //                     color: status.fg ?? '' }
+    //             } )
+    //         }`;
+    //     }
+    //     return tentry['LOCALIZADOR'];
+    // } ],
+    // [ 'Logistics Provider', null, () => 'SEUR' ],
+    // [ 'Delete', null, () => '' ]
 ];
 
-class SheinApp
+class TikTokApp
 {
     constructor( core )
     {
@@ -87,15 +86,15 @@ class SheinApp
         groupsListContainer.appendChild( groupsListArea.root );
 
         // Tracking info
-        const trackingContainer = LX.makeContainer( [ null, 'auto' ],
-            'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
-            trackingArea.root.innerHTML = "";
-            trackingArea.attach( this.getTrackingDataDropZone() );
-        } } );
+        // const trackingContainer = LX.makeContainer( [ null, 'auto' ],
+        //     'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        // tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
+        //     trackingArea.root.innerHTML = "";
+        //     trackingArea.attach( this.getTrackingDataDropZone() );
+        // } } );
 
         const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
-        trackingContainer.appendChild( trackingArea.root );
+        // trackingContainer.appendChild( trackingArea.root );
 
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
@@ -111,12 +110,15 @@ class SheinApp
     {
         fileData = fileData ?? this.lastSeurData;
 
+        // TikTok contains header descriptions in the first row
+        fileData = fileData.slice( 1 );
+
         if ( !fileData.length )
         {
             return;
         }
 
-        this.showSheinList( fileData );
+        this.showTiktokList( fileData );
         this.showGroupsByCountryList( fileData );
     }
 
@@ -188,11 +190,11 @@ class SheinApp
         return dropZone;
     }
 
-    showSheinList( data )
+    showTiktokList( data )
     {
         data = data ?? this.lastSeurData;
 
-        this.vendor = 'Shein';
+        this.vendor = 'TikTok';
 
         const dom = this.seurDataArea.root;
         while ( dom.children.length > 0 )
@@ -210,7 +212,7 @@ class SheinApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of SHEIN_COLUMN_DATA )
+            for ( let c of TIKTOK_COLUMN_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -228,7 +230,7 @@ class SheinApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_COLUMN_DATA.map( ( c ) => {
+            head: TIKTOK_COLUMN_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
@@ -245,7 +247,7 @@ class SheinApp
         this.lastShownSeurData = tableWidget.data.body;
         this.lastSeurData = data;
 
-        console.log("shein", this.lastSeurData)
+        console.log("tiktok", this.lastSeurData)
     }
 
     showTrackingList( trackingData )
@@ -254,7 +256,7 @@ class SheinApp
 
         const data = this.lastSeurData;
 
-        this.vendor = 'Shein';
+        this.vendor = 'TikTok';
 
         const dom = this.trackingArea.root;
         while ( dom.children.length > 0 )
@@ -265,7 +267,7 @@ class SheinApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of SHEIN_TRACKING_COLUMN_DATA )
+            for ( let c of TIKTOK_TRACKING_COLUMN_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -283,7 +285,7 @@ class SheinApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_TRACKING_COLUMN_DATA.map( ( c ) => {
+            head: TIKTOK_TRACKING_COLUMN_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
@@ -313,9 +315,6 @@ class SheinApp
             dom.removeChild( dom.children[0] );
         }
 
-        // Boton de copiar por columna (no por fila porque estan separadas en el Excel final)
-        // en caso de repetir "Número del pedido", se tiene que añadir fila por separado
-
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
@@ -324,15 +323,17 @@ class SheinApp
         }
 
         let columnData = [
-            [ 'SKU del vendedor', null ],
+            [ 'Seller SKU', 'SKU del vendedor' ],
             [ 'Cantidad', null ],
-            [ 'Transporte', null, () => "SEUR" ],
-            [ 'Plataforma', null, () => "SHEIN" ],
-            [ 'País', null, ( str, row ) => {
-                return this.core.countryFormat[str] ?? str;
+            [ 'Transporte', null, ( r, i ) => {
+                return core.getTransportForItem( i['Seller SKU'], i['Quantity'] );
+            } ],
+            [ 'Plataforma', null, () => "TIKTOK" ],
+            [ 'Country', 'País', null, ( str, row ) => {
+                return core.countryFormat[str] ?? str;
             } ],
             [ 'Observaciones', null ],
-            [ 'Número del pedido', null ]
+            [ 'Order ID', 'Número del pedido' ],
         ];
 
         const uid = columnData[6][0];
@@ -452,18 +453,18 @@ class SheinApp
         dom.appendChild( tableWidget.root );
     }
 
-    exportSEUR( ignoreErrors = false, sheinData )
+    exportSEUR( ignoreErrors = false, tiktokData )
     {
-        let columnData = SHEIN_COLUMN_DATA;
+        let columnData = TIKTOK_COLUMN_DATA;
 
-        const currentSheinData = sheinData ?? this.lastSeurData;
+        const currentTiktokData = tiktokData ?? this.lastSeurData;
         const uid = columnData[0][0];
 
         // Process the xlsx first to detect empty fields
         if ( !ignoreErrors )
         {
             const errorFields = [];
-            currentSheinData.forEach( ( row, index ) => {
+            currentTiktokData.forEach( ( row, index ) => {
                 for ( let c of columnData )
                 {
                     const ogColName = c[0];
@@ -495,7 +496,7 @@ class SheinApp
                         return c[0].split( '+' )[0];
                     } );
 
-                    const fixedData = LX.deepCopy( currentSheinData );
+                    const fixedData = LX.deepCopy( currentTiktokData );
 
                     for ( const [ errIndex, errName ] of errorFields )
                     {
@@ -544,7 +545,7 @@ class SheinApp
             } );
         };
 
-        if ( !currentSheinData?.length )
+        if ( !currentTiktokData?.length )
         {
             errMsg = `No existen datos.`;
             errorFn();
@@ -553,7 +554,7 @@ class SheinApp
 
         const orderNumbers = new Map();
 
-        let rows = currentSheinData.map( ( row, index ) => {
+        let rows = currentTiktokData.map( ( row, index ) => {
             const lRow = [];
             for ( let c of columnData )
             {
@@ -655,9 +656,9 @@ class SheinApp
 
     open( params )
     {
-        this.core.tool = 'shein';
-        this.core.setHeaderTitle( `SHEIN`,
-            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Handbag' );
+        this.core.tool = 'tiktok';
+        this.core.setHeaderTitle( `TikTok`,
+            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'TikTok' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 
@@ -668,8 +669,8 @@ class SheinApp
     clear()
     {
         delete this.lastSeurData;
-        this.showSheinList( [] );
+        this.showTiktokList( [] );
     }
 }
 
-export { SheinApp };
+export { TikTokApp };

@@ -4,6 +4,7 @@ import { ChillApp } from './apps/chill_app.js';
 import { LabelsApp } from './apps/mirakl_apps.js';
 import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
+import { TikTokApp } from './apps/tiktok_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import { WooCommerceClient } from './woocomerce.js';
 
@@ -92,6 +93,7 @@ const core = {
         // Content: create all apps
         this.cblTrackingApp = new CblTrackingApp( this );
         this.sheinApp = new SheinApp( this );
+        this.tikTokApp = new TikTokApp( this );
         this.ordersApp = new OrdersApp( this );
         this.transportCalculatorApp = new TransportCalculatorApp( this );
         this.chillApp = new ChillApp( this );
@@ -140,6 +142,10 @@ const core = {
             else if ( lastTool.includes( 'carrefour' ) )
             {
                 this.openApp( this.carrefourApp );
+            }
+            else if ( lastTool.includes( 'tiktok' ) )
+            {
+                this.openApp( this.tikTokApp );
             }
         }
 
@@ -294,6 +300,7 @@ const core = {
         this.chillApp.area.root.classList.toggle( 'hidden', true );
         this.decathlonApp.area.root.classList.toggle( 'hidden', true );
         this.carrefourApp.area.root.classList.toggle( 'hidden', true );
+        this.tikTokApp.area.root.classList.toggle( 'hidden', true );
 
         app.open( params );
 
@@ -346,6 +353,10 @@ const core = {
         {
             this.sheinApp.openData( fileData );
         }
+        else if ( this.tool == 'tiktok' )
+        {
+            this.tikTokApp.openData( fileData );
+        }
 
         if ( err !== null )
         {
@@ -353,6 +364,19 @@ const core = {
         }
 
         return true;
+    },
+
+    getTransportForItem( sku, quantity )
+    {
+        if (
+            ( sku.startsWith( 'JW-DF2' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DT2' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DS2' ) && quantity > 2 ) ||
+            ( sku.startsWith( 'JW-DF4' ) && quantity > 1 ) ||
+            ( sku.startsWith( 'JW-DT4' ) && quantity > 1 ) ||
+            [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku )
+        ) return 'CBL';
+        return 'SEUR';
     },
 
     updateTransport: function( value )
@@ -674,7 +698,7 @@ core.data['bathby'].template = ( id, url, transport ) => {
             submenu: [
                 { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Handbag' },
-                { name: 'TikTok', disabled: true, callback: ( v, e ) => core.openApp( core.tiktokApp ), icon: 'TikTok' },
+                { name: 'TikTok', callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
                 { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' },
                 
             ]

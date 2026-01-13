@@ -299,19 +299,6 @@ class LabelsApp
         this.lastShownSeurData = tableWidget.data.body;
     }
 
-    getTransportForItem( sku, quantity )
-    {
-        if (
-            ( sku.startsWith( 'JW-DF2' ) && quantity > 2 ) ||
-            ( sku.startsWith( 'JW-DT2' ) && quantity > 2 ) ||
-            ( sku.startsWith( 'JW-DS2' ) && quantity > 2 ) ||
-            ( sku.startsWith( 'JW-DF4' ) && quantity > 1 ) ||
-            ( sku.startsWith( 'JW-DT4' ) && quantity > 1 ) ||
-            [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku )
-        ) return 'CBL';
-        return 'SEUR';
-    }
-
     showGroupsByCountryList( ogData )
     {
         ogData = ogData ?? this.lastSeurData;
@@ -339,7 +326,7 @@ class LabelsApp
                 return i['quantity'];
             } ],
             [ 'Transporte', null, ( r, i ) => {
-                return this.getTransportForItem( i['product_shop_sku'], i['quantity'] );
+                return core.getTransportForItem( i['product_shop_sku'], i['quantity'] );
             } ],
             [ 'Plataforma', null, () => this.vendor.toUpperCase() ],
             [ 'País', null, ( row, i ) => {
