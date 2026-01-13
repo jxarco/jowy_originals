@@ -72,7 +72,7 @@ class TikTokApp
 
         // SEUR
         const seurContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.openData() } );
+        tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.showTiktokList() } );
 
         const seurArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         seurContainer.appendChild( seurArea.root );
@@ -556,7 +556,7 @@ class TikTokApp
         const month = `${date.getMonth() + 1}`;
         const year = `${date.getFullYear()}`;
         const todayStringDate = `${'0'.repeat( 2 - day.length )}${day}_${'0'.repeat( 2 - month.length )}${month}_${year}`;
-        const filename = `SEUR_${this.core.tool.substring( 0, this.core.tool.indexOf( '-' ) ).toUpperCase()}_${todayStringDate}.xlsx`;
+        const filename = `SEUR_tiktok_${todayStringDate}.xlsx`;
 
         let err = 0;
         let errMsg = '';
@@ -642,7 +642,10 @@ class TikTokApp
         {
             const skuIdx = data.indexOf( 'SKU del vendedor' );
             const rest = repeats.slice( 1 );
-            const trail = rest.reduce( ( p, c ) => p + ` + ${rows[c][skuIdx]}`, '' );
+            const trail = rest.reduce( ( p, c ) => {
+                const q = parseInt( currentTiktokData[ c ]['Quantity'] ); // Get quantity
+                return p + ` + ${rows[c][skuIdx]}${ q > 1 ? ` x ${q}` : '' }`;
+            }, '' );
             rest.forEach( ( r ) => {
                 rows[r] = undefined;
             } );

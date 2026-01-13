@@ -59,7 +59,7 @@
 	z-index: 0;
 }
 
-:root[data-theme="light"] .parallax-bg {
+:root[data-mode="light"] .parallax-bg {
 	background: linear-gradient(rgba(256, 256, 256, 0.4), rgba(256, 256, 256, 0.4)), url("../data/parallax.png") no-repeat center center / cover;
 	filter: brightness(1.5);
 }

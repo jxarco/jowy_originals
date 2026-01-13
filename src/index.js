@@ -135,18 +135,18 @@ const core = {
             {
                 this.openApp( this.chillApp );
             }
-            else if ( lastTool.includes( 'decathlon' ) )
-            {
-                this.openApp( this.decathlonApp );
-            }
-            else if ( lastTool.includes( 'carrefour' ) )
-            {
-                this.openApp( this.carrefourApp );
-            }
-            else if ( lastTool.includes( 'tiktok' ) )
-            {
-                this.openApp( this.tikTokApp );
-            }
+            // else if ( lastTool.includes( 'decathlon' ) )
+            // {
+            //     this.openApp( this.decathlonApp );
+            // }
+            // else if ( lastTool.includes( 'carrefour' ) )
+            // {
+            //     this.openApp( this.carrefourApp );
+            // }
+            // else if ( lastTool.includes( 'tiktok' ) )
+            // {
+            //     this.openApp( this.tikTokApp );
+            // }
         }
 
         // LX.requestBinary( "listadoenvios.xlsx", (data) => {
@@ -380,6 +380,21 @@ const core = {
             [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku )
         ) return 'CBL';
         return 'SEUR';
+    },
+
+    getIndividualQuantityPerPack( sku, quantity )
+    {
+        if (sku.startsWith( 'JW-T60' ) )
+        {
+            return quantity * 4;
+        }
+
+        if ([ 'HG-CD020', 'HG-CD040', 'HG-CD050', 'HG-CD060', 'HG-CD080', 'HG-CD100' ].includes( sku ))
+        {
+            return quantity * 2;
+        }
+
+        return quantity;
     },
 
     updateTransport: function( value )
@@ -699,9 +714,9 @@ core.data['bathby'].template = ( id, url, transport ) => {
         {
             name: 'Plataformas',
             submenu: [
-                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
+                { name: 'Decathlon', disabled: true, callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Handbag' },
-                { name: 'TikTok', callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
+                { name: 'TikTok', disabled: true, callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
                 { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' },
                 
             ]

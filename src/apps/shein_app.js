@@ -410,13 +410,15 @@ class SheinApp
             }
         }
 
+        // In SHEIN, do it by individual units, not in item combined orders
         for ( let row of listSKU )
         {
             const sku = row[0];
-            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) && row[5] !== 'Mismo pedido' )
-            {
-                row[1] *= 4;
-            }
+
+            if( sku.includes( '+' ) )
+                continue;
+
+            row[1] = this.core.getIndividualQuantityPerPack( sku, parseInt( row[1] ) );
         }
 
         const tableWidget = new LX.Table( null, {
@@ -538,7 +540,7 @@ class SheinApp
         const month = `${date.getMonth() + 1}`;
         const year = `${date.getFullYear()}`;
         const todayStringDate = `${'0'.repeat( 2 - day.length )}${day}_${'0'.repeat( 2 - month.length )}${month}_${year}`;
-        const filename = `SEUR_${this.core.tool.substring( 0, this.core.tool.indexOf( '-' ) ).toUpperCase()}_${todayStringDate}.xlsx`;
+        const filename = `SEUR_shein_${todayStringDate}.xlsx`;
 
         let err = 0;
         let errMsg = '';
