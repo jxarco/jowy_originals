@@ -16,6 +16,30 @@ const SHEIN_COLUMN_DATA = [
     [ 'Correo electrónico de usuario', null ]
 ];
 
+const SHEIN_TRACKING_COLUMN_DATA = [
+    [ 'Número del pedido', 'Order Number' ],
+    [ 'ID del artículo', 'Item ID' ],
+    [ 'Tracking Number', null, ( str, row, tdata) => {
+        const name = row['Nombre de usuario completo'].toUpperCase();
+        const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === name );
+        // const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === 'BEATRIZ HAGGE' );
+        if( !tentry )
+        {
+            const status = core.trackStatusColors['Incidencia'];
+            let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
+            return `${
+                LX.badge( iconStr, 'text-xs font-bold border-none ', {
+                    style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
+                        color: status.fg ?? '' }
+                } )
+            }`;
+        }
+        return tentry['LOCALIZADOR'];
+    } ],
+    [ 'Logistics Provider', null, () => 'SEUR' ],
+    [ 'Delete', null, () => '' ]
+];
+
 class SheinApp
 {
     constructor( core )
@@ -34,7 +58,12 @@ class SheinApp
             tooltip: true } );
         utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
             icon: 'Download',
-            title: 'Exportar datos',
+            title: 'Exportar Etiquetas',
+            tooltip: true
+        } );
+        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
+            icon: 'FileDown',
+            title: 'Exportar Seguimiento',
             tooltip: true
         } );
         utilButtonsPanel.endLine();
@@ -57,11 +86,23 @@ class SheinApp
         const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         groupsListContainer.appendChild( groupsListArea.root );
 
+        // Tracking info
+        const trackingContainer = LX.makeContainer( [ null, 'auto' ],
+            'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
+            trackingArea.root.innerHTML = "";
+            trackingArea.attach( this.getTrackingDataDropZone() );
+        } } );
+
+        const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        trackingContainer.appendChild( trackingArea.root );
+
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
 
         this.seurDataArea = seurArea;
         this.groupsListArea = groupsListArea;
+        this.trackingArea = trackingArea;
 
         this.clear();
     }
@@ -77,6 +118,74 @@ class SheinApp
 
         this.showSheinList( fileData );
         this.showGroupsByCountryList( fileData );
+    }
+
+    getTrackingDataDropZone()
+    {
+        const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center text-center border-top border-bottom gap-4 px-8 py-8', `
+            <div class="flex flex-row gap-2 items-center">
+                ${ LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML }
+            </div>
+            <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un listado de trackings.</p>
+        `, this.area );
+        dropZone.style.transition = 'transform 0.1s ease-in';
+
+        // add file drag and drop event to dropZone
+        dropZone.addEventListener( 'dragover', ( event ) => {
+            event.preventDefault();
+            event.stopPropagation();
+            dropZone.classList.add( 'draggingover' );
+        } );
+
+        dropZone.addEventListener( 'dragleave', ( event ) => {
+            event.preventDefault();
+            event.stopPropagation();
+            dropZone.classList.remove( 'draggingover' );
+        } );
+
+        dropZone.addEventListener( 'drop', ( event ) => {
+            event.preventDefault();
+            event.stopPropagation();
+            dropZone.classList.remove( 'draggingover' );
+
+            // Check if a file was dropped
+            if ( event.dataTransfer.files.length > 0 )
+            {
+                const file = event.dataTransfer.files[0];
+                if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
+                {
+                    const reader = new FileReader();
+                    reader.onload = ( e ) =>
+                    {
+                        const data = e.target.result;
+
+                        try
+                        {
+                            const workbook = XLSX.read( data, { type: 'binary' } );
+                            core.sheetName = workbook.SheetNames[0];
+                            const sheet = workbook.Sheets[core.sheetName];
+                            const rowsData = XLSX.utils.sheet_to_json( sheet, { raw: false } );
+                            this.showTrackingList( rowsData );
+
+                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
+                        }
+                        catch ( e )
+                        {
+                            LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
+                        }
+                    };
+
+                    // Read the data as binary
+                    reader.readAsArrayBuffer( file );
+                }
+                else
+                {
+                    alert( 'Please drop a valid .xlsx file.' );
+                }
+            }
+        } );
+
+        return dropZone;
     }
 
     showSheinList( data )
@@ -135,6 +244,61 @@ class SheinApp
         this.lastSeurColumnData = tableWidget.data.head;
         this.lastShownSeurData = tableWidget.data.body;
         this.lastSeurData = data;
+
+        console.log("shein", this.lastSeurData)
+    }
+
+    showTrackingList( trackingData )
+    {
+        console.log(trackingData)
+
+        const data = this.lastSeurData;
+
+        this.vendor = 'Shein';
+
+        const dom = this.trackingArea.root;
+        while ( dom.children.length > 0 )
+        {
+            dom.removeChild( dom.children[0] );
+        }
+
+        // Create table data from the list
+        const tableData = data.map( ( row ) => {
+            const lRow = [];
+            for ( let c of SHEIN_TRACKING_COLUMN_DATA )
+            {
+                const ogColName = c[0];
+                if ( ogColName.includes( '+' ) )
+                {
+                    const tks = ogColName.split( '+' );
+                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
+                }
+                else
+                {
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row, trackingData ) );
+                }
+            }
+            return lRow;
+        } );
+
+        const tableWidget = new LX.Table( null, {
+            head: SHEIN_TRACKING_COLUMN_DATA.map( ( c ) => {
+                return c[1] ?? c[0];
+            } ),
+            body: tableData
+        }, {
+            selectable: true,
+            sortable: false,
+            toggleColumns: true,
+            centered: true,
+            filter: 'Tracking Number'
+        } );
+
+        dom.appendChild( tableWidget.root );
+
+        this.lastSeurTrackingsColumnData = tableWidget.data.head;
+        this.lastShownSeurTrackingsData = tableWidget.data.body;
     }
 
     showGroupsByCountryList( ogData )
@@ -460,6 +624,12 @@ class SheinApp
         rows = rows.filter( ( r ) => r !== undefined );
 
         this.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
+    }
+
+    exportSEURTrackings()
+    {
+        const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
+        this.exportXLSXData( data, "NUMERODEGUIA.xlsx" );   
     }
 
     exportXLSXData( data, filename, ignoreErrors )
