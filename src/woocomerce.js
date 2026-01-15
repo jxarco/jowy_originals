@@ -293,6 +293,25 @@ export class WooCommerceClient
         return await this._get( 'orders', params );
     }
 
+    async getAllOrdersByIds( ids = [], per_page = 100 )
+    {
+        let page = 1;
+        let allOrders = [];
+
+        while ( true )
+        {
+            const { data, totalPages } = await this.getOrdersByIds( ids, page, per_page );
+
+            allOrders.push( ...data );
+
+            if ( page >= totalPages ) break;
+
+            page++;
+        }
+
+        return allOrders;
+    }
+
     // Get ALL orders (auto-pagination)
     async getAllOrders( perPage = 50 )
     {

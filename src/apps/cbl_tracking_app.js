@@ -1111,14 +1111,15 @@ class CblTrackingApp
 
         const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
 
-        const r = await wcc.getOrdersByIds( ids );
-        if ( !r.ok )
+        const r = await wcc.getAllOrdersByIds( ids );
+        
+        if ( !r || !r.length )
         {
-            LX.toast( 'WooCommerce Error', `❌ ${r.error}`, { timeout: -1, position: 'top-center' } );
+            LX.toast( 'WooCommerce Error', `❌ No se han podido cargar los datos. `, { timeout: -1, position: 'top-center' } );
             return;
         }
 
-        r.data.forEach( ( o ) => orders[o['number']] = o );
+        r.forEach( ( o ) => orders[o['number']] = o );
 
         dialog.destroy();
 

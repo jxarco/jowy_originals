@@ -88,7 +88,8 @@ const core = {
         'En destino': { icon: 'Warehouse', bg: '#2560da', fg: '#e5e5e5' },
         'En tránsito': { icon: 'Package', bg: '#a21caf', fg: '#e5e5e5' },
         'En gestión': { icon: 'TriangleAlert', bg: '#ca8a04', fg: '#e5e5e5' },
-        'Devuelta': { icon: 'Frown', bg: '#dc2626', fg: '#e5e5e5' }
+        'Devuelta': { icon: 'Frown', bg: '#dc2626', fg: '#e5e5e5' },
+        'Falta': { icon: 'CircleQuestionMark', bg: '#dc2626', fg: '#e5e5e5' },
     },
     data: {
         'otros': { list: [], dom: null },
