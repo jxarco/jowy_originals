@@ -134,7 +134,7 @@ class OrdersApp
                 const shipping = ( r['shipping_lines'] ?? [] )[0];
                 if ( shipping['method_id'] === 'local_pickup' )
                 {
-                    return 'RECOGIDA ALMACÉN';
+                    return 'PENDIENTE DE RECOGIDA';
                 }
                 const q = i['quantity'];
                 const sku = i['sku'];
@@ -201,7 +201,7 @@ class OrdersApp
             centered: [ 4, 5, 6, 7, 8 ],
             customFilters: [
                 { name: 'FECHA', type: 'date', default: [ todayStringDate, todayStringDate ] },
-                { name: 'TRANSPORTE', options: [ 'CBL', 'SEUR', 'RECOGIDA ALMACÉN' ] },
+                { name: 'TRANSPORTE', options: [ 'CBL', 'SEUR', 'PENDIENTE DE RECOGIDA' ] },
                 { name: 'PAÍS', options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
             ],
             rowActions: [
