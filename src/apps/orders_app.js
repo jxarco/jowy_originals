@@ -20,7 +20,10 @@ class OrdersApp
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine( 3 );
-        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), { icon: 'Trash2', title: 'Limpiar datos anteriores',
+        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), {
+            buttonClass: 'lg outline',
+            icon: 'Trash2',
+            title: 'Limpiar datos anteriores',
             tooltip: true } );
         utilButtonsPanel.addNumber( null, this.ordersBeforeDays, ( v ) => {
             this.ordersBeforeDays = v;

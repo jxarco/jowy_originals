@@ -53,14 +53,19 @@ class TikTokApp
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
-        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), { icon: 'Trash2', title: 'Limpiar datos anteriores',
+        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), {
+            buttonClass: 'lg outline',
+            icon: 'Trash2',
+            title: 'Limpiar datos anteriores',
             tooltip: true } );
         utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
+            buttonClass: 'lg outline',
             icon: 'Download',
             title: 'Exportar Etiquetas',
             tooltip: true
         } );
         utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
+            buttonClass: 'lg outline',
             icon: 'FileDown',
             title: 'Exportar Seguimiento',
             tooltip: true

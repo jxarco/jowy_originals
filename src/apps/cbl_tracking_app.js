@@ -28,15 +28,15 @@ class CblTrackingApp
 
         const seeMessagesButton = utilButtonsPanel.addButton( null, 'SeeMessagesButton', () => {
             if ( core.compName !== 'otros' ) this.showMessages( core.compName, 0 );
-        }, { icon: 'Eye', title: 'Ver mensajes', tooltip: true } );
+        }, { buttonClass: 'lg outline', icon: 'Eye', title: 'Ver mensajes', tooltip: true } );
 
         const clearButtonWidget = utilButtonsPanel.addButton( null, 'ClearButton', () => {
             core.clearData();
-        }, { icon: 'Trash2', title: 'Limpiar datos anteriores', tooltip: true } );
+        }, { buttonClass: 'lg outline', icon: 'Trash2', title: 'Limpiar datos anteriores', tooltip: true } );
 
         const messageFromTrackIdButton = utilButtonsPanel.addButton( null, 'NewCustomMessage', () => {
             this.openMessageDialog();
-        }, { icon: 'Plus', title: 'Nuevo Pedido', tooltip: true } );
+        }, { buttonClass: 'lg outline', icon: 'Plus', title: 'Nuevo Pedido', tooltip: true } );
 
         const moreOptionsButton = utilButtonsPanel.addButton( null, 'MoreOptionsButton', ( value, event ) => {
             LX.addDropdownMenu( event.target, [
@@ -85,7 +85,7 @@ class CblTrackingApp
                     callback: () => this.showList( core.compName, true, true )
                 }
             ], { side: 'bottom', align: 'start' } );
-        }, { icon: 'EllipsisVertical', title: 'Más opciones', tooltip: true } );
+        }, { buttonClass: 'lg outline', icon: 'EllipsisVertical', title: 'Más opciones', tooltip: true } );
 
         this.area.attach( utilButtonsPanel.root );
 

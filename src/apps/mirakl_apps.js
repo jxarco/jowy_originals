@@ -61,11 +61,15 @@ class LabelsApp
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
 
-        utilButtonsPanel.addButton( null, 'ClearButton', () => {
-            core.clearData();
-        }, { icon: 'Trash2', title: 'Limpiar datos anteriores', tooltip: true } );
+        utilButtonsPanel.addButton( null, 'ClearButton', () => core.clearData(), {
+            buttonClass: 'lg outline',
+            icon: 'Trash2',
+            title: 'Limpiar datos anteriores',
+            tooltip: true
+        } );
 
         utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
+            buttonClass: 'lg outline',
             icon: 'Download',
             title: 'Exportar etiquetas',
             tooltip: true
@@ -79,7 +83,7 @@ class LabelsApp
                     callback: () => this.showOrders( vendor_lc )
                 }
             ], { side: 'bottom', align: 'start' } );
-        }, { icon: 'EllipsisVertical', title: 'Más opciones', tooltip: true } );
+        }, { buttonClass: 'lg outline', icon: 'EllipsisVertical', title: 'Más opciones', tooltip: true } );
 
         utilButtonsPanel.endLine();
 
