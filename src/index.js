@@ -27,6 +27,22 @@ class Company
     }
 }
 
+const REFERENCE_MAPPING = {
+    "BY-FBT05GN": "BY-FBT05V",
+    "BY-FBT02GN": "BY-FBT02V",
+    "BY-FBT03GN": "BY-FBT03V",
+    "BY-FBT04GN": "BY-FBT04V",
+    "FM01": "BY-FM01",
+    "FM02": "BY-FM02",
+    "FM03": "BY-FM03",
+    "HG-AT20G1": "JW-AT20G1",
+    "HG-AT20G2": "JW-AT20G2",
+    "HG-AT30G1": "JW-AT30G1",
+    "HG-AT30G2": "JW-AT30G2",
+    "HG-AT40G1": "JW-AT40G1",
+    "HG-AT40G2": "JW-AT40G2"
+};
+
 const core = {
     transport: 'CBL', // Default transport
     transportOptions: [ 'CBL', 'SEUR' ], // , "GLS"];
@@ -382,9 +398,14 @@ const core = {
         return 'SEUR';
     },
 
+    getFinalSku( sku )
+    {
+        return REFERENCE_MAPPING[sku] ?? sku;
+    },
+
     getIndividualQuantityPerPack( sku, quantity )
     {
-        if (sku.startsWith( 'JW-T60' ) )
+        if ( sku.startsWith( 'JW-T60' ) )
         {
             return quantity * 4;
         }

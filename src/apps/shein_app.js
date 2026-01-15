@@ -1,9 +1,15 @@
 import { LX } from 'lexgui';
 
-const SHEIN_COLUMN_DATA = [
-    [ 'Número del pedido', null ],
-    [ 'ID del artículo', null ],
-    [ 'SKU del vendedor', null ],
+const SHEIN_COLUMN_LIST_DATA = [
+    [ 'Número del pedido' ],
+    [ 'ID del artículo' ],
+    [ 'SKU del vendedor', null, ( str, row ) => {
+        return core.getFinalSku( str );
+    }],
+    [ 'Nombre del producto', null, ( str, row ) => {
+        return `<span title='${str}'>${str}</span>`;
+    }],
+    [ 'Nombre de usuario completo' ],
     [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
     [ 'País', null, ( str, row ) => {
         return core.countryFormat[str] ?? str;
@@ -11,9 +17,26 @@ const SHEIN_COLUMN_DATA = [
     [ 'Provincia', null ],
     [ 'Ciudad', null ],
     [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
-    [ 'Nombre de usuario completo', null ],
-    [ 'Número de Teléfono', null ],
-    [ 'Correo electrónico de usuario', null ]
+    [ 'Número de Teléfono' ],
+    [ 'Correo electrónico de usuario' ]
+];
+
+const SHEIN_COLUMN_SEUR_DATA = [
+    [ 'Número del pedido' ],
+    [ 'ID del artículo' ],
+    [ 'SKU del vendedor', null, ( str, row ) => {
+        return core.getFinalSku( str );
+    }],
+    [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
+    [ 'País', null, ( str, row ) => {
+        return core.countryFormat[str] ?? str;
+    } ],
+    [ 'Provincia', null ],
+    [ 'Ciudad', null ],
+    [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
+    [ 'Nombre de usuario completo' ],
+    [ 'Número de Teléfono' ],
+    [ 'Correo electrónico de usuario' ]
 ];
 
 const SHEIN_TRACKING_COLUMN_DATA = [
@@ -88,7 +111,7 @@ class SheinApp
         // Groups List
         const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
             'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
+        tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
 
         const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         groupsListContainer.appendChild( groupsListArea.root );
@@ -124,12 +147,12 @@ class SheinApp
         }
 
         this.showSheinList( fileData );
-        this.showGroupsByCountryList( fileData );
+        this.showStockList( fileData );
     }
 
     getTrackingDataDropZone()
     {
-        const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center text-center border-top border-bottom gap-4 px-8 py-8', `
+        const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center rounded-xl text-center border-color gap-4 px-12 py-12', `
             <div class="flex flex-row gap-2 items-center">
                 ${ LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML }
             </div>
@@ -199,6 +222,8 @@ class SheinApp
     {
         data = data ?? this.lastSeurData;
 
+        console.log(data)
+
         this.vendor = 'Shein';
 
         const dom = this.seurDataArea.root;
@@ -217,7 +242,7 @@ class SheinApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of SHEIN_COLUMN_DATA )
+            for ( let c of SHEIN_COLUMN_LIST_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -237,7 +262,7 @@ class SheinApp
         this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Handbag' );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_COLUMN_DATA.map( ( c ) => {
+            head: SHEIN_COLUMN_LIST_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
@@ -245,6 +270,7 @@ class SheinApp
             selectable: true,
             sortable: false,
             toggleColumns: true,
+            centered: [ 'Número del pedido', 'ID del artículo', 'SKU del vendedor' ],
             filter: 'SKU del vendedor'
         } );
 
@@ -257,63 +283,7 @@ class SheinApp
         // console.log("shein", this.lastSeurData)
     }
 
-    showTrackingList( trackingData )
-    {
-        // console.log(trackingData)
-
-        const data = this.lastSeurData;
-
-        this.vendor = 'Shein';
-
-        const dom = this.trackingArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
-
-        this._trackingSyncErrors = false;
-
-        // Create table data from the list
-        const tableData = data.map( ( row ) => {
-            const lRow = [];
-            for ( let c of SHEIN_TRACKING_COLUMN_DATA )
-            {
-                const ogColName = c[0];
-                if ( ogColName.includes( '+' ) )
-                {
-                    const tks = ogColName.split( '+' );
-                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                }
-                else
-                {
-                    const fn = c[2] ?? ( ( str ) => str );
-                    const val = fn( row[ogColName] ?? '?', row, trackingData, this );
-                    lRow.push( val );
-                }
-            }
-            return lRow;
-        } );
-
-        const tableWidget = new LX.Table( null, {
-            head: SHEIN_TRACKING_COLUMN_DATA.map( ( c ) => {
-                return c[1] ?? c[0];
-            } ),
-            body: tableData
-        }, {
-            selectable: true,
-            sortable: false,
-            toggleColumns: true,
-            centered: true,
-            filter: 'Tracking Number'
-        } );
-
-        dom.appendChild( tableWidget.root );
-
-        this.lastSeurTrackingsColumnData = tableWidget.data.head;
-        this.lastShownSeurTrackingsData = tableWidget.data.body;
-    }
-
-    showGroupsByCountryList( ogData )
+    showStockList( ogData )
     {
         ogData = ogData ?? this.lastSeurData;
 
@@ -336,8 +306,10 @@ class SheinApp
         }
 
         let columnData = [
-            [ 'SKU del vendedor', null ],
-            [ 'Cantidad', null ],
+            [ 'SKU del vendedor', null, ( str, row ) => {
+                return core.getFinalSku( str );
+            }],
+            [ 'Unidades', null ],
             [ 'Transporte', null, () => "SEUR" ],
             [ 'Plataforma', null, () => "SHEIN" ],
             [ 'País', null, ( str, row ) => {
@@ -401,7 +373,12 @@ class SheinApp
 
         for ( let row of tableData )
         {
-            const sku = `${row[0]}_${row[4]}`; // SKU _ País
+            let sku = `${this.core.getFinalSku(row[0])}_${row[4]}`; // SKU _ País
+
+            // if sku starts with "JW-T60", never combine with others, so we must 
+            // add a unique identifier in the sku
+            sku += sku.includes( 'JW-T60' ) ? `_${LX.guidGenerator()}` : '';
+
             if ( !skus[sku] )
             {
                 skus[sku] = [ listSKU.length ];
@@ -416,7 +393,7 @@ class SheinApp
             }
         }
 
-        // In SHEIN, do it by individual units, not in item combined orders
+        // do it by individual units, not in item combined orders
         for ( let row of listSKU )
         {
             const sku = row[0];
@@ -469,9 +446,65 @@ class SheinApp
         dom.appendChild( tableWidget.root );
     }
 
+    showTrackingList( trackingData )
+    {
+        // console.log(trackingData)
+
+        const data = this.lastSeurData;
+
+        this.vendor = 'Shein';
+
+        const dom = this.trackingArea.root;
+        while ( dom.children.length > 0 )
+        {
+            dom.removeChild( dom.children[0] );
+        }
+
+        this._trackingSyncErrors = false;
+
+        // Create table data from the list
+        const tableData = data.map( ( row ) => {
+            const lRow = [];
+            for ( let c of SHEIN_TRACKING_COLUMN_DATA )
+            {
+                const ogColName = c[0];
+                if ( ogColName.includes( '+' ) )
+                {
+                    const tks = ogColName.split( '+' );
+                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
+                }
+                else
+                {
+                    const fn = c[2] ?? ( ( str ) => str );
+                    const val = fn( row[ogColName] ?? '?', row, trackingData, this );
+                    lRow.push( val );
+                }
+            }
+            return lRow;
+        } );
+
+        const tableWidget = new LX.Table( null, {
+            head: SHEIN_TRACKING_COLUMN_DATA.map( ( c ) => {
+                return c[1] ?? c[0];
+            } ),
+            body: tableData
+        }, {
+            selectable: true,
+            sortable: false,
+            toggleColumns: true,
+            centered: true,
+            filter: 'Tracking Number'
+        } );
+
+        dom.appendChild( tableWidget.root );
+
+        this.lastSeurTrackingsColumnData = tableWidget.data.head;
+        this.lastShownSeurTrackingsData = tableWidget.data.body;
+    }
+
     exportSEUR( ignoreErrors = false, sheinData )
     {
-        let columnData = SHEIN_COLUMN_DATA;
+        let columnData = SHEIN_COLUMN_SEUR_DATA;
 
         const currentSheinData = sheinData ?? this.lastSeurData;
         const uid = columnData[0][0];
