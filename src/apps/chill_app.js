@@ -126,7 +126,8 @@ class ChillApp
                 draw();
             } );
 
-            this.audio.addEventListener( 'ended', function() {
+            this.audio.addEventListener( 'ended', function()
+            {
                 this.currentTime = 0;
                 this.play();
             }, false );

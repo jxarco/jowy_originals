@@ -24,12 +24,13 @@ class OrdersApp
             buttonClass: 'lg outline',
             icon: 'Trash2',
             title: 'Limpiar datos anteriores',
-            tooltip: true } );
+            tooltip: true
+        } );
         utilButtonsPanel.addNumber( null, this.ordersBeforeDays, ( v ) => {
             this.ordersBeforeDays = v;
         }, { step: 1, min: 1, max: 120, units: 'días', skipSlider: true } );
-        utilButtonsPanel.addButton( null, 'TooltipButton', null, { disabled: true, icon: 'Info', buttonClass: 'bg-none',
-            title: "Ver pedidos de hasta 'N' días atrás", tooltip: true } );
+        utilButtonsPanel.addButton( null, 'TooltipButton', null, { disabled: true, icon: 'Info', buttonClass: 'bg-none', title: "Ver pedidos de hasta 'N' días atrás",
+            tooltip: true } );
         this.area.attach( utilButtonsPanel.root );
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
@@ -37,8 +38,7 @@ class OrdersApp
 
         // Jowy
         {
-            const jowyContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const jowyContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Jowy', jowyContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -48,8 +48,7 @@ class OrdersApp
 
         // HxG
         {
-            const hxgContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const hxgContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'HxG', hxgContainer, { xselected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const hxgArea = new LX.Area( { className: 'rounded-lg' } );
@@ -59,8 +58,7 @@ class OrdersApp
 
         // Bathby
         {
-            const bathbyContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const bathbyContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Bathby', bathbyContainer, { xselected: true, onSelect: ( event, name ) => this.showOrders( name.toLowerCase() ) } );
 
             const bathbyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -109,8 +107,7 @@ class OrdersApp
         const r = await wcc.getAllOrdersByFilter( after, before, [ 'processing', 'on-hold' ] );
         console.log( r );
 
-        core.setHeaderTitle( `Web (${name}): <i>Pedidos</i>`, `${r.length} pedidos pendientes (Últimos ${this.ordersBeforeDays} día/s)`,
-            'WooCommerce' );
+        core.setHeaderTitle( `Web (${name}): <i>Pedidos</i>`, `${r.length} pedidos pendientes (Últimos ${this.ordersBeforeDays} día/s)`, 'WooCommerce' );
 
         dialog.destroy();
 
@@ -119,8 +116,7 @@ class OrdersApp
         const columnData = [
             [ 'paymethod', 'PAGO', ( r ) => {
                 // `payment_method_title`
-                const b = new LX.Button( null, 'Payment', null, { buttonClass: 'bg-none', icon: 'CircleDollarSign',
-                    title: r['payment_method_title'] } );
+                const b = new LX.Button( null, 'Payment', null, { buttonClass: 'bg-none', icon: 'CircleDollarSign', title: r['payment_method_title'] } );
                 return b.root.innerHTML;
             } ],
             [ 'preview', 'PREVIEW', ( r, i ) => {

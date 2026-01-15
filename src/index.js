@@ -1,6 +1,7 @@
 import { LX } from 'lexgui';
 import { CblTrackingApp } from './apps/cbl_tracking_app.js';
 import { ChillApp } from './apps/chill_app.js';
+import { ManualApp } from './apps/manual_app.js';
 import { LabelsApp } from './apps/mirakl_apps.js';
 import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
@@ -28,19 +29,19 @@ class Company
 }
 
 const REFERENCE_MAPPING = {
-    "BY-FBT05GN": "BY-FBT05V",
-    "BY-FBT02GN": "BY-FBT02V",
-    "BY-FBT03GN": "BY-FBT03V",
-    "BY-FBT04GN": "BY-FBT04V",
-    "FM01": "BY-FM01",
-    "FM02": "BY-FM02",
-    "FM03": "BY-FM03",
-    "HG-AT20G1": "JW-AT20G1",
-    "HG-AT20G2": "JW-AT20G2",
-    "HG-AT30G1": "JW-AT30G1",
-    "HG-AT30G2": "JW-AT30G2",
-    "HG-AT40G1": "JW-AT40G1",
-    "HG-AT40G2": "JW-AT40G2"
+    'BY-FBT05GN': 'BY-FBT05V',
+    'BY-FBT02GN': 'BY-FBT02V',
+    'BY-FBT03GN': 'BY-FBT03V',
+    'BY-FBT04GN': 'BY-FBT04V',
+    'FM01': 'BY-FM01',
+    'FM02': 'BY-FM02',
+    'FM03': 'BY-FM03',
+    'HG-AT20G1': 'JW-AT20G1',
+    'HG-AT20G2': 'JW-AT20G2',
+    'HG-AT30G1': 'JW-AT30G1',
+    'HG-AT30G2': 'JW-AT30G2',
+    'HG-AT40G1': 'JW-AT40G1',
+    'HG-AT40G2': 'JW-AT40G2'
 };
 
 const core = {
@@ -89,12 +90,12 @@ const core = {
         'En tránsito': { icon: 'Package', bg: '#a21caf', fg: '#e5e5e5' },
         'En gestión': { icon: 'TriangleAlert', bg: '#ca8a04', fg: '#e5e5e5' },
         'Devuelta': { icon: 'Frown', bg: '#dc2626', fg: '#e5e5e5' },
-        'Falta': { icon: 'CircleQuestionMark', bg: '#dc2626', fg: '#e5e5e5' },
+        'Falta': { icon: 'CircleQuestionMark', bg: '#dc2626', fg: '#e5e5e5' }
     },
     data: {
         'otros': { list: [], dom: null },
-        'decathlon': new Company( 'Decathlon', 'https://marketplace-decathlon-eu.mirakl.net/', 'https://jowy-originals.alexroco-30.workers.dev' ),// cf worker
-        'carrefour': new Company( 'Carrefour', '........', 'https://jowy-originals.alexroco-30.workers.dev' ),// cf worker
+        'decathlon': new Company( 'Decathlon', 'https://marketplace-decathlon-eu.mirakl.net/', 'https://jowy-originals.alexroco-30.workers.dev' ), // cf worker
+        'carrefour': new Company( 'Carrefour', '........', 'https://jowy-originals.alexroco-30.workers.dev' ), // cf worker
         'jowy': new Company( 'Jowy', 'https://www.jowyoriginals.com/wp-admin/', 'https://jowyoriginals.com', '2-' ),
         'hxg': new Company( 'HxG', 'https://www.homexgym.com/wp-admin/', 'https://homexgym.com', '3-' ),
         'bathby': new Company( 'Bathby', 'https://www.bathby.com/wp-admin/', 'https://bathby.com', '4-' )
@@ -114,8 +115,9 @@ const core = {
         this.ordersApp = new OrdersApp( this );
         this.transportCalculatorApp = new TransportCalculatorApp( this );
         this.chillApp = new ChillApp( this );
-        this.decathlonApp = new LabelsApp( this, "Decathlon" );
-        this.carrefourApp = new LabelsApp( this, "Carrefour" );
+        this.decathlonApp = new LabelsApp( this, 'Decathlon' );
+        this.carrefourApp = new LabelsApp( this, 'Carrefour' );
+        this.manualApp = new ManualApp( this );
 
         // Footer
         this.createFooterHtml();
@@ -151,6 +153,10 @@ const core = {
             else if ( lastTool.includes( 'chill' ) )
             {
                 this.openApp( this.chillApp );
+            }
+            else if ( lastTool.includes( 'manual' ) )
+            {
+                this.openApp( this.manualApp );
             }
             // else if ( lastTool.includes( 'decathlon' ) )
             // {
@@ -318,6 +324,7 @@ const core = {
         this.decathlonApp.area.root.classList.toggle( 'hidden', true );
         this.carrefourApp.area.root.classList.toggle( 'hidden', true );
         this.tikTokApp.area.root.classList.toggle( 'hidden', true );
+        this.manualApp.area.root.classList.toggle( 'hidden', true );
 
         app.open( params );
 
@@ -386,15 +393,15 @@ const core = {
     getTransportForItem( sku, quantity )
     {
         if (
-            ( sku.startsWith( 'JW-DF20' ) && quantity > 3 ) ||
-            ( sku.startsWith( 'JW-DT20' ) && quantity > 3 ) ||
-            ( sku.startsWith( 'JW-DF25' ) && quantity > 2 ) ||
-            ( sku.startsWith( 'JW-DT25' ) && quantity > 2 ) ||
-            ( sku.startsWith( 'JW-DS25' ) && quantity > 2 ) ||
-            ( sku.startsWith( 'JW-DF3' ) && quantity > 1 ) ||
-            ( sku.startsWith( 'JW-DF4' ) && quantity > 1 ) ||
-            ( sku.startsWith( 'JW-DT4' ) && quantity > 1 ) ||
-            [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku )
+            ( sku.startsWith( 'JW-DF20' ) && quantity > 3 )
+            || ( sku.startsWith( 'JW-DT20' ) && quantity > 3 )
+            || ( sku.startsWith( 'JW-DF25' ) && quantity > 2 )
+            || ( sku.startsWith( 'JW-DT25' ) && quantity > 2 )
+            || ( sku.startsWith( 'JW-DS25' ) && quantity > 2 )
+            || ( sku.startsWith( 'JW-DF3' ) && quantity > 1 )
+            || ( sku.startsWith( 'JW-DF4' ) && quantity > 1 )
+            || ( sku.startsWith( 'JW-DT4' ) && quantity > 1 )
+            || [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku )
         ) return 'CBL';
         return 'SEUR';
     },
@@ -411,7 +418,7 @@ const core = {
             return quantity * 4;
         }
 
-        if ([ 'HG-CD020', 'HG-CD040', 'HG-CD050', 'HG-CD060', 'HG-CD080', 'HG-CD100' ].includes( sku ))
+        if ( [ 'HG-CD020', 'HG-CD040', 'HG-CD050', 'HG-CD060', 'HG-CD080', 'HG-CD100' ].includes( sku ) )
         {
             return quantity * 2;
         }
@@ -450,8 +457,7 @@ const core = {
         const clientId = '851633355284-ecd2lk1f1v771sv18rkmrjvvup6752iq.apps.googleusercontent.com';
         const redirectUri = encodeURIComponent( window.location.origin + window.location.pathname );
         const scope = encodeURIComponent( 'https://www.googleapis.com/auth/drive.readonly' );
-        const authUrl =
-            `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
         window.location.href = authUrl;
     },
 
@@ -720,28 +726,32 @@ core.data['bathby'].template = ( id, url, transport ) => {
 
     LX.setThemeColor( 'teal' );
 
-    LX.registerIcon( 'TikTok', '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16.6 5.82s.51.5 0 0A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64c0 3.33 2.76 5.7 5.69 5.7c3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88-.09-3 .8"></path></svg>' );
-    LX.registerIcon( 'Decathlon', `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.68 20.946c-4.68 5.509-2.254 16.552 5.334 12.2c1.887-.978 6.31-5.03 14.76-17.551v20.761c-2.421 1.654-16.97 8.473-22.928 1.003c-2.492-3.4-2.492-7.986.186-12.455H6.03q4.005-7.215 12.408-12.36C36.408 1.792 43.6 9.87 43.95 14.5c.72 8.497-6.495 14.875-10.289 18.577v-6.333c9.195-9.054 4.795-14.035 3.794-14.85c-2.047-2.37-7.865-4.53-13.13-2.392" stroke-width="1" /></svg>` );
-    LX.registerIcon( 'WooCommerce', `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><path fill="currentColor" d=" M108.6 46.9 c-2.3-.2-6.7 1-8.7 10.8 c0 5.9 1.4 9.5 3.6 10.8 c4.1 1.2 8.9-4.3 8.9-10.2 c.2-4.1.4-9.2-3.8-11.4 M116.3 25.8 H11.7 C5.2 25.8 0 31 0 37.4 v40 c0 6.4 5.2 11.7 11.7 11.7 h104.7 c6.4 0 11.7-5.2 11.7-11.7 v-40 c-.1-6.4-5.3-11.6-11.8-11.6 M44 80 s-6.9-9.1-8.5-16 c-1.6-6.8-2-3.7-2-3.7 S28 72.7 22.3 80.6 s-8.5-3.9-8.5-3.9 c-2-2.4-7.7-37.3-7.7-37.3 c3.2-8.9 8.7-1.6 8.7-1.6 l5.5 28.4 s8.5-17.4 11.4-21.9 c2.8-4.5 7.7-3.2 8.1 1.4 c.4 4.7 5.1 17.4 5.1 17.4 c.4-13.4 5.9-26.2 6.7-28.2 s9.7-4.5 8.1 4.1 C55.8 48.5 52 68.6 53 79.6 c-2.7 8.3-9 .4-9 .4 M79.9 75.5 c-2.6 1.2-12.3 7.9-19.2-7.1 C56.4 53.3 66 42.2 66 42.2 s12.5-10.7 21 3.5 c6.9 15.6-4.5 28.6-7.1 29.8 M111.7 75.5 c-2.6 1.2-12.3 7.9-19.2-7.1 c-4.3-15.1 5.3-26.2 5.3-26.2 s12.6-10.8 21.1 3.4 c6.9 15.7-4.6 28.7-7.2 29.9 M76.7 46.9 c-2.3-.2-6.7 1-8.7 10.8 c0 5.9 1.4 9.5 3.6 10.8 c4.1 1.2 8.9-4.3 8.9-10.2 c.3-4.1.5-9.2-3.8-11.4 M61.3 89.1 l22.3 13.1 l-4.7-13.1 l-12.8-3.6 z "/></svg>` );
-    LX.registerIcon( 'Carrefour', `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12.14 4.045c-2.569 0-3.572 3.64-3.572 7.979s1.003 7.931 3.572 7.931c1.541 0 2.855-.903 2.86-1.645a.63.63 0 0 0-.199-.453c-.73-.706-1.016-1.412-1.018-2.034c-.005-1.189 1.026-2.074 1.977-2.074c1.306 0 2.077 1.027 2.077 2.357c0 1.26-.537 2.31-1.121 3.15a.2.2 0 0 0-.034.107c0 .065.04.12.098.12q.053.001.122-.065l6.561-6.344c.328-.28.537-.608.537-1.073c0-.468-.21-.794-.537-1.073l-6.561-6.346q-.069-.066-.122-.064c-.059 0-.097.055-.098.12q-.001.054.034.107c.584.84 1.12 1.89 1.12 3.15c0 1.329-.77 2.356-2.076 2.356c-.95 0-1.982-.884-1.977-2.073c.002-.622.288-1.328 1.018-2.033A.62.62 0 0 0 15 5.69c-.004-.743-1.319-1.646-2.86-1.646m-5.043.537L.537 10.93C.209 11.207 0 11.534 0 12c0 .465.21.793.537 1.073l6.56 6.345c.042.043.083.06.117.06c.062 0 .105-.057.103-.123a.2.2 0 0 0-.057-.123C5.72 17.32 4.6 15.126 4.6 12.024c0-3.104 1.12-5.341 2.66-7.255a.2.2 0 0 0 .057-.123c.002-.068-.04-.123-.103-.123c-.034 0-.075.017-.117.06"/></svg>` );
-    LX.registerIcon( 'Shein', `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 50 50"><path d="M36,4H14C8.486,4,4,8.486,4,14v22c0,5.514,4.486,10,10,10h22c5.514,0,10-4.486,10-10V14C46,8.486,41.514,4,36,4z M25,37.25	c-3.5,0-6.5-1.25-9-2.75l2.5-2.5c1.5,1,4.5,2,6.5,2c1,0,4.5-0.25,4.5-3.5c0-4.75-13-3.25-13-11C16.5,15,21,13,25,13s6,1,7.5,2.25	L30,17.5c-1.25-1-3.75-1.5-5-1.5c-1,0-4.5,0.5-4.5,3.5c0,4.25,13,4,13,11C33.5,35.75,28,37.25,25,37.25z"></path></svg>` );
+    LX.registerIcon( 'TikTok',
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16.6 5.82s.51.5 0 0A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64c0 3.33 2.76 5.7 5.69 5.7c3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88-.09-3 .8"></path></svg>' );
+    LX.registerIcon( 'Decathlon',
+        `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.68 20.946c-4.68 5.509-2.254 16.552 5.334 12.2c1.887-.978 6.31-5.03 14.76-17.551v20.761c-2.421 1.654-16.97 8.473-22.928 1.003c-2.492-3.4-2.492-7.986.186-12.455H6.03q4.005-7.215 12.408-12.36C36.408 1.792 43.6 9.87 43.95 14.5c.72 8.497-6.495 14.875-10.289 18.577v-6.333c9.195-9.054 4.795-14.035 3.794-14.85c-2.047-2.37-7.865-4.53-13.13-2.392" stroke-width="1" /></svg>` );
+    LX.registerIcon( 'WooCommerce',
+        `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><path fill="currentColor" d=" M108.6 46.9 c-2.3-.2-6.7 1-8.7 10.8 c0 5.9 1.4 9.5 3.6 10.8 c4.1 1.2 8.9-4.3 8.9-10.2 c.2-4.1.4-9.2-3.8-11.4 M116.3 25.8 H11.7 C5.2 25.8 0 31 0 37.4 v40 c0 6.4 5.2 11.7 11.7 11.7 h104.7 c6.4 0 11.7-5.2 11.7-11.7 v-40 c-.1-6.4-5.3-11.6-11.8-11.6 M44 80 s-6.9-9.1-8.5-16 c-1.6-6.8-2-3.7-2-3.7 S28 72.7 22.3 80.6 s-8.5-3.9-8.5-3.9 c-2-2.4-7.7-37.3-7.7-37.3 c3.2-8.9 8.7-1.6 8.7-1.6 l5.5 28.4 s8.5-17.4 11.4-21.9 c2.8-4.5 7.7-3.2 8.1 1.4 c.4 4.7 5.1 17.4 5.1 17.4 c.4-13.4 5.9-26.2 6.7-28.2 s9.7-4.5 8.1 4.1 C55.8 48.5 52 68.6 53 79.6 c-2.7 8.3-9 .4-9 .4 M79.9 75.5 c-2.6 1.2-12.3 7.9-19.2-7.1 C56.4 53.3 66 42.2 66 42.2 s12.5-10.7 21 3.5 c6.9 15.6-4.5 28.6-7.1 29.8 M111.7 75.5 c-2.6 1.2-12.3 7.9-19.2-7.1 c-4.3-15.1 5.3-26.2 5.3-26.2 s12.6-10.8 21.1 3.4 c6.9 15.7-4.6 28.7-7.2 29.9 M76.7 46.9 c-2.3-.2-6.7 1-8.7 10.8 c0 5.9 1.4 9.5 3.6 10.8 c4.1 1.2 8.9-4.3 8.9-10.2 c.3-4.1.5-9.2-3.8-11.4 M61.3 89.1 l22.3 13.1 l-4.7-13.1 l-12.8-3.6 z "/></svg>` );
+    LX.registerIcon( 'Carrefour',
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12.14 4.045c-2.569 0-3.572 3.64-3.572 7.979s1.003 7.931 3.572 7.931c1.541 0 2.855-.903 2.86-1.645a.63.63 0 0 0-.199-.453c-.73-.706-1.016-1.412-1.018-2.034c-.005-1.189 1.026-2.074 1.977-2.074c1.306 0 2.077 1.027 2.077 2.357c0 1.26-.537 2.31-1.121 3.15a.2.2 0 0 0-.034.107c0 .065.04.12.098.12q.053.001.122-.065l6.561-6.344c.328-.28.537-.608.537-1.073c0-.468-.21-.794-.537-1.073l-6.561-6.346q-.069-.066-.122-.064c-.059 0-.097.055-.098.12q-.001.054.034.107c.584.84 1.12 1.89 1.12 3.15c0 1.329-.77 2.356-2.076 2.356c-.95 0-1.982-.884-1.977-2.073c.002-.622.288-1.328 1.018-2.033A.62.62 0 0 0 15 5.69c-.004-.743-1.319-1.646-2.86-1.646m-5.043.537L.537 10.93C.209 11.207 0 11.534 0 12c0 .465.21.793.537 1.073l6.56 6.345c.042.043.083.06.117.06c.062 0 .105-.057.103-.123a.2.2 0 0 0-.057-.123C5.72 17.32 4.6 15.126 4.6 12.024c0-3.104 1.12-5.341 2.66-7.255a.2.2 0 0 0 .057-.123c.002-.068-.04-.123-.103-.123c-.034 0-.075.017-.117.06"/></svg>` );
+    LX.registerIcon( 'Shein',
+        `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 50 50"><path d="M36,4H14C8.486,4,4,8.486,4,14v22c0,5.514,4.486,10,10,10h22c5.514,0,10-4.486,10-10V14C46,8.486,41.514,4,36,4z M25,37.25	c-3.5,0-6.5-1.25-9-2.75l2.5-2.5c1.5,1,4.5,2,6.5,2c1,0,4.5-0.25,4.5-3.5c0-4.75-13-3.25-13-11C16.5,15,21,13,25,13s6,1,7.5,2.25	L30,17.5c-1.25-1-3.75-1.5-5-1.5c-1,0-4.5,0.5-4.5,3.5c0,4.25,13,4,13,11C33.5,35.75,28,37.25,25,37.25z"></path></svg>` );
 
     const menubar = area.addMenubar( [
         {
             name: 'Web',
             submenu: [
                 { name: 'Seguimiento/Facturas', callback: ( v, e ) => core.openApp( core.cblTrackingApp, v ), icon: 'TextSearch' },
-                { name: 'Pedidos', callback: ( v, e ) => core.openApp( core.ordersApp ), icon: 'WooCommerce' },
+                { name: 'Pedidos', callback: ( v, e ) => core.openApp( core.ordersApp ), icon: 'WooCommerce' }
             ]
         },
         {
             name: 'Plataformas',
             submenu: [
-                { name: 'Decathlon', disabled: true, callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' },
+                { name: 'Decathlon', disabled: true, callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
                 { name: 'TikTok', disabled: true, callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
-                { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' },
-                
+                { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' }
             ]
         },
         {
@@ -751,12 +761,15 @@ core.data['bathby'].template = ( id, url, transport ) => {
                 { name: 'Stock', disabled: true, callback: core.redirectToOAuth.bind( core ), icon: 'Boxes' }
             ]
         },
-        { name: 'Chill', callback: ( v, e ) => core.openApp( core.chillApp ) }
+        { name: 'Chill', callback: ( v, e ) => core.openApp( core.chillApp ) },
+        { name: 'Manual', float: 'right', callback: ( v, e ) => core.openApp( core.manualApp ) }
     ] );
 
-    const separator = LX.makeContainer( [ '1px', '100%' ], 'content-center ml-4 mr-2', '' );
-    LX.makeContainer( [ 'auto', '1.25rem' ], 'bg-muted', '', separator );
-    LX.insertChildAtIndex( menubar.root, separator, 0 );
+    {
+        const separator = LX.makeContainer( [ '1px', '100%' ], 'content-center ml-4 mr-2', '' );
+        LX.makeContainer( [ 'auto', '1.25rem' ], 'bg-muted', '', separator );
+        LX.insertChildAtIndex( menubar.root, separator, 0 );
+    }
 
     menubar.setButtonImage( 'bathby', `data/bathby_${starterMode}.png`, () => {
         window.open( 'https://bathby.com/wp-admin/' );
@@ -783,6 +796,28 @@ core.data['bathby'].template = ( id, url, transport ) => {
             }
         }
     ], { float: 'center' } );
+
+    // Move Chill to right side
+    {
+        const entry = document.querySelector( '#Chill' );
+        LX.insertChildAtIndex( menubar.root, entry );
+    }
+
+    {
+        const separator = LX.makeContainer( [ '1px', '100%' ], 'content-center ml-4 mr-2', '' );
+        LX.makeContainer( [ 'auto', '1.25rem' ], 'bg-muted', '', separator );
+        LX.insertChildAtIndex( menubar.root, separator );
+    }
+
+    // Move Manual to right side
+    {
+        const entry = document.querySelector( '#Manual' );
+        entry.classList.add( 'mr-4' );
+        const span = entry.querySelector( 'span' );
+        span.appendChild( LX.makeIcon( 'Info@solid' ) );
+        LX.addClass( span, 'flex flex-row gap-2' );
+        LX.insertChildAtIndex( menubar.root, entry );
+    }
 
     core.init( menubar.siblingArea );
 }

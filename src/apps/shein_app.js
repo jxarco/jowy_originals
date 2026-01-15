@@ -5,10 +5,10 @@ const SHEIN_COLUMN_LIST_DATA = [
     [ 'ID del artículo' ],
     [ 'SKU del vendedor', null, ( str, row ) => {
         return core.getFinalSku( str );
-    }],
+    } ],
     [ 'Nombre del producto', null, ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
-    }],
+    } ],
     [ 'Nombre de usuario completo' ],
     [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
     [ 'País', null, ( str, row ) => {
@@ -26,7 +26,7 @@ const SHEIN_COLUMN_SEUR_DATA = [
     [ 'ID del artículo' ],
     [ 'SKU del vendedor', null, ( str, row ) => {
         return core.getFinalSku( str );
-    }],
+    } ],
     [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
     [ 'País', null, ( str, row ) => {
         return core.countryFormat[str] ?? str;
@@ -42,19 +42,18 @@ const SHEIN_COLUMN_SEUR_DATA = [
 const SHEIN_TRACKING_COLUMN_DATA = [
     [ 'Número del pedido', 'Order Number' ],
     [ 'ID del artículo', 'Item ID' ],
-    [ 'Tracking Number', null, ( str, row, tdata, app) => {
+    [ 'Tracking Number', null, ( str, row, tdata, app ) => {
         const name = row['Nombre de usuario completo'].toUpperCase();
-        const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === name );
+        const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
         // const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === 'BEATRIZ HAGGE' );
-        if( !tentry )
+        if ( !tentry )
         {
             app._trackingSyncErrors = true;
             const status = core.trackStatusColors['Incidencia'];
             let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
             return `${
                 LX.badge( iconStr, 'text-xs font-bold border-none ', {
-                    style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
-                        color: status.fg ?? '' }
+                    style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
                 } )
             }`;
         }
@@ -107,18 +106,16 @@ class SheinApp
         seurContainer.appendChild( seurArea.root );
 
         // Groups List
-        const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
-            'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const groupsListContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
         tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
 
         const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         groupsListContainer.appendChild( groupsListArea.root );
 
         // Tracking info
-        const trackingContainer = LX.makeContainer( [ null, 'auto' ],
-            'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const trackingContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
         tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
-            trackingArea.root.innerHTML = "";
+            trackingArea.root.innerHTML = '';
             trackingArea.attach( this.getTrackingDataDropZone() );
         } } );
 
@@ -152,7 +149,7 @@ class SheinApp
     {
         const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center rounded-xl text-center border-color gap-4 px-12 py-12', `
             <div class="flex flex-row gap-2 items-center">
-                ${ LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML }
+                ${LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML}
             </div>
             <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un listado de trackings.</p>
         `, this.area );
@@ -183,8 +180,7 @@ class SheinApp
                 if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
                 {
                     const reader = new FileReader();
-                    reader.onload = ( e ) =>
-                    {
+                    reader.onload = ( e ) => {
                         const data = e.target.result;
 
                         try
@@ -253,7 +249,8 @@ class SheinApp
             return lRow;
         } );
 
-        this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Shein' );
+        this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.',
+            'Shein' );
 
         const tableWidget = new LX.Table( null, {
             head: SHEIN_COLUMN_LIST_DATA.map( ( c ) => {
@@ -302,10 +299,10 @@ class SheinApp
         let columnData = [
             [ 'SKU del vendedor', null, ( str, row ) => {
                 return core.getFinalSku( str );
-            }],
+            } ],
             [ 'Unidades', null ],
-            [ 'Transporte', null, () => "SEUR" ],
-            [ 'Plataforma', null, () => "SHEIN" ],
+            [ 'Transporte', null, () => 'SEUR' ],
+            [ 'Plataforma', null, () => 'SHEIN' ],
             [ 'País', null, ( str, row ) => {
                 return this.core.countryFormat[str] ?? str;
             } ],
@@ -369,7 +366,7 @@ class SheinApp
         {
             let sku = `${row[0]}_${row[4]}`; // SKU _ País
 
-            // if sku starts with "JW-T60", never combine with others, so we must 
+            // if sku starts with "JW-T60", never combine with others, so we must
             // add a unique identifier in the sku
             sku += sku.includes( 'JW-T60' ) ? `_${LX.guidGenerator()}` : '';
 
@@ -392,8 +389,10 @@ class SheinApp
         {
             const sku = row[0];
 
-            if( sku.includes( '+' ) )
+            if ( sku.includes( '+' ) )
+            {
                 continue;
+            }
 
             row[1] = this.core.getIndividualQuantityPerPack( sku, parseInt( row[1] ) );
         }
@@ -403,15 +402,17 @@ class SheinApp
         {
             const sku = row[0];
 
-            if( !sku.includes( '+' ) )
+            if ( !sku.includes( '+' ) )
+            {
                 continue;
+            }
 
-            const skusList = sku.split( '+' ).map( s => s.trim() );
+            const skusList = sku.split( '+' ).map( ( s ) => s.trim() );
             const uniqueSkus = Array.from( new Set( skusList ) );
-            const quantities = uniqueSkus.map( s => skusList.filter( x => x === s ).length );
+            const quantities = uniqueSkus.map( ( s ) => skusList.filter( ( x ) => x === s ).length );
             const newSkuParts = uniqueSkus.map( ( s, i ) => {
                 const q = quantities[i];
-                return `${s}${q > 1 ? ` x ${q}` : '' }`;
+                return `${s}${q > 1 ? ` x ${q}` : ''}`;
             } );
             row[0] = newSkuParts.join( ' + ' );
         }
@@ -687,25 +688,23 @@ class SheinApp
 
     exportSEURTrackings()
     {
-        const filename = "NUMERODEGUIA.xlsx";
+        const filename = 'NUMERODEGUIA.xlsx';
 
-        if( this._trackingSyncErrors )
+        if ( this._trackingSyncErrors )
         {
-            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". Faltan datos.`, { timeout: -1,
-                position: 'top-center' } );
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". Faltan datos.`, { timeout: -1, position: 'top-center' } );
             return;
         }
 
         const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
-        this.exportXLSXData( data, filename );   
+        this.exportXLSXData( data, filename );
     }
 
     exportXLSXData( data, filename, ignoreErrors )
     {
         if ( !( data?.length ) )
         {
-            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1,
-                position: 'top-center' } );
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1, position: 'top-center' } );
             return;
         }
 
@@ -723,8 +722,7 @@ class SheinApp
     open( params )
     {
         this.core.tool = 'shein';
-        this.core.setHeaderTitle( `SHEIN`,
-            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Shein' );
+        this.core.setHeaderTitle( `SHEIN`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Shein' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 

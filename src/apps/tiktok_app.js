@@ -57,7 +57,8 @@ class TikTokApp
             buttonClass: 'lg outline',
             icon: 'Trash2',
             title: 'Limpiar datos anteriores',
-            tooltip: true } );
+            tooltip: true
+        } );
         utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
             buttonClass: 'lg outline',
             icon: 'Download',
@@ -83,8 +84,7 @@ class TikTokApp
         seurContainer.appendChild( seurArea.root );
 
         // Groups List
-        const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
-            'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const groupsListContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
         tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
 
         const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
@@ -131,7 +131,7 @@ class TikTokApp
     {
         const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center text-center border-top border-bottom gap-4 px-8 py-8', `
             <div class="flex flex-row gap-2 items-center">
-                ${ LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML }
+                ${LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML}
             </div>
             <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un listado de trackings.</p>
         `, this.area );
@@ -162,8 +162,7 @@ class TikTokApp
                 if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
                 {
                     const reader = new FileReader();
-                    reader.onload = ( e ) =>
-                    {
+                    reader.onload = ( e ) => {
                         const data = e.target.result;
 
                         try
@@ -252,12 +251,12 @@ class TikTokApp
         this.lastShownSeurData = tableWidget.data.body;
         this.lastSeurData = data;
 
-        console.log("tiktok", this.lastSeurData)
+        console.log( 'tiktok', this.lastSeurData );
     }
 
     showTrackingList( trackingData )
     {
-        console.log(trackingData)
+        console.log( trackingData );
 
         const data = this.lastSeurData;
 
@@ -329,16 +328,16 @@ class TikTokApp
 
         let columnData = [
             [ 'Seller SKU', 'SKU del vendedor' ],
-            [ 'Cantidad', null, ( str, row ) => parseInt(row['Quantity']) ],
+            [ 'Cantidad', null, ( str, row ) => parseInt( row['Quantity'] ) ],
             [ 'Transporte', null, ( str, row ) => {
-                return core.getTransportForItem( row['Seller SKU'], parseInt(row['Quantity']) );
+                return core.getTransportForItem( row['Seller SKU'], parseInt( row['Quantity'] ) );
             } ],
-            [ 'Plataforma', null, () => "TIKTOK" ],
+            [ 'Plataforma', null, () => 'TIKTOK' ],
             [ 'Country', 'País', null, ( str, row ) => {
                 return core.countryFormat[str] ?? str;
             } ],
             [ 'Observaciones', null ],
-            [ 'Order ID', 'Número del pedido' ],
+            [ 'Order ID', 'Número del pedido' ]
         ];
 
         const uid = columnData[6][0];
@@ -378,8 +377,8 @@ class TikTokApp
         {
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => {
-                const q = tableData[ c ][ 1 ]; // Get quantity
-                return p + ` + ${tableData[c][0]}${ q > 1 ? ` x ${q}` : '' }`;
+                const q = tableData[c][1]; // Get quantity
+                return p + ` + ${tableData[c][0]}${q > 1 ? ` x ${q}` : ''}`;
             }, '' );
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
@@ -409,7 +408,7 @@ class TikTokApp
             row.splice( 6, 1 );
 
             // If same order or more than 1 unit, do not merge items
-            if( notes === "Mismo pedido" || q > 1 )
+            if ( notes === 'Mismo pedido' || q > 1 )
             {
                 listSKU.push( row );
                 continue;
@@ -433,8 +432,9 @@ class TikTokApp
         for ( let row of listSKU )
         {
             const sku = row[0];
-            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' ) 
-                // && row[5] !== 'Mismo pedido' 
+            if (
+                sku.startsWith( 'JW-T60' ) && !sku.includes( '+' )
+                // && row[5] !== 'Mismo pedido'
             )
             {
                 row[1] *= 4;
@@ -648,8 +648,8 @@ class TikTokApp
             const skuIdx = data.indexOf( 'SKU del vendedor' );
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => {
-                const q = parseInt( currentTiktokData[ c ]['Quantity'] ); // Get quantity
-                return p + ` + ${rows[c][skuIdx]}${ q > 1 ? ` x ${q}` : '' }`;
+                const q = parseInt( currentTiktokData[c]['Quantity'] ); // Get quantity
+                return p + ` + ${rows[c][skuIdx]}${q > 1 ? ` x ${q}` : ''}`;
             }, '' );
             rest.forEach( ( r ) => {
                 rows[r] = undefined;
@@ -665,15 +665,14 @@ class TikTokApp
     exportSEURTrackings()
     {
         const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
-        this.exportXLSXData( data, "NUMERODEGUIA.xlsx" );   
+        this.exportXLSXData( data, 'NUMERODEGUIA.xlsx' );
     }
 
     exportXLSXData( data, filename, ignoreErrors )
     {
         if ( !( data?.length ) )
         {
-            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1,
-                position: 'top-center' } );
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1, position: 'top-center' } );
             return;
         }
 
@@ -691,8 +690,7 @@ class TikTokApp
     open( params )
     {
         this.core.tool = 'tiktok';
-        this.core.setHeaderTitle( `TikTok`,
-            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'TikTok' );
+        this.core.setHeaderTitle( `TikTok`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'TikTok' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 

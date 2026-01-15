@@ -94,8 +94,7 @@ class CblTrackingApp
 
         // Jowy
         {
-            const jowyContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const jowyContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Jowy', jowyContainer, { selected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -105,8 +104,7 @@ class CblTrackingApp
 
         // HxG
         {
-            const hxgContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const hxgContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'HxG', hxgContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
             const hxgArea = new LX.Area( { className: 'rounded-lg' } );
@@ -116,8 +114,7 @@ class CblTrackingApp
 
         // Bathby
         {
-            const bathbyContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const bathbyContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Bathby', bathbyContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
             const bathbyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -127,10 +124,8 @@ class CblTrackingApp
 
         // Otros
         {
-            const miscContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'Otros', miscContainer, { xselected: true,
-                onSelect: ( event, name ) => this.showList( name.toLowerCase(), false ) } );
+            const miscContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            tabs.add( 'Otros', miscContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase(), false ) } );
 
             const miscArea = new LX.Area( { className: 'rounded-lg' } );
             miscContainer.appendChild( miscArea.root );
@@ -186,8 +181,7 @@ class CblTrackingApp
                         let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
                         return `${
                             LX.badge( iconStr, 'text-xs font-bold border-none ', {
-                                style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
-                                    color: status.fg ?? '' }
+                                style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
                             } )
                         }`;
                     }
@@ -385,9 +379,10 @@ class CblTrackingApp
         const dialogClosable = new LX.Dialog( 'Actualizar estado de pedidos', ( dialogPanel ) => {
             let spinner = null;
             dialogPanel.addTextArea( null,
-                `Vas a marcar como ${statusName} los siguientes pedidos en WooCommerce:\n\n${
-                    orderUpdates.map( ( v ) => v.id ).join( '\n' )
-                }\n\n¿Quieres continuar?`, null, { fitHeight: true, disabled: true } );
+                `Vas a marcar como ${statusName} los siguientes pedidos en WooCommerce:\n\n${orderUpdates.map( ( v ) => v.id ).join( '\n' )}\n\n¿Quieres continuar?`, null, {
+                fitHeight: true,
+                disabled: true
+            } );
             dialogPanel.addSeparator();
             dialogPanel.sameLine( 2, 'justify-right mt-2' );
             dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'text-destructive' } );
@@ -440,8 +435,7 @@ class CblTrackingApp
         const core = this.core;
         const statusName = core.orderStatus[newStatus] ?? 'ERROR';
         const dialogClosable = new LX.Dialog( 'Actualizar Pedido', ( dialogPanel ) => {
-            dialogPanel.addTextArea( null, `Vas a marcar el pedido ${orderNumber} como ${statusName} en WooCommerce. ¿Quieres continuar?`,
-                null, {
+            dialogPanel.addTextArea( null, `Vas a marcar el pedido ${orderNumber} como ${statusName} en WooCommerce. ¿Quieres continuar?`, null, {
                 fitHeight: true,
                 disabled: true
             } );
@@ -453,7 +447,8 @@ class CblTrackingApp
 
                 const dialog = core.makeLoadingDialog();
 
-                try {
+                try
+                {
                     const r = await wcc.updateOrderStatus( orderNumber, newStatus );
 
                     dialog.destroy();
@@ -464,9 +459,9 @@ class CblTrackingApp
                         if ( onComplete ) onComplete( 1 );
                         return;
                     }
-
-                } catch ( error ) {
-
+                }
+                catch ( error )
+                {
                     LX.toast( 'WooCommerce Error', `❌ ${error}`, { timeout: -1, position: 'top-center' } );
                     if ( onComplete ) onComplete( 1 );
                     dialog.destroy();
@@ -498,10 +493,9 @@ class CblTrackingApp
 
                 if ( onComplete ) onComplete( 2 );
             }, { buttonClass: 'primary' } );
-        }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false,
-            onBeforeClose: () => {
-                if ( onComplete ) onComplete();
-            } } );
+        }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false, onBeforeClose: () => {
+            if ( onComplete ) onComplete();
+        } } );
     }
 
     async showMessages( compName, rowOffset = 0 )
@@ -659,14 +653,11 @@ class CblTrackingApp
             {
                 invoicePanel.addButton( null, 'Facturar', () => {
                     const dialogClosable = new LX.Dialog( 'Facturar en WooCommerce', ( dialogPanel ) => {
-                        dialogPanel.addTextArea( null,
-                            `Vas a facturar con los siguientes datos en WooCommerce (pedido ${orderNumber}). Revisa los datos antes de continuar.`,
-                            null, { fitHeight: true, disabled: true } );
+                        dialogPanel.addTextArea( null, `Vas a facturar con los siguientes datos en WooCommerce (pedido ${orderNumber}). Revisa los datos antes de continuar.`, null,
+                            { fitHeight: true, disabled: true } );
                         dialogPanel.addSeparator();
-                        dialogPanel.addNumber( 'Número de Factura', invoiceNumber, () => {}, { disabled: true, nameWidth: '40%',
-                            className: 'text-lg text-muted-foreground' } );
-                        dialogPanel.addText( 'Fecha de Factura', invoiceDate, () => {}, { disabled: true, nameWidth: '40%',
-                            className: 'text-lg text-muted-foreground' } );
+                        dialogPanel.addNumber( 'Número de Factura', invoiceNumber, () => {}, { disabled: true, nameWidth: '40%', className: 'text-lg text-muted-foreground' } );
+                        dialogPanel.addText( 'Fecha de Factura', invoiceDate, () => {}, { disabled: true, nameWidth: '40%', className: 'text-lg text-muted-foreground' } );
                         dialogPanel.addSeparator();
                         dialogPanel.addCheckbox( 'Añadir nota de seguimiento', customerNote, ( v ) => {
                             customerNote = v;
@@ -729,8 +720,7 @@ class CblTrackingApp
                             // refresh
                             this.showMessages( compName, rowOffset );
                         }, { buttonClass: 'primary' } );
-                    }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true,
-                        draggable: false } );
+                    }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
                 }, { buttonClass: 'primary' } );
             }
         }
@@ -893,8 +883,7 @@ class CblTrackingApp
 
                     console.log( 'Nota creada para pedido #' + idOrder );
                 }
-            }, { icon: 'PaperPlane', swap: 'Check', title: 'Enviar Mensaje', tooltip: true, width: '48px', className: 'ml-auto',
-                mustConfirm: true, confirmSide: 'right', // confirmAlign: "start",
+            }, { icon: 'PaperPlane', swap: 'Check', title: 'Enviar Mensaje', tooltip: true, width: '48px', className: 'ml-auto', mustConfirm: true, confirmSide: 'right', // confirmAlign: "start",
                 confirmText: 'Continuar', confirmCancelText: 'Cancelar', confirmTitle: 'Confirmar acción',
                 confirmContent: `Se va a enviar un mensaje al cliente. ¿Quieres continuar?` } );
 
@@ -968,10 +957,8 @@ class CblTrackingApp
 
                     console.log( 'Facturado pedido #' + idOrder );
                 }
-            }, { icon: 'FilePlusCorner', swap: 'Check', title: 'Facturar', tooltip: true, width: '48px', className: 'ml-auto',
-                mustConfirm: true, confirmSide: 'right', // confirmAlign: "start",
-                confirmText: 'Continuar', confirmCancelText: 'Cancelar', confirmTitle: 'Confirmar acción',
-                confirmContent: `Se va a facturar el pedido. ¿Quieres continuar?` } );
+            }, { icon: 'FilePlusCorner', swap: 'Check', title: 'Facturar', tooltip: true, width: '48px', className: 'ml-auto', mustConfirm: true, confirmSide: 'right', // confirmAlign: "start",
+                confirmText: 'Continuar', confirmCancelText: 'Cancelar', confirmTitle: 'Confirmar acción', confirmContent: `Se va a facturar el pedido. ¿Quieres continuar?` } );
 
             const invoiceNumberTextWidget = p.addText( 'Número de factura', invoiceNumber, ( value, event ) => {
                 invoiceNumber = value;
@@ -1112,7 +1099,7 @@ class CblTrackingApp
         const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
 
         const r = await wcc.getAllOrdersByIds( ids );
-        
+
         if ( !r || !r.length )
         {
             LX.toast( 'WooCommerce Error', `❌ No se han podido cargar los datos. `, { timeout: -1, position: 'top-center' } );
@@ -1139,8 +1126,7 @@ class CblTrackingApp
     open( params )
     {
         this.core.tool = 'tracking-messages';
-        this.core.setHeaderTitle( 'Gestión de pedidos <i>WEB</i>',
-            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'TextSearch' );
+        this.core.setHeaderTitle( 'Gestión de pedidos <i>WEB</i>', 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'TextSearch' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 

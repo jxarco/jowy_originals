@@ -4,7 +4,7 @@ export class MiraklClient
 {
     constructor()
     {
-        this.baseUrl = "";
+        this.baseUrl = '';
 
         this.headers = {
             'Content-Type': 'application/json',
@@ -67,19 +67,19 @@ export class MiraklClient
         this.baseUrl = baseUrl.replace( /\/+$/, '' );
 
         const res = await fetch(
-            this.baseUrl + "/mirakl/auth/test",
+            this.baseUrl + '/mirakl/auth/test',
             {
                 headers: {
-                    "X-Access-Token": accessToken
+                    'X-Access-Token': accessToken
                 }
             }
         );
 
         this.connected = res.ok;
 
-        if( this.connected )
+        if ( this.connected )
         {
-            this.headers[ "X-Access-Token" ] = accessToken;
+            this.headers['X-Access-Token'] = accessToken;
         }
 
         return res;

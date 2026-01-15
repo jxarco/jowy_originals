@@ -2,7 +2,7 @@ import { LX } from 'lexgui';
 import { MiraklClient } from '../mirakl-api.js';
 
 const COLUMN_TEMPLATES = {
-    "DECATHLON_COLUMN_DATA": [
+    'DECATHLON_COLUMN_DATA': [
         [ 'order_id', 'Número del pedido' ],
         [ 'ID del artículo', null, ( str, row ) => {
             const items = row['order_lines'];
@@ -49,7 +49,7 @@ class LabelsApp
     {
         this.mkClient = new MiraklClient();
         this.vendor = vendorName;
-        this.COLUMN_DATA_TEMPLATE = COLUMN_TEMPLATES[ vendorName.toUpperCase() + "_COLUMN_DATA" ];
+        this.COLUMN_DATA_TEMPLATE = COLUMN_TEMPLATES[vendorName.toUpperCase() + '_COLUMN_DATA'];
 
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
@@ -94,8 +94,7 @@ class LabelsApp
 
         // Marketplace orders
         {
-            const ordersContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const ordersContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( vendor_lc ) } );
 
             const jowyArea = new LX.Area( { className: 'rounded-lg' } );
@@ -105,8 +104,7 @@ class LabelsApp
 
         // Groups List
         {
-            const groupsListContainer = LX.makeContainer( [ null, 'auto' ],
-                'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const groupsListContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
 
             const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
@@ -208,9 +206,7 @@ class LabelsApp
             //     return b.root.innerHTML;
             // } ],
             [ 'preview', 'PREVIEW', ( r, i ) => {
-                return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${
-                    i['product_medias'][1]['media_url']
-                }">`;
+                return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${i['product_medias'][1]['media_url']}">`;
             } ],
             [ 'order_id', 'NÚMERO PEDIDO' ],
             [ 'date', 'FECHA', ( r ) => {
@@ -226,7 +222,7 @@ class LabelsApp
                 return str1 + ( str2 ? ` ${str2}` : '' );
             } ],
             [ 'CIUDAD', null, ( row, i ) => {
-                return row.customer?.shipping_address?.city ?? "";
+                return row.customer?.shipping_address?.city ?? '';
             } ],
             [ 'country', 'PAÍS', ( row ) => {
                 const ctr = row.customer?.shipping_address?.country;
@@ -342,16 +338,16 @@ class LabelsApp
                 return core.countryFormat[ctr] ?? ctr;
             } ],
             [ 'Observaciones', null, ( row, i ) => {
-                return i['quantity'] > 1 ? "Mismo pedido" : "";
+                return i['quantity'] > 1 ? 'Mismo pedido' : '';
             } ],
-            [ 'order_id', 'Número del pedido' ],
+            [ 'order_id', 'Número del pedido' ]
         ];
 
         const uid = columnData[6][0];
         const orderNumbers = new Map();
 
         // Create table data from the list
-        let tableData =  [];
+        let tableData = [];
         data.forEach( ( row, index ) => {
             const items = row['order_lines'];
             for ( let item of items )
@@ -391,8 +387,8 @@ class LabelsApp
         {
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => {
-                const q = tableData[ c ][ 1 ]; // Get quantity
-                return p + ` + ${tableData[c][0]}${ q > 1 ? ` x ${q}` : '' }`;
+                const q = tableData[c][1]; // Get quantity
+                return p + ` + ${tableData[c][0]}${q > 1 ? ` x ${q}` : ''}`;
             }, '' );
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
@@ -422,7 +418,7 @@ class LabelsApp
             row.splice( 6, 1 );
 
             // If same order or more than 1 unit, do not merge items
-            if( notes === "Mismo pedido" || q > 1 )
+            if ( notes === 'Mismo pedido' || q > 1 )
             {
                 listSKU.push( row );
                 continue;
@@ -446,7 +442,8 @@ class LabelsApp
         for ( let row of listSKU )
         {
             const sku = row[0];
-            if ( sku.startsWith( 'JW-T60' ) && !sku.includes( '+' )
+            if (
+                sku.startsWith( 'JW-T60' ) && !sku.includes( '+' )
                 // && row[5] !== 'Mismo pedido'
             )
             {
@@ -659,8 +656,7 @@ class LabelsApp
     {
         if ( !( data?.length ) )
         {
-            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1,
-                position: 'top-center' } );
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1, position: 'top-center' } );
             return;
         }
 
@@ -678,7 +674,7 @@ class LabelsApp
     open( params )
     {
         this.core.tool = this.vendor.toLowerCase();
-        this.core.setHeaderTitle( `${ this.vendor } <i>(Mirakl)</i>`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
+        this.core.setHeaderTitle( `${this.vendor} <i>(Mirakl)</i>`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
         this.area.root.classList.toggle( 'hidden', false );
 
         this.clear();
@@ -686,7 +682,6 @@ class LabelsApp
 
     close()
     {
-
     }
 
     clear()
