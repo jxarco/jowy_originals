@@ -103,7 +103,7 @@ class SheinApp
 
         // SEUR
         const seurContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.openData() } );
+        tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.showSheinList() } );
 
         const seurArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         seurContainer.appendChild( seurArea.root );
@@ -373,7 +373,7 @@ class SheinApp
 
         for ( let row of tableData )
         {
-            let sku = `${this.core.getFinalSku(row[0])}_${row[4]}`; // SKU _ País
+            let sku = `${row[0]}_${row[4]}`; // SKU _ País
 
             // if sku starts with "JW-T60", never combine with others, so we must 
             // add a unique identifier in the sku
@@ -402,6 +402,24 @@ class SheinApp
                 continue;
 
             row[1] = this.core.getIndividualQuantityPerPack( sku, parseInt( row[1] ) );
+        }
+
+        // for the skus that contain '+', change the sku to sku x quantity in each of them
+        for ( let row of listSKU )
+        {
+            const sku = row[0];
+
+            if( !sku.includes( '+' ) )
+                continue;
+
+            const skusList = sku.split( '+' ).map( s => s.trim() );
+            const uniqueSkus = Array.from( new Set( skusList ) );
+            const quantities = uniqueSkus.map( s => skusList.filter( x => x === s ).length );
+            const newSkuParts = uniqueSkus.map( ( s, i ) => {
+                const q = quantities[i];
+                return `${s}${q > 1 ? ` x ${q}` : '' }`;
+            } );
+            row[0] = newSkuParts.join( ' + ' );
         }
 
         const tableWidget = new LX.Table( null, {
