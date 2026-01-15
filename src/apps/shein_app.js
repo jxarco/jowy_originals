@@ -68,8 +68,6 @@ class SheinApp
 {
     constructor( core )
     {
-        this.title = 'Gestión de pedidos: <i>CBL</i>';
-        this.subtitle = 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.';
         this.icon = 'FileText';
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
@@ -222,10 +220,6 @@ class SheinApp
     {
         data = data ?? this.lastSeurData;
 
-        console.log(data)
-
-        this.vendor = 'Shein';
-
         const dom = this.seurDataArea.root;
         while ( dom.children.length > 0 )
         {
@@ -259,7 +253,7 @@ class SheinApp
             return lRow;
         } );
 
-        this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Handbag' );
+        this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Shein' );
 
         const tableWidget = new LX.Table( null, {
             head: SHEIN_COLUMN_LIST_DATA.map( ( c ) => {
@@ -466,11 +460,7 @@ class SheinApp
 
     showTrackingList( trackingData )
     {
-        // console.log(trackingData)
-
         const data = this.lastSeurData;
-
-        this.vendor = 'Shein';
 
         const dom = this.trackingArea.root;
         while ( dom.children.length > 0 )
@@ -734,7 +724,7 @@ class SheinApp
     {
         this.core.tool = 'shein';
         this.core.setHeaderTitle( `SHEIN`,
-            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Handbag' );
+            'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Shein' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 
