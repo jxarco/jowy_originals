@@ -557,7 +557,7 @@ class CblTrackingApp
         }`;
 
         const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-3 py-6 mb-3', `
-                <h2 class="flex flex-row items-center gap-1">${row['NOMCONS']}</h2>
+                <span class="user-name-span text-2xl font-semibold flex flex-row items-center gap-1">${row['NOMCONS']}</span>
                 <div class="flex flex-row items-center gap-1"><p class="font-light text-muted-foreground">Población</p><p class="flex flex-row items-center font-medium">${
             row['POBLACION']
         }</p></div>
@@ -575,7 +575,7 @@ class CblTrackingApp
 
         // Add button to copy NOMBRE USUARIO
         {
-            const nPedidoH2 = header.querySelector( 'h2' );
+            const nPedidoH2 = header.querySelector( '.user-name-span' );
             const copyButtonWidget = new LX.Button( null, 'CopyButton', async function()
             {
                 navigator.clipboard.writeText( nPedidoH2.innerText ).then( () => {

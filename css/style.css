@@ -113,7 +113,8 @@
 .help-content {
 	margin-left: auto;
     margin-right: auto;
-    max-width: 1400px;
+    max-width: 1200px;
+    padding-inline: 4rem;
 	/* https://pqina.nl/blog/fade-out-overflow-using-css-mask-image/ */
     --scrollbar-width: 8px;
     --mask-height: 64px;
@@ -131,20 +132,33 @@
 .help-content p, .help-content li {
 	color: var(--secondary-foreground);
 	list-style: initial;
+	padding-inline-start: 1rem;
+    opacity: 0.9;
 }
 
 .help-content ul {
-	padding-inline-start: 2rem;
+	padding-inline-start: 3rem;
+    margin-block: 0.5rem;
 	list-style: initial;
 }
 
 .help-content h1 {
 	font-weight: 600;
 	font-size: 2rem;
+    margin-block: 1.5rem;
 }
 
 .help-content h2 {
 	font-weight: 600;
 	font-size: 1.5rem;
-	color: var(--secondary-foreground);
+    margin-block: 0.75rem;
+	padding-inline-start: 0.5rem;
+}
+
+.help-content h3 {
+	font-weight: 600;
+	font-size: 1.2rem;
+    margin-block: 0.75rem;
+    font-style: italic;
+	padding-inline-start: 1rem;
 }
