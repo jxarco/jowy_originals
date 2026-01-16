@@ -1,6 +1,6 @@
 import { LX } from 'lexgui';
 
-const SHEIN_COLUMN_LIST_DATA = [
+const SHEIN_ORDERS_DATA = [
     [ 'Número del pedido' ],
     [ 'ID del artículo' ],
     [ 'SKU del vendedor', null, ( str, row ) => {
@@ -39,7 +39,7 @@ const SHEIN_LABEL_DATA = [
     [ 'Correo electrónico de usuario' ]
 ];
 
-const SHEIN_TRACKING_COLUMN_DATA = [
+const SHEIN_TRACKING_DATA = [
     [ 'Número del pedido', 'Order Number' ],
     [ 'ID del artículo', 'Item ID' ],
     [ 'Tracking Number', null, ( str, row, tdata, app ) => {
@@ -164,7 +164,7 @@ class SheinApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of SHEIN_COLUMN_LIST_DATA )
+            for ( let c of SHEIN_ORDERS_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -185,7 +185,7 @@ class SheinApp
             'Shein' );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_COLUMN_LIST_DATA.map( ( c ) => {
+            head: SHEIN_ORDERS_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
@@ -194,7 +194,8 @@ class SheinApp
             sortable: false,
             toggleColumns: true,
             centered: [ 'Número del pedido', 'ID del artículo', 'SKU del vendedor' ],
-            filter: 'SKU del vendedor'
+            filter: 'SKU del vendedor',
+            hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', 'Código Postal', 'Número de Teléfono', 'Correo electrónico de usuario' ]
         } );
 
         dom.appendChild( tableWidget.root );
@@ -406,7 +407,7 @@ class SheinApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of SHEIN_TRACKING_COLUMN_DATA )
+            for ( let c of SHEIN_TRACKING_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -425,7 +426,7 @@ class SheinApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_TRACKING_COLUMN_DATA.map( ( c ) => {
+            head: SHEIN_TRACKING_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData

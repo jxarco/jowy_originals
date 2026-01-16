@@ -2,17 +2,53 @@ import { LX } from 'lexgui';
 import { MiraklClient } from '../mirakl-api.js';
 
 const VENDOR_TEMPLATES = {
+
+    'DECATHLON_ORDERS_DATA': [
+        [ 'preview', 'PREVIEW', ( row, i, url ) => {
+            return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${i['product_medias'][1]['media_url']}">`;
+        } ],
+        [ 'order_id', 'Número del pedido' ],
+        [ 'date', 'FECHA', ( r ) => {
+            const d = new Date( r['created_date'] );
+            return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+        } ],
+        [ 'ID del artículo', null, ( row, i ) => i['product_sku'] ],
+        [ 'offer_sku', 'SKU del vendedor', ( row, i ) => core.getFinalSku( i['offer_sku'] ) ],
+        [ 'product_title', 'Nombre del producto' ],
+        [ 'quantity', 'Cantidad' ],
+        [ 'Nombre de usuario completo', null, ( row, i ) => {
+            const customer = row.customer;
+            const str1 = customer?.firstname;
+            const str2 = customer?.lastname;
+            return str1 + ( str2 ? ` ${str2}` : '' );
+        } ],
+        [ 'País', null, ( row, i ) => {
+            const ctr = row.customer?.shipping_address?.country;
+            return core.countryFormat[ctr] ?? ctr;
+        } ],
+        [ 'Provincia', null, ( row, i ) => '' ],
+        [ 'Ciudad', null, ( row, i ) => {
+            return row.customer?.shipping_address?.city;
+        } ],
+        [ 'Código Postal', null, ( row, i ) => {
+            return row.customer?.shipping_address?.zip_code;
+        } ],
+        [ 'Dirección', null, ( row, i ) => {
+            const shipping = row.customer?.shipping_address;
+            const str1 = shipping?.street_1;
+            const str2 = shipping?.street_2;
+            return str1 + ( str2 ? ` ${str2}` : '' );
+        } ],
+        [ 'Número de Teléfono', null, ( row, i ) => {
+            return row.customer?.shipping_address?.phone;
+        } ],
+        [ 'Correo electrónico de usuario', null, ( row, i ) => '' ]
+    ],
+
     'DECATHLON_LABEL_DATA': [
         [ 'order_id', 'Número del pedido' ],
-        [ 'ID del artículo', null, ( str, row ) => {
-            const items = row['order_lines'];
-            return items[0]['product_sku'];
-        } ],
-        [ 'offer_sku', 'SKU del vendedor', ( str, row ) => {
-            const items = row['order_lines'];
-            const skus = items.map( ( i ) => i['offer_sku'] );
-            return skus.join( ' + ' );
-        } ],
+        [ 'ID del artículo', null, ( row, i ) => i['product_sku'] ],
+        [ 'offer_sku', 'SKU del vendedor', ( row, i ) => core.getFinalSku( i['offer_sku'] ) ],
         [ 'Código Postal', null, ( str, row ) => {
             return row.customer?.shipping_address?.zip_code;
         } ],
@@ -226,6 +262,9 @@ class LabelsApp
             return;
         }
 
+        const tableData = [];
+        const columnData = VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_ORDERS_DATA'];
+
         let r = null;
 
         if( !clean )
@@ -237,9 +276,43 @@ class LabelsApp
                 order: 'desc',
                 order_state_codes: 'SHIPPING'
             } );
-            // console.log( r );
+            console.log( r );
 
             this.core.setHeaderTitle( `${name} <i>(Mirakl):</i> ${r.orders.length} pedidos`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
+
+            // Create table data from the list
+            r.orders.forEach( ( row ) => {
+                const items = row['order_lines'];
+
+                for ( let item of items )
+                {
+                    const lRow = [];
+
+                    for ( let c of columnData )
+                    {
+                        const ogColName = c[0];
+                        if ( c[2] )
+                        {
+                            const fn = c[2];
+                            lRow.push( fn( row, item, url ) );
+                        }
+                        else if ( item[ogColName] )
+                        {
+                            lRow.push( item[ogColName] );
+                        }
+                        else if ( row[ogColName] )
+                        {
+                            lRow.push( row[ogColName] );
+                        }
+                        else
+                        {
+                            lRow.push( '?' );
+                        }
+                    }
+
+                    tableData.push( lRow );
+                }
+            } );
 
             dialog.destroy();
         }
@@ -248,67 +321,11 @@ class LabelsApp
             r = { orders: [] };
         }
 
-        const columnData = [
-            [ 'preview', 'PREVIEW', ( r, i ) => {
-                return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${i['product_medias'][1]['media_url']}">`;
-            } ],
-            [ 'order_id', 'NÚMERO PEDIDO' ],
-            [ 'date', 'FECHA', ( r ) => {
-                const d = new Date( r['created_date'] );
-                return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-            } ],
-            [ 'offer_sku', 'REFERENCIA', ( row, i ) => core.getFinalSku( i['offer_sku'] ) ],
-            [ 'quantity', 'UNIDADES' ],
-            [ 'NOMBRE COMPLETO', null, ( row, i ) => {
-                const customer = row.customer;
-                const str1 = customer?.firstname;
-                const str2 = customer?.lastname;
-                return str1 + ( str2 ? ` ${str2}` : '' );
-            } ],
-            [ 'CIUDAD', null, ( row, i ) => {
-                return row.customer?.shipping_address?.city ?? '';
-            } ],
-            [ 'country', 'PAÍS', ( row ) => {
-                const ctr = row.customer?.shipping_address?.country;
-                return core.countryFormat[ctr] ?? ctr;
-            } ]
-        ];
-
-        const tableData = [];
-
-        // Create table data from the list
-        r.orders.forEach( ( row ) => {
-            const items = row['order_lines'];
-
-            for ( let item of items )
-            {
-                const lRow = [];
-
-                for ( let c of columnData )
-                {
-                    const ogColName = c[0];
-                    if ( c[2] )
-                    {
-                        const fn = c[2];
-                        lRow.push( fn( row, item ) );
-                    }
-                    else if ( item[ogColName] )
-                    {
-                        lRow.push( item[ogColName] );
-                    }
-                    else if ( row[ogColName] )
-                    {
-                        lRow.push( row[ogColName] );
-                    }
-                    else
-                    {
-                        lRow.push( '?' );
-                    }
-                }
-
-                tableData.push( lRow );
-            }
-        } );
+            // [ 'date', 'FECHA', ( r ) => {
+            //     const d = new Date( r['created_date'] );
+            //     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+            // } ],
+            // [ 'quantity', 'UNIDADES' ],
 
         const date = new Date();
         const todayStringDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
@@ -321,7 +338,7 @@ class LabelsApp
         }, {
             selectable: false,
             sortable: false,
-            toggleColumns: false,
+            toggleColumns: true,
             filter: 'REFERENCIA',
             centered: true,
             customFilters: [
@@ -337,7 +354,8 @@ class LabelsApp
                         if ( orderNumber !== '' ) window.open( `${url}mmp/shop/order/${orderNumber}` );
                     }
                 }
-            ]
+            ],
+            hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', 'Código Postal', 'Número de Teléfono', 'Correo electrónico de usuario' ]
         } );
 
         dom.appendChild( tableWidget.root );

@@ -95,7 +95,7 @@ const core = {
     data: {
         'otros': { list: [], dom: null },
         'decathlon': new Company( 'Decathlon', 'https://marketplace-decathlon-eu.mirakl.net/', 'https://jowy-originals.alexroco-30.workers.dev' ), // cf worker
-        'carrefour': new Company( 'Carrefour', '........', 'https://jowy-originals.alexroco-30.workers.dev' ), // cf worker
+        // 'carrefour': new Company( 'Carrefour', '........', 'https://jowy-originals.alexroco-30.workers.dev' ), // cf worker
         'jowy': new Company( 'Jowy', 'https://www.jowyoriginals.com/wp-admin/', 'https://jowyoriginals.com', '2-' ),
         'hxg': new Company( 'HxG', 'https://www.homexgym.com/wp-admin/', 'https://homexgym.com', '3-' ),
         'bathby': new Company( 'Bathby', 'https://www.bathby.com/wp-admin/', 'https://bathby.com', '4-' )
@@ -116,7 +116,7 @@ const core = {
         this.transportCalculatorApp = new TransportCalculatorApp( this );
         this.chillApp = new ChillApp( this );
         this.decathlonApp = new LabelsApp( this, 'Decathlon' );
-        this.carrefourApp = new LabelsApp( this, 'Carrefour' );
+        // this.carrefourApp = new LabelsApp( this, 'Carrefour' );
         this.manualApp = new ManualApp( this );
 
         // Footer
@@ -322,7 +322,7 @@ const core = {
         this.transportCalculatorApp.area.root.classList.toggle( 'hidden', true );
         this.chillApp.area.root.classList.toggle( 'hidden', true );
         this.decathlonApp.area.root.classList.toggle( 'hidden', true );
-        this.carrefourApp.area.root.classList.toggle( 'hidden', true );
+        // this.carrefourApp.area.root.classList.toggle( 'hidden', true );
         this.tikTokApp.area.root.classList.toggle( 'hidden', true );
         this.manualApp.area.root.classList.toggle( 'hidden', true );
 

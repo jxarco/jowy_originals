@@ -1,5 +1,25 @@
 import { LX } from 'lexgui';
 
+const TIKTOK_ORDERS_DATA = [
+    [ 'Order ID', 'Número del pedido' ],
+    [ 'SKU ID', 'ID del artículo' ],
+    [ 'Seller SKU', 'SKU del vendedor' ],
+    [ 'Product Name', null, ( str, row ) => {
+        return `<span title='${str}'>${str}</span>`;
+    } ],
+    [ 'Quantity', 'Cantidad' ],
+    [ 'Recipient', 'Nombre de usuario completo' ],
+    [ 'Zipcode', 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
+    [ 'Country', 'País', null, ( str, row ) => {
+        return core.countryFormat[str] ?? str;
+    } ],
+    [ 'Province', 'Provincia' ],
+    [ 'City', 'Ciudad' ],
+    [ 'Street Name', 'Dirección' ],
+    [ 'Phone #', 'Número de Teléfono' ],
+    [ 'Email', 'Correo electrónico de usuario' ]
+];
+
 const TIKTOK_LABEL_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'SKU ID', 'ID del artículo' ],
@@ -161,7 +181,7 @@ class TikTokApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of TIKTOK_LABEL_DATA )
+            for ( let c of TIKTOK_ORDERS_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -182,7 +202,7 @@ class TikTokApp
             'TikTok' );
 
         const tableWidget = new LX.Table( null, {
-            head: TIKTOK_LABEL_DATA.map( ( c ) => {
+            head: TIKTOK_ORDERS_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
@@ -190,7 +210,9 @@ class TikTokApp
             selectable: true,
             sortable: false,
             toggleColumns: true,
-            filter: 'SKU del vendedor'
+            filter: 'SKU del vendedor',
+            centered: [ 'Cantidad' ],
+            hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', 'Código Postal', 'Número de Teléfono', 'Correo electrónico de usuario' ]
         } );
 
         dom.appendChild( tableWidget.root );
