@@ -23,7 +23,7 @@ const SHEIN_ORDERS_DATA = [
 
 const SHEIN_LABEL_DATA = [
     [ 'Número del pedido' ],
-    [ 'ID del artículo' ],
+    [ 'Bultos', null, ( row, i ) => 1 ],
     [ 'SKU del vendedor', null, ( str, row ) => {
         return core.getFinalSku( str );
     } ],

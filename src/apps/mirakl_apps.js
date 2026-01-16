@@ -47,8 +47,8 @@ const VENDOR_TEMPLATES = {
 
     'DECATHLON_LABEL_DATA': [
         [ 'order_id', 'Número del pedido' ],
-        [ 'ID del artículo', null, ( row, i ) => i['product_sku'] ],
-        [ 'offer_sku', 'SKU del vendedor', ( row, i ) => core.getFinalSku( i['offer_sku'] ) ],
+        [ 'Bultos', null, ( str, row, i ) => 1 ],
+        [ 'offer_sku', 'SKU del vendedor', ( str, row, i ) => core.getFinalSku( i['offer_sku'] ) ],
         [ 'Código Postal', null, ( str, row ) => {
             return row.customer?.shipping_address?.zip_code;
         } ],

@@ -22,7 +22,7 @@ const TIKTOK_ORDERS_DATA = [
 
 const TIKTOK_LABEL_DATA = [
     [ 'Order ID', 'Número del pedido' ],
-    [ 'SKU ID', 'ID del artículo' ],
+    [ 'Bultos', null, ( row, i ) => 1 ],
     [ 'Seller SKU', 'SKU del vendedor' ],
     [ 'Zipcode', 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
     [ 'Country', 'País', null, ( str, row ) => {
