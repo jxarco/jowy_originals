@@ -39,7 +39,7 @@ class CblTrackingApp
         }, { buttonClass: 'lg outline', icon: 'Plus', title: 'Nuevo Pedido', tooltip: true } );
 
         const moreOptionsButton = utilButtonsPanel.addButton( null, 'MoreOptionsButton', ( value, event ) => {
-            LX.addDropdownMenu( event.target, [
+            LX.addDropdownMenu( moreOptionsButton.root, [
                 {
                     name: 'Abrir pedidos',
                     icon: 'ExternalLink',
