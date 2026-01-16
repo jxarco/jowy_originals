@@ -92,7 +92,7 @@ const VENDOR_TEMPLATES = {
             const str1 = customer?.firstname;
             const str2 = customer?.lastname;
             const name = str1 + ( str2 ? ` ${str2}` : '' );
-            const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
+            const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name.toUpperCase() );
             if ( !tentry )
             {
                 app._trackingSyncErrors = true;
@@ -585,6 +585,11 @@ class LabelsApp
             const items = row['order_lines'];
             for ( let item of items )
             {
+                // discard orders sent with CBL
+                const sku = this.core.getFinalSku( item['offer_sku'] );
+                const transport = this.core.getTransportForItem( sku, item['quantity'] );
+                if( transport === 'CBL' ) continue;
+
                 const lRow = [];
 
                 for ( let c of VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_TRACKING_DATA'] )
