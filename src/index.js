@@ -49,11 +49,15 @@ const core = {
     transportOptions: [ 'CBL', 'SEUR' ], // , "GLS"];
     sheetName: '',
     countryFormat: {
+        'España': 'ESPAÑA',
         'Spain': 'ESPAÑA',
         'ES': 'ESPAÑA',
         'Portugal': 'PORTUGAL',
         'PT': 'PORTUGAL',
+        'Italia': 'ITALIA',
         'Italy': 'ITALIA',
+        'IT': 'ITALIA',
+        'Francia': 'FRANCIA',
         'France': 'FRANCIA',
         'FR': 'FRANCIA'
     },
