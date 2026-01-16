@@ -92,12 +92,12 @@ class TikTokApp
             title: 'Exportar Etiquetas',
             tooltip: true
         } );
-        // utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
-        //     buttonClass: 'lg outline',
-        //     icon: 'FileDown',
-        //     title: 'Exportar Seguimiento',
-        //     tooltip: true
-        // } );
+        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
+            buttonClass: 'lg outline',
+            icon: 'FileDown',
+            title: 'Exportar Seguimiento',
+            tooltip: true
+        } );
         utilButtonsPanel.endLine();
         this.area.attach( utilButtonsPanel.root );
 
