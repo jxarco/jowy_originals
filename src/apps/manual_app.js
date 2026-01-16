@@ -66,7 +66,7 @@ class ManualApp
 
         {
             const webContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'Web', webContainer, { selected: true, onSelect: ( event, name ) => {} } );
+            tabs.add( 'Web', webContainer, { xselected: true, onSelect: ( event, name ) => {} } );
             webContainer.appendChild( this.createWebDocs() );
         }
 
