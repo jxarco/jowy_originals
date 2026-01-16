@@ -330,6 +330,7 @@ class TikTokApp
             [ 'Seller SKU', 'SKU del vendedor' ],
             [ 'Cantidad', null, ( str, row ) => parseInt( row['Quantity'] ) ],
             [ 'Transporte', null, ( str, row ) => {
+                const sku = this.core.getFinalSku( row['Seller SKU'] );
                 return core.getTransportForItem( row['Seller SKU'], parseInt( row['Quantity'] ) );
             } ],
             [ 'Plataforma', null, () => 'TIKTOK' ],

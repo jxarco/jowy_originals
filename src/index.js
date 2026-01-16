@@ -158,10 +158,10 @@ const core = {
             {
                 this.openApp( this.manualApp );
             }
-            // else if ( lastTool.includes( 'decathlon' ) )
-            // {
-            //     this.openApp( this.decathlonApp );
-            // }
+            else if ( lastTool.includes( 'decathlon' ) )
+            {
+                this.openApp( this.decathlonApp );
+            }
             // else if ( lastTool.includes( 'carrefour' ) )
             // {
             //     this.openApp( this.carrefourApp );
@@ -302,7 +302,7 @@ const core = {
         this.footer = new LX.Footer( {
             className: 'border-top',
             parent: LX.root,
-            credits: `${new Date().getUTCFullYear()}. Alex Rodríguez (@jxarco)`,
+            credits: `${new Date().getUTCFullYear()}. Alex Rodríguez (@jxarco) x INOUT ORIENT ATTRACTION SL`,
             socials: [
                 { title: 'Github', link: 'https://github.com/jxarco/', icon: 'Github' }
             ]
@@ -392,8 +392,7 @@ const core = {
 
     getTransportForItem( sku, quantity )
     {
-        if (
-            ( sku.startsWith( 'JW-DF20' ) && quantity > 3 )
+        if ( ( sku.startsWith( 'JW-DF20' ) && quantity > 3 )
             || ( sku.startsWith( 'JW-DT20' ) && quantity > 3 )
             || ( sku.startsWith( 'JW-DF25' ) && quantity > 2 )
             || ( sku.startsWith( 'JW-DT25' ) && quantity > 2 )
@@ -551,6 +550,77 @@ const core = {
         }
 
         return r;
+    },
+
+    getTrackingDataDropZone( area, callback )
+    {
+        const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center rounded-xl text-center border-color gap-4 px-12 py-12', `
+            <div class="flex flex-row gap-2 items-center">
+                ${LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML}
+            </div>
+            <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un listado de trackings.</p>
+        `, area );
+        dropZone.style.transition = 'transform 0.1s ease-in';
+
+        // add file drag and drop event to dropZone
+        dropZone.addEventListener( 'dragover', ( event ) => {
+            event.preventDefault();
+            event.stopPropagation();
+            dropZone.classList.add( 'draggingover' );
+        } );
+
+        dropZone.addEventListener( 'dragleave', ( event ) => {
+            event.preventDefault();
+            event.stopPropagation();
+            dropZone.classList.remove( 'draggingover' );
+        } );
+
+        dropZone.addEventListener( 'drop', ( event ) => {
+            event.preventDefault();
+            event.stopPropagation();
+            dropZone.classList.remove( 'draggingover' );
+
+            // Check if a file was dropped
+            if ( event.dataTransfer.files.length > 0 )
+            {
+                const file = event.dataTransfer.files[0];
+                if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
+                {
+                    const reader = new FileReader();
+                    reader.onload = ( e ) => {
+                        const data = e.target.result;
+
+                        try
+                        {
+                            const workbook = XLSX.read( data, { type: 'binary' } );
+                            core.sheetName = workbook.SheetNames[0];
+                            const sheet = workbook.Sheets[core.sheetName];
+                            const rowsData = XLSX.utils.sheet_to_json( sheet, { raw: false } );
+
+                            if( callback )
+                            {
+                                callback( rowsData );
+                            }
+
+                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
+                        }
+                        catch ( e )
+                        {
+                            LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
+                        }
+                    };
+
+                    // Read the data as binary
+                    reader.readAsArrayBuffer( file );
+                }
+                else
+                {
+                    alert( 'Please drop a valid .xlsx file.' );
+                }
+            }
+        } );
+
+        return dropZone;
     },
 
     makeLoadingDialog( title )
@@ -749,7 +819,7 @@ core.data['bathby'].template = ( id, url, transport ) => {
             name: 'Plataformas',
             submenu: [
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' },
-                { name: 'Decathlon', disabled: true, callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
+                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
                 { name: 'TikTok', disabled: true, callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
                 { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' }
             ]

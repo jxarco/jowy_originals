@@ -116,7 +116,7 @@ class SheinApp
         const trackingContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
         tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
             trackingArea.root.innerHTML = '';
-            trackingArea.attach( this.getTrackingDataDropZone() );
+            trackingArea.attach( this.core.getTrackingDataDropZone( this.area, this.showTrackingList.bind( this ) ) );
         } } );
 
         const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
@@ -143,73 +143,6 @@ class SheinApp
 
         this.showSheinList( fileData );
         this.showStockList( fileData );
-    }
-
-    getTrackingDataDropZone()
-    {
-        const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center rounded-xl text-center border-color gap-4 px-12 py-12', `
-            <div class="flex flex-row gap-2 items-center">
-                ${LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML}
-            </div>
-            <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un listado de trackings.</p>
-        `, this.area );
-        dropZone.style.transition = 'transform 0.1s ease-in';
-
-        // add file drag and drop event to dropZone
-        dropZone.addEventListener( 'dragover', ( event ) => {
-            event.preventDefault();
-            event.stopPropagation();
-            dropZone.classList.add( 'draggingover' );
-        } );
-
-        dropZone.addEventListener( 'dragleave', ( event ) => {
-            event.preventDefault();
-            event.stopPropagation();
-            dropZone.classList.remove( 'draggingover' );
-        } );
-
-        dropZone.addEventListener( 'drop', ( event ) => {
-            event.preventDefault();
-            event.stopPropagation();
-            dropZone.classList.remove( 'draggingover' );
-
-            // Check if a file was dropped
-            if ( event.dataTransfer.files.length > 0 )
-            {
-                const file = event.dataTransfer.files[0];
-                if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
-                {
-                    const reader = new FileReader();
-                    reader.onload = ( e ) => {
-                        const data = e.target.result;
-
-                        try
-                        {
-                            const workbook = XLSX.read( data, { type: 'binary' } );
-                            core.sheetName = workbook.SheetNames[0];
-                            const sheet = workbook.Sheets[core.sheetName];
-                            const rowsData = XLSX.utils.sheet_to_json( sheet, { raw: false } );
-                            this.showTrackingList( rowsData );
-
-                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
-                        }
-                        catch ( e )
-                        {
-                            LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
-                        }
-                    };
-
-                    // Read the data as binary
-                    reader.readAsArrayBuffer( file );
-                }
-                else
-                {
-                    alert( 'Please drop a valid .xlsx file.' );
-                }
-            }
-        } );
-
-        return dropZone;
     }
 
     showSheinList( data )
@@ -345,13 +278,14 @@ class SheinApp
 
         for ( const repeats of multipleItemsOrderNames )
         {
+            const finalIndex = repeats[0];
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => p + ` + ${tableData[c][0]}`, '' );
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
             } );
-            tableData[repeats[0]][0] += trail;
-            tableData[repeats[0]][5] = 'Mismo pedido';
+            tableData[finalIndex][0] += trail;
+            tableData[finalIndex][5] = 'Mismo pedido';
         }
 
         tableData = tableData.filter( ( r ) => r !== undefined );
@@ -374,7 +308,7 @@ class SheinApp
             {
                 skus[sku] = [ listSKU.length ];
                 row[1] = 1;
-                row.splice( 6, 1 );
+                row.splice( 6, 1 );  // Delete order num
                 listSKU.push( row );
             }
             else
@@ -398,6 +332,7 @@ class SheinApp
         }
 
         // for the skus that contain '+', change the sku to sku x quantity in each of them
+        // only for SHEIN, since we don't have the quantity until now
         for ( let row of listSKU )
         {
             const sku = row[0];

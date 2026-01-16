@@ -110,7 +110,7 @@ class ManualApp
     open( params )
     {
         this.core.tool = 'manual';
-        this.core.setHeaderTitle( `Web: <i>Pedidos</i>`, '', 'WooCommerce' );
+        this.core.setHeaderTitle( `Manual de uso`, 'Guía detalladas de las acciones a realizar con la aplicación.', 'Info@solid' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 

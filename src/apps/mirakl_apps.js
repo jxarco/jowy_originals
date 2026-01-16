@@ -1,16 +1,16 @@
 import { LX } from 'lexgui';
 import { MiraklClient } from '../mirakl-api.js';
 
-const COLUMN_TEMPLATES = {
+const VENDOR_TEMPLATES = {
     'DECATHLON_COLUMN_DATA': [
         [ 'order_id', 'Número del pedido' ],
         [ 'ID del artículo', null, ( str, row ) => {
             const items = row['order_lines'];
             return items[0]['product_sku'];
         } ],
-        [ 'product_shop_sku', 'SKU del vendedor', ( str, row ) => {
+        [ 'offer_sku', 'SKU del vendedor', ( str, row ) => {
             const items = row['order_lines'];
-            const skus = items.map( ( i ) => i['product_shop_sku'] );
+            const skus = items.map( ( i ) => i['offer_sku'] );
             return skus.join( ' + ' );
         } ],
         [ 'Código Postal', null, ( str, row ) => {
@@ -39,7 +39,40 @@ const COLUMN_TEMPLATES = {
         [ 'Número de Teléfono', null, ( str, row ) => {
             return row.customer?.shipping_address?.phone;
         } ],
-        [ 'Correo electrónico de usuario', null, ( str, row ) => '' ]
+        [ 'Correo electrónico de usuario', null, ( str, row ) => '' ],
+        // THIS ONE HAS TO BE DELETED
+        [ 'quantity' ],
+    ],
+
+    // (str, row, tracking_data, app)
+    'DECATHLON_TRACKING_DATA': [
+        [ 'order_id', 'order-id' ],
+        [ 'carrier_code', 'carrier-code', () => 'SEUR (Spain)' ],
+        [ 'carrier_standard_code', 'carrier-standard-code', () => '' ],
+        [ 'carrier_name', 'carrier-name', () => 'SEUR' ],
+        [ 'carrier_url', 'carrier-url', () => 'https://www.seur.com/livetracking?segOnlineIdentificador=%7BtrackingId%7D&segOnlineIdioma=en' ],
+        [ 'tracking_number', 'tracking-number', ( str, row, tdata, app ) => {
+            const customer = row.customer;
+            const str1 = customer?.firstname;
+            const str2 = customer?.lastname;
+            const name = str1 + ( str2 ? ` ${str2}` : '' );
+            const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
+            if ( !tentry )
+            {
+                app._trackingSyncErrors = true;
+                const status = core.trackStatusColors['Incidencia'];
+                let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
+                return `${
+                    LX.badge( iconStr, 'text-xs font-bold border-none ', {
+                        style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
+                    } )
+                }`;
+            }
+            return tentry['LOCALIZADOR'];
+        } ],
+        [ 'offer_sku', 'offer-sku', ( str ) => core.getFinalSku( str ) ],
+        [ 'order_line_id', 'order-line-id' ],
+        [ 'quantity' ]
     ]
 };
 
@@ -49,8 +82,6 @@ class LabelsApp
     {
         this.mkClient = new MiraklClient();
         this.vendor = vendorName;
-        this.COLUMN_DATA_TEMPLATE = COLUMN_TEMPLATES[vendorName.toUpperCase() + '_COLUMN_DATA'];
-
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
         core.area.attach( this.area );
@@ -72,6 +103,13 @@ class LabelsApp
             buttonClass: 'lg outline',
             icon: 'Download',
             title: 'Exportar etiquetas',
+            tooltip: true
+        } );
+
+        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
+            buttonClass: 'lg outline',
+            icon: 'FileDown',
+            title: 'Exportar Seguimiento',
             tooltip: true
         } );
 
@@ -105,15 +143,27 @@ class LabelsApp
         // Groups List
         {
             const groupsListContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
+            tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
 
             const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
             groupsListContainer.appendChild( groupsListArea.root );
             this.groupsListArea = groupsListArea;
         }
 
+        // Tracking info
+        const trackingContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
+            trackingArea.root.innerHTML = '';
+            trackingArea.attach( this.core.getTrackingDataDropZone( this.area, this.showTrackingList.bind( this ) ) );
+        } } );
+
+        const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        trackingContainer.appendChild( trackingArea.root );
+
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
+
+        this.trackingArea = trackingArea;
 
         this.clear();
     }
@@ -194,17 +244,18 @@ class LabelsApp
         } );
         console.log( r );
 
+        // TEST ONLY
+        r.orders[ 1 ][ 'order_id' ] = r.orders[ 2 ][ 'order_id' ];
+        r.orders[ 1 ][ 'order_lines' ][0][ 'quantity' ] = 2;
+        r.orders[ 2 ][ 'order_lines' ][0][ 'quantity' ] = 3;
+        r.orders[ 5 ][ 'order_lines' ][0][ 'offer_sku' ] = r.orders[ 0 ][ 'order_lines' ][0][ 'offer_sku' ]
+        //
+
         this.core.setHeaderTitle( `${name} <i>(Mirakl):</i> ${r.orders.length} pedidos`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
 
         dialog.destroy();
 
         const columnData = [
-            // [ 'paymethod', 'PAGO', ( r ) => {
-            //     if ( !r['payment_type'] ) return '';
-            //     const b = new LX.Button( null, 'Payment', null, { buttonClass: 'bg-none', icon: 'CircleDollarSign',
-            //         title: r['payment_type'] } );
-            //     return b.root.innerHTML;
-            // } ],
             [ 'preview', 'PREVIEW', ( r, i ) => {
                 return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${i['product_medias'][1]['media_url']}">`;
             } ],
@@ -213,7 +264,7 @@ class LabelsApp
                 const d = new Date( r['created_date'] );
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
             } ],
-            [ 'product_shop_sku', 'REFERENCIA' ],
+            [ 'offer_sku', 'REFERENCIA', ( row, i ) => core.getFinalSku( i['offer_sku'] ) ],
             [ 'quantity', 'UNIDADES' ],
             [ 'NOMBRE COMPLETO', null, ( row, i ) => {
                 const customer = row.customer;
@@ -303,7 +354,7 @@ class LabelsApp
         this.lastShownSeurData = tableWidget.data.body;
     }
 
-    showGroupsByCountryList( ogData )
+    showStockList( ogData )
     {
         ogData = ogData ?? this.lastSeurData;
 
@@ -324,13 +375,14 @@ class LabelsApp
 
         let columnData = [
             [ 'SKU del vendedor', null, ( row, i ) => {
-                return i['product_shop_sku'];
+                return this.core.getFinalSku( i['offer_sku'] );
             } ],
             [ 'Cantidad', null, ( row, i ) => {
                 return i['quantity'];
             } ],
             [ 'Transporte', null, ( r, i ) => {
-                return core.getTransportForItem( i['product_shop_sku'], i['quantity'] );
+                const sku = this.core.getFinalSku( i['offer_sku'] );
+                return this.core.getTransportForItem( sku, i['quantity'] );
             } ],
             [ 'Plataforma', null, () => this.vendor.toUpperCase() ],
             [ 'País', null, ( row, i ) => {
@@ -357,7 +409,6 @@ class LabelsApp
                 for ( let c of columnData )
                 {
                     let colName = c[0];
-
                     if ( colName === uid )
                     {
                         const orderNumber = row[colName];
@@ -385,15 +436,15 @@ class LabelsApp
 
         for ( const repeats of multipleItemsOrderNames )
         {
+            const finalIndex = repeats[0];
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => {
                 const q = tableData[c][1]; // Get quantity
                 return p + ` + ${tableData[c][0]}${q > 1 ? ` x ${q}` : ''}`;
-            }, '' );
+            }, ` x ${tableData[finalIndex][1]}` );
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
             } );
-            const finalIndex = repeats[0];
             tableData[finalIndex][0] += trail; // Add REF trail
             tableData[finalIndex][0] = `<span title="${tableData[finalIndex][0]}">${tableData[finalIndex][0]}</span>`;
             tableData[finalIndex][1] = 1; // Set always 1 UNIT for multiple item orders
@@ -410,15 +461,21 @@ class LabelsApp
 
         for ( let row of tableData )
         {
-            const sku = `${row[0]}_${row[4]}`; // SKU _ País
             const q = row[1];
             const notes = row[5];
+
+            // if sku starts with "JW-T60", never combine with others, so we must
+            // add a unique identifier in the sku
+            let sku = `${row[0]}_${row[4]}`; // SKU _ País
+            sku += sku.includes( 'JW-T60' ) ? `_${LX.guidGenerator()}` : '';
 
             // Delete order num
             row.splice( 6, 1 );
 
             // If same order or more than 1 unit, do not merge items
-            if ( notes === 'Mismo pedido' || q > 1 )
+            if ( q > 1 
+                // || notes === 'Mismo pedido'
+             )
             {
                 listSKU.push( row );
                 continue;
@@ -439,16 +496,17 @@ class LabelsApp
             }
         }
 
+        // do it by individual units, not in item combined orders
         for ( let row of listSKU )
         {
             const sku = row[0];
-            if (
-                sku.startsWith( 'JW-T60' ) && !sku.includes( '+' )
-                // && row[5] !== 'Mismo pedido'
-            )
+
+            if ( sku.includes( '+' ) )
             {
-                row[1] *= 4;
+                continue;
             }
+
+            row[1] = this.core.getIndividualQuantityPerPack( sku, parseInt( row[1] ) );
         }
 
         // console.log(tableData)
@@ -496,9 +554,68 @@ class LabelsApp
         dom.appendChild( tableWidget.root );
     }
 
+    showTrackingList( trackingData )
+    {
+        const data = this.lastSeurData;
+
+        const dom = this.trackingArea.root;
+        while ( dom.children.length > 0 )
+        {
+            dom.removeChild( dom.children[0] );
+        }
+
+        this._trackingSyncErrors = false;
+
+        // Create table data from the list
+        const tableData = [];
+        data.forEach( ( row ) => {
+            const items = row['order_lines'];
+            for ( let item of items )
+            {
+                const lRow = [];
+
+                for ( let c of VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_TRACKING_DATA'] )
+                {
+                    const ogColName = c[0];
+                    if ( ogColName.includes( '+' ) )
+                    {
+                        const tks = ogColName.split( '+' );
+                        lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
+                    }
+                    else
+                    {
+                        const fn = c[2] ?? ( ( str ) => str );
+                        const val = fn( item[ogColName] ?? ( row[ogColName] ?? '?' ), row, trackingData, this );
+                        lRow.push( val );
+                    }
+                }
+
+                tableData.push( lRow );
+            }
+        } );
+
+        const tableWidget = new LX.Table( null, {
+            head: VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_TRACKING_DATA'].map( ( c ) => {
+                return c[1] ?? c[0];
+            } ),
+            body: tableData
+        }, {
+            selectable: true,
+            sortable: false,
+            toggleColumns: true,
+            centered: true,
+            filter: 'Tracking Number'
+        } );
+
+        dom.appendChild( tableWidget.root );
+
+        this.lastSeurTrackingsColumnData = tableWidget.data.head;
+        this.lastShownSeurTrackingsData = tableWidget.data.body;
+    }
+
     exportSEUR( ignoreErrors = false, ordersData )
     {
-        let columnData = this.COLUMN_DATA_TEMPLATE;
+        let columnData = VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_COLUMN_DATA'];
 
         const currentOrdersData = ordersData ?? this.lastSeurData;
 
@@ -514,27 +631,32 @@ class LabelsApp
         {
             const errorFields = [];
             currentOrdersData.forEach( ( row, index ) => {
-                for ( let c of columnData )
+                const items = row['order_lines'];
+                for ( let item of items )
                 {
-                    const ogColName = c[0];
-                    if ( ogColName.includes( '+' ) )
+                    for ( let c of columnData )
                     {
-                        const tks = ogColName.split( '+' );
+                        const ogColName = c[0];
+                        if ( ogColName.includes( '+' ) )
+                        {
+                            const tks = ogColName.split( '+' );
 
-                        if ( !row[tks[0]] )
-                        {
-                            errorFields.push( [ index, tks[0] ] );
+                            if ( !row[tks[0]] )
+                            {
+                                errorFields.push( [ index, tks[0] ] );
+                            }
                         }
-                    }
-                    else
-                    {
-                        const v = c[2] ? c[2]( row[ogColName], row ) : row[ogColName];
-                        if ( v === undefined )
+                        else
                         {
-                            errorFields.push( [ index, ogColName ] );
+                            const v = c[2] ? c[2]( item[ogColName] ?? row[ogColName], row, item ) : ( item[ogColName] ?? row[ogColName] );
+                            if ( v === undefined )
+                            {
+                                errorFields.push( [ index, ogColName ] );
+                            }
                         }
                     }
                 }
+                
             } );
 
             if ( errorFields.length )
@@ -605,41 +727,71 @@ class LabelsApp
             return;
         }
 
-        let rows = currentOrdersData.map( ( row, index ) => {
-            const lRow = [];
-            for ( let c of columnData )
+        const orderNumbers = new Map();    
+
+        let rows = [];
+        currentOrdersData.forEach( ( row, index ) => {
+            const items = row['order_lines'];
+            for ( let item of items )
             {
-                const ogColName = c[0];
+                // discard orders sent with CBL
+                const sku = this.core.getFinalSku( item['offer_sku'] );
+                const transport = this.core.getTransportForItem( sku, item['quantity'] );
+                if( transport === 'CBL' ) continue;
 
-                if ( ogColName.includes( '+' ) )
+                const lRow = [];
+
+                for ( let c of columnData )
                 {
-                    const tks = ogColName.split( '+' );
-
-                    if ( !ignoreErrors && !row[tks[0]] )
+                    const ogColName = c[0];
+                    if ( ogColName === uid )
                     {
-                        err = 1;
-                        errMsg = `No existen direcciones válidas (${row[uid]}).`;
-                        return;
+                        const orderNumber = row[ogColName];
+
+                        if ( orderNumbers.has( orderNumber ) )
+                        {
+                            const val = orderNumbers.get( orderNumber );
+                            orderNumbers.set( orderNumber, [ ...val, index ] );
+                        }
+                        else
+                        {
+                            orderNumbers.set( orderNumber, [ index ] );
+                        }
                     }
 
-                    lRow.push( `${row[tks[0]] ?? ''}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                }
-                else
-                {
-                    const v = c[2] ? c[2]( row[ogColName], row ) : row[ogColName];
-
-                    if ( !ignoreErrors && v === undefined )
+                    if ( ogColName.includes( '+' ) )
                     {
-                        err = 1;
-                        errMsg = `No existen datos de "${ogColName}".`;
-                        return;
-                    }
+                        const tks = ogColName.split( '+' );
 
-                    lRow.push( v );
+                        if ( !ignoreErrors && !row[tks[0]] )
+                        {
+                            err = 1;
+                            errMsg = `No existen direcciones válidas (${row[uid]}).`;
+                            return;
+                        }
+
+                        lRow.push( `${row[tks[0]] ?? ''}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
+                    }
+                    else
+                    {
+                        const v = c[2] ? c[2]( item[ogColName] ?? row[ogColName], row, item ) : ( item[ogColName] ?? row[ogColName] );
+
+                        if ( !ignoreErrors && v === undefined )
+                        {
+                            err = 1;
+                            errMsg = `No existen datos de "${ogColName}".`;
+                            return;
+                        }
+
+                        lRow.push( v );
+                    }
                 }
+                
+                rows.push( lRow );
             }
-            return lRow;
-        } ).filter( ( v ) => v !== undefined );
+        } );
+
+        rows = rows.filter( ( r ) => r !== undefined );
 
         if ( err === 1 )
         {
@@ -647,9 +799,46 @@ class LabelsApp
             return;
         }
 
+        const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
+
+        for ( const repeats of multipleItemsOrderNames )
+        {
+            const skuIdx = data.indexOf( 'SKU del vendedor' );
+            const finalIndex = repeats[0];
+            const rest = repeats.slice( 1 );
+            let finalRow = rows[finalIndex];
+            const trail = rest.reduce( ( p, c ) => {
+                const q = rows[c].at( -1 ); // Get quantity (last col)
+                return p + ` + ${rows[c][skuIdx]}${q > 1 ? ` x ${q}` : ''}`;
+            }, ` x ${finalRow.at( -1 )}` );
+            rest.forEach( ( r ) => {
+                rows[r] = undefined;
+            } );
+            finalRow[skuIdx] += trail; // Add REF trail
+            // Remove tmp quantity
+            finalRow = finalRow.slice( 0, -1 );
+        }
+
+        // Remove tmp quantity
+        data = data.slice( 0, -1 );
+
         rows = rows.filter( ( r ) => r !== undefined );
 
         this.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
+    }
+
+    exportSEURTrackings()
+    {
+        const filename = 'NUMERODEGUIA.xlsx';
+
+        if ( this._trackingSyncErrors )
+        {
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". Faltan datos.`, { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
+        const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
+        this.exportXLSXData( data, filename );
     }
 
     exportXLSXData( data, filename, ignoreErrors )
