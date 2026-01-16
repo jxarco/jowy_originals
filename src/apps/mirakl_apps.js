@@ -213,41 +213,40 @@ class LabelsApp
         const dom = compData.domO;
         dom.innerHTML = '';
 
-        if ( clean )
-        {
-            return;
-        }
+        // if ( clean )
+        // {
+        //     return;
+        // }
 
         core.compName = compName;
 
-        if ( !this.mkClient.connected )
+        if ( !clean && !this.mkClient.connected )
         {
             this.openMiraklLogin( () => this.showOrders( compName, clean ) );
             return;
         }
 
-        const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
+        let r = null;
 
-        // const after = getDateNDaysAgo( this.ordersBeforeDays );
-        // const before = null;
-        const r = await this.mkClient.listOrders( {
-            // start_date: after,
-            sort: 'dateCreated',
-            order: 'desc',
-            order_state_codes: 'SHIPPING'
-        } );
-        console.log( r );
+        if( !clean )
+        {
+            const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
 
-        // TEST ONLY
-        r.orders[ 1 ][ 'order_id' ] = r.orders[ 2 ][ 'order_id' ];
-        r.orders[ 1 ][ 'order_lines' ][0][ 'quantity' ] = 2;
-        r.orders[ 2 ][ 'order_lines' ][0][ 'quantity' ] = 3;
-        r.orders[ 5 ][ 'order_lines' ][0][ 'offer_sku' ] = r.orders[ 0 ][ 'order_lines' ][0][ 'offer_sku' ]
-        //
+            r = await this.mkClient.listOrders( {
+                sort: 'dateCreated',
+                order: 'desc',
+                order_state_codes: 'SHIPPING'
+            } );
+            // console.log( r );
 
-        this.core.setHeaderTitle( `${name} <i>(Mirakl):</i> ${r.orders.length} pedidos`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
+            this.core.setHeaderTitle( `${name} <i>(Mirakl):</i> ${r.orders.length} pedidos`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
 
-        dialog.destroy();
+            dialog.destroy();
+        }
+        else
+        {
+            r = { orders: [] };
+        }
 
         const columnData = [
             [ 'preview', 'PREVIEW', ( r, i ) => {

@@ -87,29 +87,38 @@ class OrdersApp
         const dom = compData.domO;
         dom.innerHTML = '';
 
-        if ( clean )
-        {
-            return;
-        }
+        // if ( clean )
+        // {
+        //     return;
+        // }
 
         core.compName = compName;
 
-        if ( !wcc.connected )
+        if ( !clean && !wcc.connected )
         {
             core.openWooCommerceLogin( this.showOrders.bind( this, compName, clean ) );
             return;
         }
 
-        const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
+        let r = null;
 
-        const after = getDateNDaysAgo( this.ordersBeforeDays );
-        const before = null;
-        const r = await wcc.getAllOrdersByFilter( after, before, [ 'processing', 'on-hold' ] );
-        console.log( r );
-
-        core.setHeaderTitle( `Web (${name}): <i>Pedidos</i>`, `${r.length} pedidos pendientes (Últimos ${this.ordersBeforeDays} día/s)`, 'WooCommerce' );
-
-        dialog.destroy();
+        if ( !clean )
+        {
+            const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
+    
+            const after = getDateNDaysAgo( this.ordersBeforeDays );
+            const before = null;
+            r = await wcc.getAllOrdersByFilter( after, before, [ 'processing', 'on-hold' ] );
+            console.log( r );
+    
+            core.setHeaderTitle( `Web (${name}): <i>Pedidos</i>`, `${r.length} pedidos pendientes (Últimos ${this.ordersBeforeDays} día/s)`, 'WooCommerce' );
+    
+            dialog.destroy();
+        }
+        else
+        {
+            r = [];
+        }
 
         // fecha, sku, desc (auto), cantidad, transporte (), "WEB", pais, observaciones (num pedido)
 
