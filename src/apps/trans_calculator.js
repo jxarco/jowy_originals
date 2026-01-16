@@ -1,46 +1,12 @@
 import { LX } from 'lexgui';
 import { Data } from '../data.js';
 
-const VOLUME_BRACKETS_CBL = [
-    5,
-    10,
-    20,
-    30,
-    40,
-    50,
-    60,
-    70,
-    80,
-    90,
-    100,
-    150,
-    200,
-    250,
-    300,
-    500,
-    750,
-    1000,
-    3000
-];
+const VOLUME_BRACKETS_CBL = [ 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 500, 750, 1000, 3000 ];
+const VOLUME_BRACKETS_SEUR = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30 ];
+const VOLUME_BRACKETS_SALVAT = [ 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400,
+    2500, 2600, 2700, 2800, 2900, 3000 ];
 
-const VOLUME_BRACKETS_SEUR = [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    15,
-    20,
-    25,
-    30
-];
-
-const TRANSPORT_NAMES = [ 'CBL', 'SEUR' ];
+const TRANSPORT_NAMES = [ 'CBL', 'SEUR', 'SALVAT' ];
 
 const NumberFormatter = new Intl.NumberFormat( 'es-ES', { style: 'currency', currency: 'EUR' } );
 
@@ -103,8 +69,8 @@ class TransportCalculatorApp
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-bottom p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
-        utilButtonsPanel.addButton( null, 'AddCalc', this.openNewCalcDialog.bind( this ), { className: 'flex flex-auto-keep', icon: 'Plus',
-            title: 'Cálculo personalizado', tooltip: true } );
+        utilButtonsPanel.addButton( null, 'AddCalc', this.openNewCalcDialog.bind( this ), { className: 'flex flex-auto-keep', icon: 'Plus', title: 'Cálculo personalizado',
+            tooltip: true } );
         utilButtonsPanel.addSelect( 'Ref', Object.keys( Data.sku ), this.sku, ( v ) => {
             this.sku = v;
         }, { className: 'flex flex-auto-fill', filter: true, overflowContainer: null, skipReset: true, emptyMsg: 'No hay resultados.' } );
@@ -254,19 +220,30 @@ class TransportCalculatorApp
                     price *= totalVolumeKgs;
                 }
             }
-            else
+            else if ( transportName === 'SEUR' )
             {
                 if ( totalVolumeKgs > 30 )
                 {
                     const diffKgs = totalVolumeKgs - 30;
                     const zN = zoneNumber[0];
-                    price = Data.pricesByZone[transportName][zN]['30']
-                        + diffKgs * Data.pricesByZone[transportName][zN]['max'];
+                    if ( zN !== undefined )
+                    {
+                        price = Data.pricesByZone[transportName][zN]['30']
+                            + diffKgs * Data.pricesByZone[transportName][zN]['max'];
+                    }
+                    else
+                    {
+                        price = 0;
+                    }
                 }
             }
+            else
+            {
+                // SALVAT DOES NOTHING SPECIAL FOR NOW
+            }
 
-            const gasPrice = 1.09;
-            // - Aplicar recargo por combustible: multiplicar el importe por 1,09.
+            // - Aplicar recargo por combustible
+            const gasPrice = ( this.country === 'Francia' ) ? 1.065 : 1.09;
             finalPrice = price * gasPrice;
 
             shippingOptions.push( {
@@ -292,13 +269,13 @@ class TransportCalculatorApp
 
     updateTransports( customWidth, customHeight, customDepth, customWeight, pArea, sArea )
     {
-        this.update( 'CBL', customWidth, customHeight, customDepth, customWeight, pArea );
+        this.update( ( this.country === 'Francia' ) ? 'SALVAT' : 'CBL', customWidth, customHeight, customDepth, customWeight, pArea );
         this.update( 'SEUR', customWidth, customHeight, customDepth, customWeight, sArea ?? pArea );
     }
 
     update( transportName = 'CBL', customWidth, customHeight, customDepth, customWeight, area )
     {
-        const transportIdx = TRANSPORT_NAMES.indexOf( transportName );
+        const transportIdx = TRANSPORT_NAMES.indexOf( transportName ) % 2;
         area = area ?? this.resultArea.sections[transportIdx];
         area.root.innerHTML = '';
 
@@ -332,8 +309,7 @@ class TransportCalculatorApp
 
             const packagingModeContainer = LX.makeContainer( [ '100%', 'auto' ], 'flex flex-col p-1 rounded-xl bg-card', ``, area );
 
-            LX.makeContainer( [ '100%', 'auto' ],
-                'px-4 py-4 flex flex-row gap-2 font-light text-2xl text-secondary-foreground items-center align-center', `
+            LX.makeContainer( [ '100%', 'auto' ], 'px-4 py-4 flex flex-row gap-2 font-light text-2xl text-secondary-foreground items-center align-center', `
                 ${
                 LX.makeIcon( packaging.type == 'Pallet' ? 'Package2' : 'Handbag', {
                     svgClass: `xl ${transportName == 'CBL' ? 'text-destructive' : 'text-info'}`
@@ -376,8 +352,7 @@ class TransportCalculatorApp
                 {
                     this.querySelector( '.collapser' ).click();
                 } );
-                const packagesContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-2 py-3 pl-8 bg-muted rounded-b-lg',
-                    ``, resultsContainer, {
+                const packagesContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-2 py-3 pl-8 bg-muted rounded-b-lg', ``, resultsContainer, {
                     display: collapsed ? 'none' : '',
                     marginTop: '-1.25rem'
                 } );
@@ -416,8 +391,7 @@ class TransportCalculatorApp
             }
 
             {
-                const resultsContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-4 p-4 items-center', ``,
-                    packagingModeContainer );
+                const resultsContainer = LX.makeContainer( [ '100%', '100%' ], 'flex flex-col gap-4 p-4 items-center', ``, packagingModeContainer );
                 LX.makeContainer( [ '100%', 'auto' ], 'flex flex-row gap-8', `
                 <div class="flex flex-row gap-2"><span class="flex text-secondary-foreground text-lg font-light items-center">Zona</span><span class="font-semibold">${zoneNumber}</span></div>
                 <div class="flex flex-row gap-2"><span class="flex text-secondary-foreground text-lg font-light items-center">Ciudad/Provincia</span><span class="font-semibold">${city}</span></div>
@@ -459,7 +433,14 @@ class TransportCalculatorApp
     {
         postalCode = postalCode.toString();
 
-        if ( prefixRule.includes( '-' ) )
+        if ( prefixRule.constructor === Array )
+        {
+            for ( const prefix of prefixRule )
+            {
+                if ( postalCode.startsWith( prefix ) ) return true;
+            }
+        }
+        else if ( prefixRule.includes( '-' ) )
         {
             let [ start, end ] = prefixRule.split( '-' ).map( ( s ) => s.trim() );
             start = Number( start[0] );
@@ -501,7 +482,10 @@ class TransportCalculatorApp
 
     getVolumeBracket( vol, transportName )
     {
-        for ( const bracket of transportName === 'CBL' ? VOLUME_BRACKETS_CBL : VOLUME_BRACKETS_SEUR )
+        const brackets = transportName === 'SALVAT'
+            ? VOLUME_BRACKETS_SALVAT
+            : ( transportName === 'CBL' ? VOLUME_BRACKETS_CBL : VOLUME_BRACKETS_SEUR );
+        for ( const bracket of brackets )
         {
             if ( vol <= bracket ) return bracket;
         }
