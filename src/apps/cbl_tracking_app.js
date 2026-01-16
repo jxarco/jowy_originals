@@ -641,17 +641,23 @@ class CblTrackingApp
                 } );
             }
 
-            invoicePanel.addText( 'Número de Factura', invoiceNumber.toString(), ( v ) => {
+            invoicePanel.addText( 'Número de Factura', invoiceNumber.toString(), ( v, e ) => {
                 v = parseInt( v );
                 invoiceNumber = !Number.isNaN( v ) ? v : 0;
+                if ( e?.constructor === KeyboardEvent && makeInvoiceButton )
+                {
+                    makeInvoiceButton.click();
+                }
             }, { disabled: orderInvoice !== null, placeholder: '000000', nameWidth: '40%', className: 'text-base font-light text-muted-foreground' } );
             invoicePanel.addDate( 'Fecha de Factura', invoiceDate, ( v ) => {
                 invoiceDate = v;
             }, { disabled: orderInvoice !== null, nameWidth: '40%', className: 'text-base font-light text-muted-foreground' } );
 
+            let makeInvoiceButton = null;
+
             if ( orderInvoice === null )
             {
-                invoicePanel.addButton( null, 'Facturar', () => {
+                makeInvoiceButton = invoicePanel.addButton( null, 'Facturar', () => {
                     const dialogClosable = new LX.Dialog( 'Facturar en WooCommerce', ( dialogPanel ) => {
                         dialogPanel.addTextArea( null, `Vas a facturar con los siguientes datos en WooCommerce (pedido ${orderNumber}). Revisa los datos antes de continuar.`, null,
                             { fitHeight: true, disabled: true } );
