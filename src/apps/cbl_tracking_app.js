@@ -662,16 +662,18 @@ class CblTrackingApp
                         dialogPanel.addTextArea( null, `Vas a facturar con los siguientes datos en WooCommerce (pedido ${orderNumber}). Revisa los datos antes de continuar.`, null,
                             { fitHeight: true, disabled: true } );
                         dialogPanel.addSeparator();
-                        dialogPanel.addNumber( 'Número de Factura', invoiceNumber, () => {}, { disabled: true, nameWidth: '40%', className: 'text-lg text-muted-foreground' } );
-                        dialogPanel.addText( 'Fecha de Factura', invoiceDate, () => {}, { disabled: true, nameWidth: '40%', className: 'text-lg text-muted-foreground' } );
+                        dialogPanel.addNumber( 'Número de Factura', invoiceNumber, () => {}, { disabled: true, nameWidth: '40%', className: 'text-muted-foreground' } );
+                        dialogPanel.addText( 'Fecha de Factura', invoiceDate, () => {}, { disabled: true, nameWidth: '40%', className: 'text-muted-foreground' } );
                         dialogPanel.addSeparator();
                         dialogPanel.addCheckbox( 'Añadir nota de seguimiento', customerNote, ( v ) => {
                             customerNote = v;
-                        }, { disabled: false, nameWidth: '60%', className: 'primary text-lg' } );
-                        dialogPanel.sameLine( 2, 'justify-right mt-2' );
-                        dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), {
-                            buttonClass: 'text-destructive'
+                        }, { disabled: false, nameWidth: '60%', className: 'primary' } );
+                        dialogPanel.addSeparator();
+                        dialogPanel.sameLine();
+                        const closeButton = dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), {
+                            width: "50%", buttonClass: 'destructive'
                         } );
+                        LX.doAsync( () => closeButton.root.querySelector( 'button' ).focus(), 10 );
                         dialogPanel.addButton( null, 'Continuar', async () => {
                             dialogClosable.close();
 
@@ -725,7 +727,8 @@ class CblTrackingApp
 
                             // refresh
                             this.showMessages( compName, rowOffset );
-                        }, { buttonClass: 'primary' } );
+                        }, { width: "50%", buttonClass: 'primary' } );
+                        dialogPanel.endLine();
                     }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: true, draggable: false } );
                 }, { buttonClass: 'primary' } );
             }
