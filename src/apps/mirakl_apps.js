@@ -2,7 +2,7 @@ import { LX } from 'lexgui';
 import { MiraklClient } from '../mirakl-api.js';
 
 const VENDOR_TEMPLATES = {
-    'DECATHLON_COLUMN_DATA': [
+    'DECATHLON_LABEL_DATA': [
         [ 'order_id', 'Número del pedido' ],
         [ 'ID del artículo', null, ( str, row ) => {
             const items = row['order_lines'];
@@ -113,15 +113,9 @@ class LabelsApp
             tooltip: true
         } );
 
-        const moreOptionsButtonComp = utilButtonsPanel.addButton( null, 'MoreOptionsButton', ( value, event ) => {
-            LX.addDropdownMenu( moreOptionsButtonComp.root, [
-                {
-                    name: 'Actualizar pedidos',
-                    icon: 'RefreshCw',
-                    callback: () => this.showOrders( vendor_lc )
-                }
-            ], { side: 'bottom', align: 'start' } );
-        }, { buttonClass: 'lg outline', icon: 'EllipsisVertical', title: 'Más opciones', tooltip: true } );
+        utilButtonsPanel.addButton( null, 'UpdateOrdersButton', ( value, event ) => {
+            this.showOrders( vendor_lc )
+        }, { buttonClass: 'lg outline', icon: 'RefreshCw', title: 'Actualizar pedidos', tooltip: true } );
 
         utilButtonsPanel.endLine();
 
@@ -437,18 +431,20 @@ class LabelsApp
         for ( const repeats of multipleItemsOrderNames )
         {
             const finalIndex = repeats[0];
+            const finalRow = tableData[finalIndex];
+            const finalQuantity = finalRow[1];
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => {
                 const q = tableData[c][1]; // Get quantity
                 return p + ` + ${tableData[c][0]}${q > 1 ? ` x ${q}` : ''}`;
-            }, ` x ${tableData[finalIndex][1]}` );
+            }, finalQuantity > 1 ? ` x ${finalQuantity}` : '' );
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
             } );
-            tableData[finalIndex][0] += trail; // Add REF trail
-            tableData[finalIndex][0] = `<span title="${tableData[finalIndex][0]}">${tableData[finalIndex][0]}</span>`;
-            tableData[finalIndex][1] = 1; // Set always 1 UNIT for multiple item orders
-            tableData[finalIndex][5] = 'Mismo pedido'; // Add NOTES
+            finalRow[0] += trail; // Add REF trail
+            finalRow[0] = `<span title="${finalRow[0]}">${finalRow[0]}</span>`;
+            finalRow[1] = 1; // Set always 1 UNIT for multiple item orders
+            finalRow[5] = 'Mismo pedido'; // Add NOTES
         }
 
         tableData = tableData.filter( ( r ) => r !== undefined );
@@ -615,7 +611,7 @@ class LabelsApp
 
     exportSEUR( ignoreErrors = false, ordersData )
     {
-        let columnData = VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_COLUMN_DATA'];
+        let columnData = VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_LABEL_DATA'];
 
         const currentOrdersData = ordersData ?? this.lastSeurData;
 
@@ -807,10 +803,11 @@ class LabelsApp
             const finalIndex = repeats[0];
             const rest = repeats.slice( 1 );
             let finalRow = rows[finalIndex];
+            const finalQuantity = finalRow.at( -1 );
             const trail = rest.reduce( ( p, c ) => {
                 const q = rows[c].at( -1 ); // Get quantity (last col)
                 return p + ` + ${rows[c][skuIdx]}${q > 1 ? ` x ${q}` : ''}`;
-            }, ` x ${finalRow.at( -1 )}` );
+            }, finalQuantity > 1 ? ` x ${finalQuantity}` : '' );
             rest.forEach( ( r ) => {
                 rows[r] = undefined;
             } );

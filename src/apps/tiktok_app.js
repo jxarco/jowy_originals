@@ -1,6 +1,6 @@
 import { LX } from 'lexgui';
 
-const TIKTOK_COLUMN_DATA = [
+const TIKTOK_LABEL_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'SKU ID', 'ID del artículo' ],
     [ 'Seller SKU', 'SKU del vendedor' ],
@@ -16,27 +16,34 @@ const TIKTOK_COLUMN_DATA = [
     [ 'Email', 'Correo electrónico de usuario' ]
 ];
 
+    // (str, row, tracking_data, app)
 const TIKTOK_TRACKING_COLUMN_DATA = [
-    // [ 'Número del pedido', 'Order Number' ],
-    // [ 'ID del artículo', 'Item ID' ],
-    // [ 'Tracking Number', null, ( str, row, tdata) => {
-    //     const name = row['Nombre de usuario completo'].toUpperCase();
-    //     const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === name );
-    //     if( !tentry )
-    //     {
-    //         const status = core.trackStatusColors['Incidencia'];
-    //         let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
-    //         return `${
-    //             LX.badge( iconStr, 'text-xs font-bold border-none ', {
-    //                 style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
-    //                     color: status.fg ?? '' }
-    //             } )
-    //         }`;
-    //     }
-    //     return tentry['LOCALIZADOR'];
-    // } ],
-    // [ 'Logistics Provider', null, () => 'SEUR' ],
-    // [ 'Delete', null, () => '' ]
+    [ 'Order ID', 'ID de pedido' ],
+    [ 'Nombre del almacén', null, () => '' ],
+    [ 'Destino', null, () => '' ],
+    [ 'ID de SKU', null, () => '' ],
+    [ 'Nombre de producto', null, () => '' ],
+    [ 'Variantes', null, () => '' ],
+    [ 'Cantidad', null, () => '' ],
+    [ 'Nombre del transportista', null, () => 'Seur' ],
+    [ 'ID de seguimiento', null, ( str, row, tdata) => {
+        const name = row['Recipient'].toUpperCase();
+        const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === name );
+        if( !tentry )
+        {
+            app._trackingSyncErrors = true;
+            const status = core.trackStatusColors['Incidencia'];
+            let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
+            return `${
+                LX.badge( iconStr, 'text-xs font-bold border-none ', {
+                    style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
+                        color: status.fg ?? '' }
+                } )
+            }`;
+        }
+        return tentry['LOCALIZADOR'];
+    } ],
+    [ 'ID de recibo', null, () => '' ]
 ];
 
 class TikTokApp
@@ -65,12 +72,12 @@ class TikTokApp
             title: 'Exportar Etiquetas',
             tooltip: true
         } );
-        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
-            buttonClass: 'lg outline',
-            icon: 'FileDown',
-            title: 'Exportar Seguimiento',
-            tooltip: true
-        } );
+        // utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
+        //     buttonClass: 'lg outline',
+        //     icon: 'FileDown',
+        //     title: 'Exportar Seguimiento',
+        //     tooltip: true
+        // } );
         utilButtonsPanel.endLine();
         this.area.attach( utilButtonsPanel.root );
 
@@ -85,21 +92,21 @@ class TikTokApp
 
         // Groups List
         const groupsListContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showGroupsByCountryList() } );
+        tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
 
         const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
         groupsListContainer.appendChild( groupsListArea.root );
 
         // Tracking info
-        // const trackingContainer = LX.makeContainer( [ null, 'auto' ],
-        //     'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        // tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
-        //     trackingArea.root.innerHTML = "";
-        //     trackingArea.attach( this.getTrackingDataDropZone() );
-        // } } );
+        const trackingContainer = LX.makeContainer( [ null, 'auto' ],
+            'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
+            trackingArea.root.innerHTML = "";
+            trackingArea.attach( this.core.getTrackingDataDropZone( this.area, this.showTrackingList.bind( this ) ) );
+        } } );
 
         const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
-        // trackingContainer.appendChild( trackingArea.root );
+        trackingContainer.appendChild( trackingArea.root );
 
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
@@ -124,77 +131,10 @@ class TikTokApp
         }
 
         this.showTiktokList( fileData );
-        this.showGroupsByCountryList( fileData );
+        this.showStockList( fileData );
     }
 
-    getTrackingDataDropZone()
-    {
-        const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center text-center border-top border-bottom gap-4 px-8 py-8', `
-            <div class="flex flex-row gap-2 items-center">
-                ${LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML}
-            </div>
-            <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un listado de trackings.</p>
-        `, this.area );
-        dropZone.style.transition = 'transform 0.1s ease-in';
-
-        // add file drag and drop event to dropZone
-        dropZone.addEventListener( 'dragover', ( event ) => {
-            event.preventDefault();
-            event.stopPropagation();
-            dropZone.classList.add( 'draggingover' );
-        } );
-
-        dropZone.addEventListener( 'dragleave', ( event ) => {
-            event.preventDefault();
-            event.stopPropagation();
-            dropZone.classList.remove( 'draggingover' );
-        } );
-
-        dropZone.addEventListener( 'drop', ( event ) => {
-            event.preventDefault();
-            event.stopPropagation();
-            dropZone.classList.remove( 'draggingover' );
-
-            // Check if a file was dropped
-            if ( event.dataTransfer.files.length > 0 )
-            {
-                const file = event.dataTransfer.files[0];
-                if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
-                {
-                    const reader = new FileReader();
-                    reader.onload = ( e ) => {
-                        const data = e.target.result;
-
-                        try
-                        {
-                            const workbook = XLSX.read( data, { type: 'binary' } );
-                            core.sheetName = workbook.SheetNames[0];
-                            const sheet = workbook.Sheets[core.sheetName];
-                            const rowsData = XLSX.utils.sheet_to_json( sheet, { raw: false } );
-                            this.showTrackingList( rowsData );
-
-                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
-                        }
-                        catch ( e )
-                        {
-                            LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
-                        }
-                    };
-
-                    // Read the data as binary
-                    reader.readAsArrayBuffer( file );
-                }
-                else
-                {
-                    alert( 'Please drop a valid .xlsx file.' );
-                }
-            }
-        } );
-
-        return dropZone;
-    }
-
-    showTiktokList( data )
+    showTiktokList( data, clean = false )
     {
         data = data ?? this.lastSeurData;
 
@@ -204,6 +144,11 @@ class TikTokApp
         while ( dom.children.length > 0 )
         {
             dom.removeChild( dom.children[0] );
+        }
+
+        if ( clean )
+        {
+            return;
         }
 
         // Sort by ref
@@ -216,7 +161,7 @@ class TikTokApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of TIKTOK_COLUMN_DATA )
+            for ( let c of TIKTOK_LABEL_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -233,8 +178,11 @@ class TikTokApp
             return lRow;
         } );
 
+        this.core.setHeaderTitle( `TikTok: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.',
+            'TikTok' );
+
         const tableWidget = new LX.Table( null, {
-            head: TIKTOK_COLUMN_DATA.map( ( c ) => {
+            head: TIKTOK_LABEL_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
@@ -254,60 +202,7 @@ class TikTokApp
         console.log( 'tiktok', this.lastSeurData );
     }
 
-    showTrackingList( trackingData )
-    {
-        console.log( trackingData );
-
-        const data = this.lastSeurData;
-
-        this.vendor = 'TikTok';
-
-        const dom = this.trackingArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
-
-        // Create table data from the list
-        const tableData = data.map( ( row ) => {
-            const lRow = [];
-            for ( let c of TIKTOK_TRACKING_COLUMN_DATA )
-            {
-                const ogColName = c[0];
-                if ( ogColName.includes( '+' ) )
-                {
-                    const tks = ogColName.split( '+' );
-                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                }
-                else
-                {
-                    const fn = c[2] ?? ( ( str ) => str );
-                    lRow.push( fn( row[ogColName] ?? '?', row, trackingData ) );
-                }
-            }
-            return lRow;
-        } );
-
-        const tableWidget = new LX.Table( null, {
-            head: TIKTOK_TRACKING_COLUMN_DATA.map( ( c ) => {
-                return c[1] ?? c[0];
-            } ),
-            body: tableData
-        }, {
-            selectable: true,
-            sortable: false,
-            toggleColumns: true,
-            centered: true,
-            filter: 'Tracking Number'
-        } );
-
-        dom.appendChild( tableWidget.root );
-
-        this.lastSeurTrackingsColumnData = tableWidget.data.head;
-        this.lastShownSeurTrackingsData = tableWidget.data.body;
-    }
-
-    showGroupsByCountryList( ogData )
+    showStockList( ogData )
     {
         ogData = ogData ?? this.lastSeurData;
 
@@ -327,8 +222,10 @@ class TikTokApp
         }
 
         let columnData = [
-            [ 'Seller SKU', 'SKU del vendedor' ],
-            [ 'Cantidad', null, ( str, row ) => parseInt( row['Quantity'] ) ],
+            [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => {
+                return core.getFinalSku( str );
+            } ],
+            [ 'Unidades', null, ( str, row ) => parseInt( row['Quantity'] ) ],
             [ 'Transporte', null, ( str, row ) => {
                 const sku = this.core.getFinalSku( row['Seller SKU'] );
                 return core.getTransportForItem( row['Seller SKU'], parseInt( row['Quantity'] ) );
@@ -376,19 +273,21 @@ class TikTokApp
 
         for ( const repeats of multipleItemsOrderNames )
         {
+            const finalIndex = repeats[0];
+            const finalRow = tableData[finalIndex];
+            const finalQuantity = finalRow[1];
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => {
                 const q = tableData[c][1]; // Get quantity
                 return p + ` + ${tableData[c][0]}${q > 1 ? ` x ${q}` : ''}`;
-            }, '' );
+            }, finalQuantity > 1 ? ` x ${finalQuantity}` : '' );
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
             } );
-            const finalIndex = repeats[0];
-            tableData[finalIndex][0] += trail; // Add REF trail
-            tableData[finalIndex][0] = `<span title="${tableData[finalIndex][0]}">${tableData[finalIndex][0]}</span>`;
-            tableData[finalIndex][1] = 1; // Set always 1 UNIT for multiple item orders
-            tableData[finalIndex][5] = 'Mismo pedido'; // Add NOTES
+            finalRow[0] += trail; // Add REF trail
+            finalRow[0] = `<span title="${finalRow[0]}">${finalRow[0]}</span>`;
+            finalRow[1] = 1; // Set always 1 UNIT for multiple item orders
+            finalRow[5] = 'Mismo pedido'; // Add NOTES
         }
 
         tableData = tableData.filter( ( r ) => r !== undefined );
@@ -401,7 +300,11 @@ class TikTokApp
 
         for ( let row of tableData )
         {
-            const sku = `${row[0]}_${row[4]}`; // SKU _ País
+            // if sku starts with "JW-T60", never combine with others, so we must
+            // add a unique identifier in the sku
+            let sku = `${row[0]}_${row[4]}`; // SKU _ País
+            sku += sku.includes( 'JW-T60' ) ? `_${LX.guidGenerator()}` : '';
+
             const q = row[1];
             const notes = row[5];
 
@@ -409,7 +312,9 @@ class TikTokApp
             row.splice( 6, 1 );
 
             // If same order or more than 1 unit, do not merge items
-            if ( notes === 'Mismo pedido' || q > 1 )
+            if ( q > 1 
+                // || notes === 'Mismo pedido'
+             )
             {
                 listSKU.push( row );
                 continue;
@@ -430,16 +335,17 @@ class TikTokApp
             }
         }
 
+        // do it by individual units, not in item combined orders
         for ( let row of listSKU )
         {
             const sku = row[0];
-            if (
-                sku.startsWith( 'JW-T60' ) && !sku.includes( '+' )
-                // && row[5] !== 'Mismo pedido'
-            )
+
+            if ( sku.includes( '+' ) )
             {
-                row[1] *= 4;
+                continue;
             }
+
+            row[1] = this.core.getIndividualQuantityPerPack( sku, parseInt( row[1] ) );
         }
 
         const tableWidget = new LX.Table( null, {
@@ -485,9 +391,61 @@ class TikTokApp
         dom.appendChild( tableWidget.root );
     }
 
+    showTrackingList( trackingData )
+    {
+        const data = this.lastSeurData;
+
+        const dom = this.trackingArea.root;
+        while ( dom.children.length > 0 )
+        {
+            dom.removeChild( dom.children[0] );
+        }
+
+        this._trackingSyncErrors = false;
+
+        // Create table data from the list
+        const tableData = data.map( ( row ) => {
+            const lRow = [];
+            for ( let c of TIKTOK_TRACKING_COLUMN_DATA )
+            {
+                const ogColName = c[0];
+                if ( ogColName.includes( '+' ) )
+                {
+                    const tks = ogColName.split( '+' );
+                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
+                }
+                else
+                {
+                    const fn = c[2] ?? ( ( str ) => str );
+                    const val = fn( row[ogColName] ?? '?', row, trackingData, this );
+                    lRow.push( val );
+                }
+            }
+            return lRow;
+        } );
+
+        const tableWidget = new LX.Table( null, {
+            head: TIKTOK_TRACKING_COLUMN_DATA.map( ( c ) => {
+                return c[1] ?? c[0];
+            } ),
+            body: tableData
+        }, {
+            selectable: true,
+            sortable: false,
+            toggleColumns: true,
+            centered: true,
+            filter: 'Tracking Number'
+        } );
+
+        dom.appendChild( tableWidget.root );
+
+        this.lastSeurTrackingsColumnData = tableWidget.data.head;
+        this.lastShownSeurTrackingsData = tableWidget.data.body;
+    }
+
     exportSEUR( ignoreErrors = false, tiktokData )
     {
-        let columnData = TIKTOK_COLUMN_DATA;
+        let columnData = TIKTOK_LABEL_DATA;
 
         const currentTiktokData = tiktokData ?? this.lastSeurData;
         const uid = columnData[0][0];
@@ -587,6 +545,13 @@ class TikTokApp
         const orderNumbers = new Map();
 
         let rows = currentTiktokData.map( ( row, index ) => {
+
+            // discard orders sent with CBL
+            const sku = this.core.getFinalSku( row['Seller SKU'] );
+            const transport = this.core.getTransportForItem( sku, row['Quantity'] );
+            if( transport === 'CBL' ) return;
+
+
             const lRow = [];
             for ( let c of columnData )
             {
@@ -647,15 +612,18 @@ class TikTokApp
         for ( const repeats of multipleItemsOrderNames )
         {
             const skuIdx = data.indexOf( 'SKU del vendedor' );
+            const finalIndex = repeats[0];
+            const finalRow = rows[finalIndex];
+            const finalQuantity = finalRow['Quantity'];
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => {
                 const q = parseInt( currentTiktokData[c]['Quantity'] ); // Get quantity
                 return p + ` + ${rows[c][skuIdx]}${q > 1 ? ` x ${q}` : ''}`;
-            }, '' );
+            }, finalQuantity > 1 ? ` x ${finalQuantity}` : '' );
             rest.forEach( ( r ) => {
                 rows[r] = undefined;
             } );
-            rows[repeats[0]][skuIdx] += trail;
+            finalRow[skuIdx] += trail;
         }
 
         rows = rows.filter( ( r ) => r !== undefined );
@@ -665,8 +633,16 @@ class TikTokApp
 
     exportSEURTrackings()
     {
+        const filename = 'NUMERODEGUIA.xlsx';
+
+        if ( this._trackingSyncErrors )
+        {
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". Faltan datos.`, { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
         const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
-        this.exportXLSXData( data, 'NUMERODEGUIA.xlsx' );
+        this.exportXLSXData( data, filename );
     }
 
     exportXLSXData( data, filename, ignoreErrors )

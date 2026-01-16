@@ -21,7 +21,7 @@ const SHEIN_COLUMN_LIST_DATA = [
     [ 'Correo electrónico de usuario' ]
 ];
 
-const SHEIN_COLUMN_SEUR_DATA = [
+const SHEIN_LABEL_DATA = [
     [ 'Número del pedido' ],
     [ 'ID del artículo' ],
     [ 'SKU del vendedor', null, ( str, row ) => {
@@ -45,7 +45,6 @@ const SHEIN_TRACKING_COLUMN_DATA = [
     [ 'Tracking Number', null, ( str, row, tdata, app ) => {
         const name = row['Nombre de usuario completo'].toUpperCase();
         const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
-        // const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === 'BEATRIZ HAGGE' );
         if ( !tentry )
         {
             app._trackingSyncErrors = true;
@@ -219,9 +218,6 @@ class SheinApp
             dom.removeChild( dom.children[0] );
         }
 
-        // Boton de copiar por columna (no por fila porque estan separadas en el Excel final)
-        // en caso de repetir "Número del pedido", se tiene que añadir fila por separado
-
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
@@ -279,13 +275,14 @@ class SheinApp
         for ( const repeats of multipleItemsOrderNames )
         {
             const finalIndex = repeats[0];
+            const finalRow = tableData[finalIndex];
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => p + ` + ${tableData[c][0]}`, '' );
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
             } );
-            tableData[finalIndex][0] += trail;
-            tableData[finalIndex][5] = 'Mismo pedido';
+            finalRow[0] += trail;
+            finalRow[5] = 'Mismo pedido';
         }
 
         tableData = tableData.filter( ( r ) => r !== undefined );
@@ -448,7 +445,7 @@ class SheinApp
 
     exportSEUR( ignoreErrors = false, sheinData )
     {
-        let columnData = SHEIN_COLUMN_SEUR_DATA;
+        let columnData = SHEIN_LABEL_DATA;
 
         const currentSheinData = sheinData ?? this.lastSeurData;
         const uid = columnData[0][0];

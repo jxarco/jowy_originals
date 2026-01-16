@@ -166,10 +166,10 @@ const core = {
             // {
             //     this.openApp( this.carrefourApp );
             // }
-            // else if ( lastTool.includes( 'tiktok' ) )
-            // {
-            //     this.openApp( this.tikTokApp );
-            // }
+            else if ( lastTool.includes( 'tiktok' ) )
+            {
+                this.openApp( this.tikTokApp );
+            }
         }
 
         // LX.requestBinary( "listadoenvios.xlsx", (data) => {
@@ -438,16 +438,13 @@ const core = {
     clearData: function()
     {
         console.log( 'Clearing data...' );
-        localStorage.removeItem( 'lastTool' );
 
         this.data['otros'].list = [];
         this.data['jowy'].list = [];
         this.data['hxg'].list = [];
         this.data['bathby'].list = [];
 
-        this.cblTrackingApp.clear();
-        this.sheinApp.clear();
-        this.ordersApp.clear();
+        this.currentApp.clear();
     },
 
     redirectToOAuth: function()
@@ -820,7 +817,7 @@ core.data['bathby'].template = ( id, url, transport ) => {
             submenu: [
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' },
                 { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
-                { name: 'TikTok', disabled: true, callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
+                { name: 'TikTok', callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
                 { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' }
             ]
         },
