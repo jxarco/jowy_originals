@@ -22,7 +22,7 @@ const TIKTOK_ORDERS_DATA = [
 
 const TIKTOK_LABEL_DATA = [
     [ 'Order ID', 'Número del pedido' ],
-    [ 'Bultos', null, ( row, i ) => 1 ],
+    [ 'Bultos', null, ( str, row ) => 1 ],
     [ 'Seller SKU', 'SKU del vendedor' ],
     [ 'Zipcode', 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
     [ 'Country', 'País', null, ( str, row ) => {
@@ -489,9 +489,14 @@ class TikTokApp
                             errorFields.push( [ index, tks[0] ] );
                         }
                     }
-                    else if ( !row[ogColName] )
+                    else
                     {
-                        errorFields.push( [ index, ogColName ] );
+                        const v = c[2] ? c[2]( row[ogColName], row ) : row[ogColName];
+                        if ( v === undefined )
+                        {
+                            debugger;
+                            errorFields.push( [ index, ogColName ] );
+                        }
                     }
                 }
             } );
@@ -609,15 +614,16 @@ class TikTokApp
                 }
                 else
                 {
-                    if ( !ignoreErrors && !row[ogColName] )
+                    const v = c[2] ? c[2]( row[ogColName], row ) : row[ogColName];
+
+                    if ( !ignoreErrors && v === undefined )
                     {
                         err = 1;
                         errMsg = `No existen datos de "${ogColName} (${row[uid]})".`;
                         return;
                     }
 
-                    const fn = c[2] ?? ( ( str ) => str );
-                    lRow.push( fn( row[ogColName] ?? '', row ) );
+                    lRow.push( v );
                 }
             }
             return lRow;
