@@ -334,9 +334,7 @@ class TikTokApp
             row.splice( 6, 1 );
 
             // If same order or more than 1 unit, do not merge items
-            if ( q > 1 
-                // || notes === 'Mismo pedido'
-             )
+            if ( q > 1 )
             {
                 listSKU.push( row );
                 continue;
@@ -494,7 +492,6 @@ class TikTokApp
                         const v = c[2] ? c[2]( row[ogColName], row ) : row[ogColName];
                         if ( v === undefined )
                         {
-                            debugger;
                             errorFields.push( [ index, ogColName ] );
                         }
                     }

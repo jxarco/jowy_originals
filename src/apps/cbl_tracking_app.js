@@ -387,8 +387,8 @@ class CblTrackingApp
             dialogPanel.sameLine( 2, 'justify-right mt-2' );
             dialogPanel.addButton( null, 'Cerrar', () => dialogClosable.close(), { buttonClass: 'text-destructive' } );
             const continueButton = dialogPanel.addButton( null, 'Continuar', async () => {
-                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
-                continueButton.root.querySelector( 'button' ).prepend( spinner );
+                spinner = new LX.Spinner();
+                continueButton.root.querySelector( 'button' ).prepend( spinner.root );
                 const r = await wcc.batchUpdateOrders( orderUpdates );
 
                 dialogClosable.close();
@@ -849,8 +849,8 @@ class CblTrackingApp
 
                 sendNoteButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
                 sendNoteButtonWidget.root.querySelector( '.swap-on' ).classList.add( 'hidden' );
-                const spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
-                sendNoteButtonWidget.root.querySelector( 'button' ).appendChild( spinner );
+                const spinner = new LX.Spinner( { size: '2xl', icon: 'LoaderCircle', iconClass: 'p-2' } );
+                sendNoteButtonWidget.root.querySelector( 'button' ).appendChild( spinner.root );
 
                 {
                     let r = await wcc.createOrderNote( idOrder, getTemplate() );
@@ -860,7 +860,7 @@ class CblTrackingApp
 
                         LX.addClass( sendNoteButtonWidget.root.querySelector( '.swap-on svg' ), 'text-destructive' );
 
-                        spinner.remove();
+                        spinner.destroy();
                         sendNoteButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
                         LX.doAsync( () => {
                             sendNoteButtonWidget.swap( true );
@@ -872,7 +872,7 @@ class CblTrackingApp
 
                     LX.addClass( sendNoteButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
 
-                    spinner.remove();
+                    spinner.destroy();
                     sendNoteButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
                     LX.doAsync( () => {
                         sendNoteButtonWidget.swap( true );
@@ -922,8 +922,8 @@ class CblTrackingApp
 
                 makeInvoiceButtonWidget.root.querySelector( "input[type='checkbox']" ).style.pointerEvents = 'none';
                 makeInvoiceButtonWidget.root.querySelector( '.swap-on' ).classList.add( 'hidden' );
-                const spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
-                makeInvoiceButtonWidget.root.querySelector( 'button' ).appendChild( spinner );
+                const spinner = new LX.Spinner( { size: '2xl', icon: 'LoaderCircle', iconClass: 'p-2' } );
+                makeInvoiceButtonWidget.root.querySelector( 'button' ).appendChild( spinner.root );
 
                 {
                     const iD = `${convertDateDMYtoMDY( invoiceDate )} ${date.getHours()}:${date.getMinutes()}`;
@@ -934,7 +934,7 @@ class CblTrackingApp
 
                         LX.addClass( makeInvoiceButtonWidget.root.querySelector( '.swap-on svg' ), 'text-destructive' );
 
-                        spinner.remove();
+                        spinner.destroy();
                         makeInvoiceButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
                         LX.doAsync( () => {
                             makeInvoiceButtonWidget.swap( true );
@@ -946,7 +946,7 @@ class CblTrackingApp
 
                     LX.addClass( makeInvoiceButtonWidget.root.querySelector( '.swap-on svg' ), 'text-success' );
 
-                    spinner.remove();
+                    spinner.destroy();
                     makeInvoiceButtonWidget.root.querySelector( '.swap-on' ).classList.remove( 'hidden' );
                     LX.doAsync( () => {
                         makeInvoiceButtonWidget.swap( true );

@@ -514,8 +514,8 @@ const core = {
                 cs = value;
             }, { nameWidth: '30%', skipReset: true, type: 'password' } );
             const loginButton = p.addButton( null, 'Login', async ( value, event ) => {
-                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
-                loginButton.root.querySelector( 'button' ).prepend( spinner );
+                spinner = new LX.Spinner();
+                loginButton.root.querySelector( 'button' ).prepend( spinner.root );
                 const r = await this.configureWooCommerce( compName, store, ck, cs );
                 if ( r.ok )
                 {
@@ -528,7 +528,7 @@ const core = {
                 }
                 else
                 {
-                    spinner.remove();
+                    spinner.destroy();
                     LX.emitSignal( '@login_errors', '❌ Credenciales no válidas' );
                 }
             }, { buttonClass: 'primary flex flex-row justify-center gap-2', skipReset: true } );
@@ -627,8 +627,8 @@ const core = {
     makeLoadingDialog( title )
     {
         return new LX.Dialog( title ?? 'Acción en curso, espere...', ( p ) => {
-            let spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex p-2', svgClass: '2xl animate-spin' } );
-            p.attach( spinner );
+            const spinner = new LX.Spinner( { size: '2xl', icon: 'LoaderCircle', iconClass: 'p-2' } );
+            p.attach( spinner.root );
         }, { modal: true, position: [ 'calc(50% - 150px)', '250px' ], size: [ '300px', null ], closable: false, draggable: false } );
     },
 

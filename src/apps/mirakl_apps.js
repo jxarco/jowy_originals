@@ -158,7 +158,6 @@ class LabelsApp
         this.area.attach( utilButtonsPanel.root );
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
-        // core.tabs = tabs.root;
 
         // Marketplace orders
         {
@@ -212,8 +211,8 @@ class LabelsApp
                 at = value;
             }, { nameWidth: '30%', skipReset: true, type: 'password' } );
             const loginButton = p.addButton( null, 'Login', async ( value, event ) => {
-                spinner = LX.makeIcon( 'LoaderCircle', { iconClass: 'flex', svgClass: 'md animate-spin' } );
-                loginButton.root.querySelector( 'button' ).prepend( spinner );
+                spinner = new LX.Spinner();
+                loginButton.root.querySelector( 'button' ).prepend( spinner.root );
 
                 const r = await this.mkClient.authenticate( store, at );
                 if ( r.ok )
@@ -232,7 +231,7 @@ class LabelsApp
                 }
                 else
                 {
-                    spinner.remove();
+                    spinner.destroy();
                     LX.emitSignal( '@login_errors', '❌ Credenciales no válidas' );
                 }
             }, { buttonClass: 'primary flex flex-row justify-center gap-2', skipReset: true } );
@@ -486,9 +485,7 @@ class LabelsApp
             row.splice( 6, 1 );
 
             // If same order or more than 1 unit, do not merge items
-            if ( q > 1 
-                // || notes === 'Mismo pedido'
-             )
+            if ( q > 1 )
             {
                 listSKU.push( row );
                 continue;
