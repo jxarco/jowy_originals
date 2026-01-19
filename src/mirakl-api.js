@@ -108,8 +108,10 @@ export class MiraklClient
      * List orders
      * https://developer.mirakl.com/content/product/mmp/rest/seller/openapi3/orders.md
      */
-    listOrders( params = {} )
+    listOrders( params = {}, page = 1, per_page = 100 )
     {
+        params.page = page;
+        params.max = per_page;
         return this._get( '/api/orders', { query: params } );
     }
 
