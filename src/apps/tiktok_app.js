@@ -4,13 +4,13 @@ const TIKTOK_ORDERS_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'SKU ID', 'ID del artículo' ],
     [ 'Seller SKU', 'SKU del vendedor' ],
-    [ 'Product Name', null, ( str, row ) => {
+    [ 'Product Name', ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
     } ],
     [ 'Quantity', 'Cantidad' ],
     [ 'Recipient', 'Nombre de usuario completo' ],
-    [ 'Zipcode', 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-    [ 'Country', 'País', null, ( str, row ) => {
+    [ 'Zipcode', 'Código Postal', ( str ) => str.replaceAll( /[ -]/g, '' ) ],
+    [ 'Country', 'País', ( str, row ) => {
         return core.countryFormat[str] ?? str;
     } ],
     [ 'Province', 'Provincia' ],
@@ -24,8 +24,8 @@ const TIKTOK_LABEL_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'Bultos', null, ( str, row ) => 1 ],
     [ 'Seller SKU', 'SKU del vendedor' ],
-    [ 'Zipcode', 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-    [ 'Country', 'País', null, ( str, row ) => {
+    [ 'Zipcode', 'Código Postal', ( str ) => str.replaceAll( /[ -]/g, '' ) ],
+    [ 'Country', 'País', ( str, row ) => {
         return core.countryFormat[str] ?? str;
     } ],
     [ 'Province', 'Provincia' ],
@@ -192,7 +192,8 @@ class TikTokApp
                 else
                 {
                     const fn = c[2] ?? ( ( str ) => str );
-                    lRow.push( fn( row[ogColName] ?? '?', row ) );
+                    const val = fn( row[ogColName] ?? '?', row );
+                    lRow.push( val );
                 }
             }
             return lRow;
@@ -253,7 +254,7 @@ class TikTokApp
                 return core.getTransportForItem( row['Seller SKU'], parseInt( row['Quantity'] ) );
             } ],
             [ 'Plataforma', null, () => 'TIKTOK' ],
-            [ 'Country', 'País', null, ( str, row ) => {
+            [ 'Country', 'País', ( str, row ) => {
                 return core.countryFormat[str] ?? str;
             } ],
             [ 'Observaciones', null ],
