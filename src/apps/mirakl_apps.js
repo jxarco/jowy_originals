@@ -836,11 +836,14 @@ class LabelsApp
 
     exportSEURTrackings()
     {
-        const filename = 'NUMERODEGUIA.xlsx';
+        const filename = `NUMERODEGUIA_${this.vendor.toUpperCase()}.xlsx`;
 
         if ( this._trackingSyncErrors )
         {
-            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". Faltan datos.`, { timeout: -1, position: 'top-center' } );
+            new LX.AlertDialog( "Aviso", `⚠️ Faltan datos de tracking. ¿Quieres continuar?`, () => {
+                const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
+                this.exportXLSXData( data, filename );
+            } );
             return;
         }
 
