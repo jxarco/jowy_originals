@@ -157,7 +157,9 @@ class SheinApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                return ( a['SKU del vendedor'] ?? '?' ).localeCompare( b['SKU del vendedor'] ?? '?' );
+                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
+                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                return sku_a.localeCompare( sku_b );
             } );
         }
 
@@ -222,7 +224,9 @@ class SheinApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                return ( a['SKU del vendedor'] ?? '?' ).localeCompare( b['SKU del vendedor'] ?? '?' );
+                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
+                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                return sku_a.localeCompare( sku_b );
             } );
         }
 

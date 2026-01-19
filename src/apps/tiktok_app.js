@@ -3,8 +3,8 @@ import { LX } from 'lexgui';
 const TIKTOK_ORDERS_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'SKU ID', 'ID del artículo' ],
-    [ 'Seller SKU', 'SKU del vendedor' ],
-    [ 'Product Name', ( str, row ) => {
+    [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.getFinalSku( str ) ],
+    [ 'Product Name', null, ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
     } ],
     [ 'Quantity', 'Cantidad' ],
@@ -23,7 +23,7 @@ const TIKTOK_ORDERS_DATA = [
 const TIKTOK_LABEL_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'Bultos', null, ( str, row ) => 1 ],
-    [ 'Seller SKU', 'SKU del vendedor' ],
+    [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.getFinalSku( str ) ],
     [ 'Zipcode', 'Código Postal', ( str ) => str.replaceAll( /[ -]/g, '' ) ],
     [ 'Country', 'País', ( str, row ) => {
         return core.countryFormat[str] ?? str;
@@ -174,7 +174,9 @@ class TikTokApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                return ( a['SKU del vendedor'] ?? '?' ).localeCompare( b['SKU del vendedor'] ?? '?' );
+                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
+                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                return sku_a.localeCompare( sku_b );
             } );
         }
 
@@ -240,7 +242,9 @@ class TikTokApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                return ( a['SKU del vendedor'] ?? '?' ).localeCompare( b['SKU del vendedor'] ?? '?' );
+                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
+                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                return sku_a.localeCompare( sku_b );
             } );
         }
 

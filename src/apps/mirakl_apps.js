@@ -374,13 +374,6 @@ class LabelsApp
             dom.removeChild( dom.children[0] );
         }
 
-        // Sort by ref
-        {
-            data = data.sort( ( a, b ) => {
-                return ( a['SKU del vendedor'] ?? '?' ).localeCompare( b['SKU del vendedor'] ?? '?' );
-            } );
-        }
-
         let columnData = [
             [ 'SKU del vendedor', null, ( row, i ) => {
                 return this.core.getFinalSku( i['offer_sku'] );
