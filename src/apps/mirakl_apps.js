@@ -253,8 +253,6 @@ class LabelsApp
         //     return;
         // }
 
-        core.compName = compName;
-
         if ( !clean && !this.mkClient.connected )
         {
             this.openMiraklLogin( () => this.showOrders( compName, clean ) );
