@@ -466,7 +466,6 @@ class LabelsApp
         for ( let row of tableData )
         {
             const q = row[1];
-            const notes = row[5];
 
             // if sku starts with "JW-T60", never combine with others, so we must
             // add a unique identifier in the sku
@@ -517,7 +516,11 @@ class LabelsApp
             head: columnData.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
-            body: listSKU
+            body: listSKU.sort( ( a, b ) => {
+                const sku_a = a[0];
+                const sku_b = b[0];
+                return sku_a.localeCompare( sku_b );
+            } )
         }, {
             selectable: false,
             sortable: false,
@@ -809,10 +812,10 @@ class LabelsApp
         }
 
         const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
+        const skuIdx = data.indexOf( 'SKU del vendedor' );
 
         for ( const repeats of multipleItemsOrderNames )
         {
-            const skuIdx = data.indexOf( 'SKU del vendedor' );
             const finalIndex = repeats[0];
             const rest = repeats.slice( 1 );
             let finalRow = rows[finalIndex];
@@ -833,6 +836,13 @@ class LabelsApp
         data = data.slice( 0, -1 );
 
         rows = rows.filter( ( r ) => r !== undefined );
+
+        // sort by sku
+        rows = rows.sort( ( a, b ) => {
+            const sku_a = a[skuIdx];
+            const sku_b = b[skuIdx];
+            return sku_a.localeCompare( sku_b );
+        } );
 
         this.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
     }

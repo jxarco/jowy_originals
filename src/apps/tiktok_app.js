@@ -175,8 +175,8 @@ class TikTokApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
-                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                const sku_a = this.core.getFinalSku( a['Seller SKU'] ) ?? '?';
+                const sku_b = this.core.getFinalSku( b['Seller SKU'] ) ?? '?';
                 return sku_a.localeCompare( sku_b );
             } );
         }
