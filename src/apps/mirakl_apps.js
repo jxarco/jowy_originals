@@ -87,7 +87,7 @@ const VENDOR_TEMPLATES = {
         [ 'carrier_standard_code', 'carrier-standard-code', () => '' ],
         [ 'carrier_name', 'carrier-name', () => 'SEUR' ],
         [ 'carrier_url', 'carrier-url', () => 'https://www.seur.com/livetracking?segOnlineIdentificador=%7BtrackingId%7D&segOnlineIdioma=en' ],
-        [ 'tracking_number', 'tracking-number', ( str, row, tdata, app ) => {
+        [ 'tracking_number', 'tracking-number', ( str, row, item, tdata, app ) => {
             const customer = row.customer;
             const str1 = customer?.firstname;
             const str2 = customer?.lastname;
@@ -95,7 +95,7 @@ const VENDOR_TEMPLATES = {
             const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name.toUpperCase() );
             if ( !tentry )
             {
-                app._trackingSyncErrors = true;
+                app._trackingSyncErrors.push( { name, uid: item['order_line_id'] } );
                 const status = core.trackStatusColors['Incidencia'];
                 let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
                 return `${
@@ -142,7 +142,7 @@ class LabelsApp
             tooltip: true
         } );
 
-        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
+        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', () => this.exportSEURTrackings(), {
             buttonClass: 'lg outline',
             icon: 'FileDown',
             title: 'Exportar Seguimiento',
@@ -193,6 +193,7 @@ class LabelsApp
         utilButtonsPanel.attach( tabs.root );
 
         this.trackingArea = trackingArea;
+        this._trackingSyncErrors = [];
 
         this.clear();
     }
@@ -565,7 +566,9 @@ class LabelsApp
             dom.removeChild( dom.children[0] );
         }
 
-        this._trackingSyncErrors = false;
+        this._trackingSyncErrors = [];
+
+        const TRACKING_COL_DATA = VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_TRACKING_DATA'];
 
         // Create table data from the list
         const tableData = [];
@@ -580,7 +583,7 @@ class LabelsApp
 
                 const lRow = [];
 
-                for ( let c of VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_TRACKING_DATA'] )
+                for ( let c of TRACKING_COL_DATA )
                 {
                     const ogColName = c[0];
                     if ( ogColName.includes( '+' ) )
@@ -591,7 +594,7 @@ class LabelsApp
                     else
                     {
                         const fn = c[2] ?? ( ( str ) => str );
-                        const val = fn( item[ogColName] ?? ( row[ogColName] ?? '?' ), row, trackingData, this );
+                        const val = fn( item[ogColName] ?? ( row[ogColName] ?? '?' ), row, item, trackingData, this );
                         lRow.push( val );
                     }
                 }
@@ -601,7 +604,7 @@ class LabelsApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_TRACKING_DATA'].map( ( c ) => {
+            head: TRACKING_COL_DATA.map( ( c ) => {
                 return c[1] ?? c[0];
             } ),
             body: tableData
@@ -834,20 +837,48 @@ class LabelsApp
         this.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
     }
 
-    exportSEURTrackings()
+    exportSEURTrackings( fixedData, ignoreErrors )
     {
         const filename = `NUMERODEGUIA_${this.vendor.toUpperCase()}.xlsx`;
+        const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
 
-        if ( this._trackingSyncErrors )
+        if ( !ignoreErrors && this._trackingSyncErrors.length )
         {
-            new LX.AlertDialog( "Aviso", `⚠️ Faltan datos de tracking. ¿Quieres continuar?`, () => {
-                const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
-                this.exportXLSXData( data, filename );
-            } );
+            const dialog = new LX.Dialog( '❌ Solucionar errores', ( p ) => {
+                LX.addClass( p.root, 'p-2 flex flex-col overflow-scroll' );
+
+                const pTop = new LX.Panel({className: 'flex flex-col gap-1 overflow-scroll'});
+                p.attach( pTop );
+
+                for ( const { name, uid } of this._trackingSyncErrors )
+                {
+                    LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${order_line_id})`, pTop );
+                    const possibleIndex = data.findIndex( d => d[7] === uid );
+                    // console.log(possibleIndex)
+                    const trackAttrName = "tracking-number";
+                    pTop.addText( trackAttrName, "", ( v ) => {
+                        const colIdx = this.lastSeurTrackingsColumnData.indexOf( trackAttrName );
+                        data[possibleIndex][colIdx] = v;
+                    } );
+                    pTop.addSeparator();
+                }
+
+                const pBottom = new LX.Panel( { height: 'auto' } );
+                p.attach( pBottom );
+
+                pBottom.sameLine( 2 );
+                pBottom.addButton( null, 'Ignorar', () => {
+                    dialog.close();
+                    this.exportSEUR( true );
+                }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
+                pBottom.addButton( null, 'Exportar', () => {
+                    dialog.close();
+                    this.exportSEURTrackings( data, true );
+                }, { width: '50%', buttonClass: 'primary' } );
+            }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
             return;
         }
-
-        const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
+        
         this.exportXLSXData( data, filename );
     }
 

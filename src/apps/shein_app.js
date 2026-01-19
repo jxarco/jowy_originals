@@ -47,7 +47,7 @@ const SHEIN_TRACKING_DATA = [
         const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
         if ( !tentry )
         {
-            app._trackingSyncErrors = true;
+            app._trackingSyncErrors.push( { name, uid: `${row['Número del pedido']}_${row['ID del artículo']}` } );
             const status = core.trackStatusColors['Incidencia'];
             let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
             return `${
@@ -86,7 +86,7 @@ class SheinApp
             title: 'Exportar Etiquetas',
             tooltip: true
         } );
-        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', this.exportSEURTrackings.bind( this ), {
+        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', () => this.exportSEURTrackings(), {
             buttonClass: 'lg outline',
             icon: 'FileDown',
             title: 'Exportar Seguimiento',
@@ -127,6 +127,7 @@ class SheinApp
         this.seurDataArea = seurArea;
         this.groupsListArea = groupsListArea;
         this.trackingArea = trackingArea;
+        this._trackingSyncErrors = [];
 
         this.clear();
     }
@@ -162,6 +163,8 @@ class SheinApp
                 return sku_a.localeCompare( sku_b );
             } );
         }
+
+        console.log(data);
 
         // Create table data from the list
         const tableData = data.map( ( row ) => {
@@ -406,7 +409,7 @@ class SheinApp
             dom.removeChild( dom.children[0] );
         }
 
-        this._trackingSyncErrors = false;
+        this._trackingSyncErrors = [];
 
         // Create table data from the list
         const tableData = data.map( ( row ) => {
@@ -649,17 +652,48 @@ class SheinApp
         this.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
     }
 
-    exportSEURTrackings()
+    exportSEURTrackings( fixedData, ignoreErrors )
     {
-        const filename = 'NUMERODEGUIA.xlsx';
+        const filename = 'NUMERODEGUIA_SHEIN.xlsx';
+        const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
 
-        if ( this._trackingSyncErrors )
+        if ( !ignoreErrors && this._trackingSyncErrors.length )
         {
-            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". Faltan datos.`, { timeout: -1, position: 'top-center' } );
+            const dialog = new LX.Dialog( '❌ Solucionar errores', ( p ) => {
+                LX.addClass( p.root, 'p-2 flex flex-col overflow-scroll' );
+
+                const pTop = new LX.Panel({className: 'flex flex-col gap-1 overflow-scroll'});
+                p.attach( pTop );
+
+                for ( const { name, uid } of this._trackingSyncErrors )
+                {
+                    LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${uid})`, pTop );
+                    const possibleIndex = data.findIndex( d => `${d[0]}_${d[1]}` === uid );
+                    // console.log(possibleIndex)
+                    const trackAttrName = "Tracking Number";
+                    pTop.addText( trackAttrName, "", ( v ) => {
+                        const colIdx = this.lastSeurTrackingsColumnData.indexOf( trackAttrName );
+                        data[possibleIndex][colIdx] = v;
+                    } );
+                    pTop.addSeparator();
+                }
+
+                const pBottom = new LX.Panel( { height: 'auto' } );
+                p.attach( pBottom );
+
+                pBottom.sameLine( 2 );
+                pBottom.addButton( null, 'Ignorar', () => {
+                    dialog.close();
+                    this.exportSEUR( true );
+                }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
+                pBottom.addButton( null, 'Exportar', () => {
+                    dialog.close();
+                    this.exportSEURTrackings( data, true );
+                }, { width: '50%', buttonClass: 'primary' } );
+            }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
             return;
         }
-
-        const data = [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
+        
         this.exportXLSXData( data, filename );
     }
 

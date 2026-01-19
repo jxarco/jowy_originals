@@ -222,9 +222,6 @@
   .m-1 {
     margin: calc(var(--spacing) * 1);
   }
-  .my-1 {
-    margin-block: calc(var(--spacing) * 1);
-  }
   .my-4 {
     margin-block: calc(var(--spacing) * 4);
   }
@@ -594,6 +591,17 @@
   .lg\:w-2\/3 {
     @media (width >= 64rem) {
       width: calc(2/3 * 100%);
+    }
+  }
+  .\[\&_span\]\:font-bold {
+    & span {
+      --tw-font-weight: var(--font-weight-bold);
+      font-weight: var(--font-weight-bold);
+    }
+  }
+  .\[\&_span\]\:text-foreground {
+    & span {
+      color: var(--color-foreground);
     }
   }
   .\[\&_svg\]\:h-5\! {
