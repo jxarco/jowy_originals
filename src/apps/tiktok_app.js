@@ -334,7 +334,6 @@ class TikTokApp
             sku += sku.includes( 'JW-T60' ) ? `_${LX.guidGenerator()}` : '';
 
             const q = row[1];
-            const notes = row[5];
 
             // Delete order num
             row.splice( 6, 1 );
@@ -394,7 +393,7 @@ class TikTokApp
                         {
                             return;
                         }
-                        const tsv = colData.map( ( r ) => r.join( '\t' ) ).join( '\n' );
+                        const tsv = LX.stripTags( colData.map( ( r ) => r.join( '\t' ) ).join( '\n' ) );
                         navigator.clipboard.writeText( tsv ).then( () => {
                             LX.toast( 'Hecho!', '✅ Columna copiada al portapapeles.', { timeout: 5000, position: 'top-center' } );
                         } ).catch( ( err ) => {

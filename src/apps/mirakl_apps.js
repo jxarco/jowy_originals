@@ -536,7 +536,7 @@ class LabelsApp
                         {
                             return;
                         }
-                        const tsv = colData.map( ( r ) => r.join( '\t' ) ).join( '\n' );
+                        const tsv = LX.stripTags( colData.map( ( r ) => r.join( '\t' ) ).join( '\n' ) );
                         navigator.clipboard.writeText( tsv ).then( () => {
                             LX.toast( 'Hecho!', '✅ Columna copiada al portapapeles.', { timeout: 5000, position: 'top-center' } );
                         } ).catch( ( err ) => {
