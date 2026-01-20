@@ -123,7 +123,7 @@ class TransportCalculatorApp
 
     execute( transportName, customWidth, customHeight, customDepth, customWeight )
     {
-        if ( this.sku == 'Vacío' || !this.quantity.length || !this.cp.length )
+        if ( this.sku == 'Vacío' || !this.quantity.length || !this.cp.length || !Data.ready )
         {
             return;
         }
@@ -156,12 +156,11 @@ class TransportCalculatorApp
         // - 2,5 cm / 3 cm: entre 26, hasta un máximo de 77.
         // - 4 cm: 30 piezas, hasta un máximo de 45.
 
-        const product = Object.assign( { height: 0, weight: 0, width: 0, depth: 0 }, Data['sku'][this.sku] );
-        product.width = customWidth ?? product.width;
-        product.height = customHeight ?? product.height;
-        product.depth = customDepth ?? product.depth;
-        product.weight = customWeight ?? product.weight;
-        const { height, weight, width, depth } = product;
+        const product = Data['sku'][this.sku];
+        const width = customWidth ?? product['ANCHO'];
+        const height = customHeight ?? product['GROSOR'];
+        const depth = customDepth ?? product['LARGO'];
+        const weight = customWeight ?? product['PESO'];
         const packagingOptions = width === 1.06 && depth === 1.06 ? this.getPackaging( height, q ) : [
             { type: 'Saca', count: 1, unitsPerPackage: [ q ] }
         ];

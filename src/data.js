@@ -1,80 +1,10 @@
 
+let xlsx_loaded = 0;
+
 const Data = {
-    'sku': {
-        'AD12': { 'height': 0.27, 'width': 0.38, 'depth': 0.25, 'weight': 13 },
-        'AD20': { 'height': 0.27, 'width': 0.49, 'depth': 0.27, 'weight': 21 },
-        'AD24': { 'height': 0.30, 'width': 0.54, 'depth': 0.35, 'weight': 25 },
-        'AD32': { 'height': 0.36, 'width': 0.53, 'depth': 0.36, 'weight': 33 },
-        'AD40': { 'height': 0.36, 'width': 0.57, 'depth': 0.36, 'weight': 41 },
-        'AK18': { 'height': 0.33, 'width': 0.25, 'depth': 0.23, 'weight': 19 },
-        'AT20G1': { 'height': 0.75, 'width': 0.23, 'depth': 0.20, 'weight': 9 },
-        'AT20G2': { 'height': 0.75, 'width': 0.24, 'depth': 0.23, 'weight': 10 },
-        'AT30G1': { 'height': 0.75, 'width': 0.23, 'depth': 0.27, 'weight': 12 },
-        'AT30G2': { 'height': 0.75, 'width': 0.26, 'depth': 0.26, 'weight': 13 },
-        'AT40G1': { 'height': 0.75, 'width': 0.28, 'depth': 0.27, 'weight': 14 },
-        'AT40G2': { 'height': 0.75, 'width': 0.28, 'depth': 0.27, 'weight': 18 },
-        'B58': { 'height': 0.62, 'width': 0.63, 'depth': 0.15, 'weight': 3 },
-        'BPB02': { 'height': 0, 'width': 0, 'depth': 0, 'weight': 19 },
-        'CB713': { 'height': 0.64, 'width': 0.05, 'depth': 0.05, 'weight': 1 },
-        'CD020': { 'height': 0.9, 'width': 0.24, 'depth': 0.19, 'weight': 5 },
-        'CD040': { 'height': 0.28, 'width': 0.22, 'depth': 0.12, 'weight': 9 },
-        'CD060': { 'height': 0.30, 'width': 0.26, 'depth': 0.12, 'weight': 13 },
-        'CD080': { 'height': 0.14, 'width': 0.32, 'depth': 0.28, 'weight': 17 },
-        'CD100': { 'height': 0.15, 'width': 0.35, 'depth': 0.30, 'weight': 21 },
-        'CD125': { 'height': 0.15, 'width': 0.35, 'depth': 0.17, 'weight': 13 },
-        'CD150': { 'height': 0.15, 'width': 0.36, 'depth': 0.17, 'weight': 16 },
-        'CD175': { 'height': 0.16, 'width': 0.37, 'depth': 0.18, 'weight': 18 },
-        'CD200': { 'height': 0.16, 'width': 0.39, 'depth': 0.19, 'weight': 21 },
-        'CD225': { 'height': 0.17, 'width': 0.39, 'depth': 0.19, 'weight': 23 },
-        'CD250': { 'height': 0.17, 'width': 0.40, 'depth': 0.21, 'weight': 26 },
-        'CD275': { 'height': 0.17, 'width': 0.41, 'depth': 0.21, 'weight': 28 },
-        'CD300': { 'height': 0, 'width': 0, 'depth': 0, 'weight': 30 },
-        'GPB01': { 'height': 0.66, 'width': 0.80, 'depth': 0.10, 'weight': 4 },
-        'PB16': { 'height': 0.25, 'width': 0.5, 'depth': 0.20, 'weight': 1 },
-        'PK04': { 'height': 0.27, 'width': 0.18, 'depth': 0.16, 'weight': 5 },
-        'PK08': { 'height': 0.28, 'width': 0.23, 'depth': 0.22, 'weight': 9 },
-        'PK12': { 'height': 0.29, 'width': 0.23, 'depth': 0.22, 'weight': 13 },
-        'PK16': { 'height': 0.30, 'width': 0.23, 'depth': 0.22, 'weight': 17 },
-        'PK20': { 'height': 0.35, 'width': 0.29, 'depth': 0.28, 'weight': 21 },
-        'SB25': { 'height': 0.60, 'width': 0.20, 'depth': 0.20, 'weight': 26 },
-        'STS': { 'height': 0.25, 'width': 0.20, 'depth': 0.07, 'weight': 1 },
-        'TP01': { 'height': 0.82, 'width': 0.50, 'depth': 0.25, 'weight': 15 },
-        'TP02': { 'height': 0.130, 'width': 0.25, 'depth': 0.45, 'weight': 30 },
-        'YMN10': { 'height': 0.60, 'width': 0.18, 'depth': 0.14, 'weight': 1 },
-        'W805': { 'height': 0.05, 'width': 0.22, 'depth': 0.08, 'weight': 2 },
-        'W810': { 'height': 0.06, 'width': 0.27, 'depth': 0.09, 'weight': 3 },
-        'W815': { 'height': 0.6, 'width': 0.29, 'depth': 0.10, 'weight': 4 },
-        'RT15A': { 'height': 0.50, 'width': 0.50, 'depth': 0.15, 'weight': 5 },
-        'RT15LA': { 'height': 0.100, 'width': 0.100, 'depth': 0.15, 'weight': 14 },
-
-        'T60': { 'height': 0.04, 'width': 0.61, 'depth': 0.61, 'weight': 2 },
-        'DF20': { 'height': 0.02, 'width': 1.06, 'depth': 1.06, 'weight': 2 },
-        'DF25': { 'height': 0.025, 'width': 1.06, 'depth': 1.06, 'weight': 3 },
-        'DF30': { 'height': 0.03, 'width': 1.06, 'depth': 1.06, 'weight': 3 },
-        'DF40': { 'height': 0.04, 'width': 1.06, 'depth': 1.06, 'weight': 4 },
-        'DS25': { 'height': 0.025, 'width': 1.06, 'depth': 1.06, 'weight': 3 },
-
-        'DT20': { 'height': 0.02, 'width': 1.06, 'depth': 1.06, 'weight': 2 },
-        'DT25': { 'height': 0.025, 'width': 1.06, 'depth': 1.06, 'weight': 3 },
-        'DT40': { 'height': 0.04, 'width': 1.06, 'depth': 1.06, 'weight': 4 },
-
-        'SM75A': { 'height': 0.75, 'width': 0.08, 'depth': 0.08, 'weight': 1 },
-        'BBS': { 'height': 0.22, 'width': 0.22, 'depth': 0.34, 'weight': 1 },
-        'BCS': { 'height': 0.32, 'width': 0.22, 'depth': 0.10, 'weight': 1 },
-        'BHC007H': { 'height': 0.53, 'width': 0.20, 'depth': 0.61, 'weight': 9 },
-        'BTT': { 'height': 0.50, 'width': 0.92, 'depth': 0.20, 'weight': 11 },
-        'FBT01': { 'height': 0.42, 'width': 0.30, 'depth': 0.19, 'weight': 2 },
-        'FBT02': { 'height': 0.42, 'width': 0.30, 'depth': 0.19, 'weight': 2 },
-        'FBT03/04': { 'height': 0.42, 'width': 0.30, 'depth': 0.19, 'weight': 2 },
-        'FBT05': { 'height': 0.76, 'width': 0.48, 'depth': 0.10, 'weight': 2 },
-
-        'PT': { 'height': 0.32, 'width': 0.185, 'depth': 0.37, 'weight': 2 },
-        'MN': { 'height': 0.35, 'width': 0.20, 'depth': 0.3, 'weight': 0 },
-        'TK05B': { 'height': 0.16, 'width': 0.10, 'depth': 0.3, 'weight': 0 },
-        'JR179': { 'height': 0.19, 'width': 0.13, 'depth': 0.1, 'weight': 0 },
-        'JR180': { 'height': 0.19, 'width': 0.13, 'depth': 0.1, 'weight': 0 },
-        'FFS30M': { 'height': 0.020, 'width': 0.08, 'depth': 0.03, 'weight': 0 }
-    },
+    'ready': false,
+    // LOADED USING THE XLSX
+    'sku': {},
     'zoneRules': {
         'España': [
             { 'prefix': '04', city: 'ALMERÍA', zone: [ [ 6 ], [ 3 ] ] },
@@ -222,6 +152,15 @@ const Data = {
     }
 };
 
+const onLoad = () => {
+    xlsx_loaded++;
+    if( xlsx_loaded === 2 )
+    {
+        Data.ready = true;
+        console.log("Data ready")
+    }
+}
+
 LX.requestBinary( "data/salvat.xlsx", (binary) => {
     const workbook = XLSX.read(binary, {type: "binary"});
     const sheetName = workbook.SheetNames[0];
@@ -243,6 +182,40 @@ LX.requestBinary( "data/salvat.xlsx", (binary) => {
             Data.pricesByZone.SALVAT[ i ][ kgs ] = price;
         }
     }
+
+    onLoad();
+} );
+
+LX.requestBinary( "data/products.xlsx", (binary) => {
+    const workbook = XLSX.read(binary, {type: "binary"});
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[ sheetName ];
+    const data = XLSX.utils.sheet_to_json(sheet, { raw: false });
+
+    for( const p of data )
+    {
+        if( !p['GROSOR'] )
+        {
+            continue;
+        }
+
+        // Default values
+        p['ANCHO'] = parseFloat( p['ANCHO'] ?? 0 ) / 100;
+        p['GROSOR'] = parseFloat( p['GROSOR'] ?? 0 ) / 100;
+        p['LARGO'] = parseFloat( p['LARGO'] ?? 0 ) / 100;
+        p['PESO'] = parseFloat( p['PESO'] ?? 0 );
+        p['UDS./BULTO'] = parseFloat( p['UDS./BULTO'] ?? 0 );
+
+        // Remove prefix and store
+        const ogSku = p['CÓDIGO'];
+        p['CÓDIGO'] = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
+
+        Data.sku[ p['CÓDIGO'] ] = p;
+    }
+
+    console.log(Data.sku)
+
+    onLoad();
 
 } );
 
