@@ -844,7 +844,7 @@ class LabelsApp
             return sku_a.localeCompare( sku_b );
         } );
 
-        this.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
+        this.core.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
     }
 
     exportSEURTrackings( fixedData, ignoreErrors )
@@ -889,26 +889,7 @@ class LabelsApp
             return;
         }
         
-        this.exportXLSXData( data, filename );
-    }
-
-    exportXLSXData( data, filename, ignoreErrors )
-    {
-        if ( !( data?.length ) )
-        {
-            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1, position: 'top-center' } );
-            return;
-        }
-
-        const worksheet = XLSX.utils.aoa_to_sheet( data );
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet( workbook, worksheet, this.core.sheetName ?? 'Sheet1' );
-        XLSX.writeFile( workbook, filename );
-
-        if ( !ignoreErrors )
-        {
-            LX.toast( 'Hecho!', `✅ Datos exportados correctamente: ${filename}`, { timeout: 5000, position: 'top-center' } );
-        }
+        this.core.exportXLSXData( data, filename );
     }
 
     open( params )

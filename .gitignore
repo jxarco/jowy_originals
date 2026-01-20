@@ -1,4 +1,5 @@
 *.xlsx
+*.xls
 *.csv
 !data/*
 node_modules/

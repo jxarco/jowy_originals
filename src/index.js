@@ -191,14 +191,14 @@ const core = {
             {
                 this.openApp( this.decathlonApp );
             }
-            // else if ( lastTool.includes( 'carrefour' ) )
-            // {
-            //     this.openApp( this.carrefourApp );
-            // }
             else if ( lastTool.includes( 'tiktok' ) )
             {
                 this.openApp( this.tikTokApp );
             }
+            // else if ( lastTool.includes( 'carrefour' ) )
+            // {
+            //     this.openApp( this.carrefourApp );
+            // }
         }
 
         // LX.requestBinary( "listadoenvios.xlsx", (data) => {
@@ -417,6 +417,25 @@ const core = {
         }
 
         return true;
+    },
+
+    exportXLSXData( data, filename, ignoreErrors )
+    {
+        if ( !( data?.length ) )
+        {
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
+        const worksheet = XLSX.utils.aoa_to_sheet( data );
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet( workbook, worksheet, this.sheetName ?? 'Sheet1' );
+        XLSX.writeFile( workbook, filename );
+
+        if ( !ignoreErrors )
+        {
+            LX.toast( 'Hecho!', `✅ Datos exportados correctamente: ${filename}`, { timeout: 5000, position: 'top-center' } );
+        }
     },
 
     getTransportForItem( sku, quantity )
