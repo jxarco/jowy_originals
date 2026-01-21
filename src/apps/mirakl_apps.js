@@ -122,7 +122,7 @@ const VENDOR_TEMPLATES = {
     ]
 };
 
-class LabelsApp
+class MiraklApp
 {
     constructor( core, vendorName )
     {
@@ -921,4 +921,4 @@ class LabelsApp
     }
 }
 
-export { LabelsApp };
+export { MiraklApp };

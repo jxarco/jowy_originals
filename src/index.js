@@ -2,7 +2,7 @@ import { LX } from 'lexgui';
 import { CblTrackingApp } from './apps/cbl_tracking_app.js';
 import { ChillApp } from './apps/chill_app.js';
 import { ManualApp } from './apps/manual_app.js';
-import { LabelsApp } from './apps/mirakl_apps.js';
+import { MiraklApp } from './apps/mirakl_apps.js';
 import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
 import { TikTokApp } from './apps/tiktok_app.js';
@@ -152,8 +152,8 @@ const core = {
         this.ordersApp = new OrdersApp( this );
         this.transportCalculatorApp = new TransportCalculatorApp( this );
         this.chillApp = new ChillApp( this );
-        this.decathlonApp = new LabelsApp( this, 'Decathlon' );
-        // this.carrefourApp = new LabelsApp( this, 'Carrefour' );
+        this.decathlonApp = new MiraklApp( this, 'Decathlon' );
+        // this.carrefourApp = new MiraklApp( this, 'Carrefour' );
         this.manualApp = new ManualApp( this );
 
         // Footer
@@ -399,11 +399,11 @@ const core = {
         this.sheinApp.area.root.classList.toggle( 'hidden', true );
         this.ordersApp.area.root.classList.toggle( 'hidden', true );
         this.transportCalculatorApp.area.root.classList.toggle( 'hidden', true );
-        this.chillApp.area.root.classList.toggle( 'hidden', true );
         this.decathlonApp.area.root.classList.toggle( 'hidden', true );
-        // this.carrefourApp.area.root.classList.toggle( 'hidden', true );
         this.tikTokApp.area.root.classList.toggle( 'hidden', true );
+        this.chillApp.area.root.classList.toggle( 'hidden', true );
         this.manualApp.area.root.classList.toggle( 'hidden', true );
+        // this.carrefourApp.area.root.classList.toggle( 'hidden', true );
 
         app.open( params );
 
