@@ -765,7 +765,7 @@ class SheinApp
 
         // IVA
         {
-            const IVAContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const IVAContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
             tabs.add( 'IVA', IVAContainer, { selected: true } );
 
             const IVA_COLS = [
@@ -827,7 +827,7 @@ class SheinApp
 
         // LAL
         {
-            const LALContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const LALContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
             tabs.add( 'LAL', LALContainer, { xselected: true } );
 
             const getProductPrice = ( row ) => {
@@ -964,6 +964,9 @@ class SheinApp
 
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
+
+        // i don't know what is this.. removing it by now
+        tmpArea.root.children[1].remove();
     }
 
     exportIVA()
