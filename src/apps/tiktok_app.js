@@ -79,9 +79,8 @@ class TikTokApp
 {
     constructor( core )
     {
-        this.title = 'Gestión de pedidos: <i>CBL</i>';
-        this.subtitle = 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.';
-        this.icon = 'FileText';
+        this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
+        this.icon = 'TikTok'
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
         core.area.attach( this.area );
@@ -129,9 +128,9 @@ class TikTokApp
         // Tracking info
         const trackingContainer = LX.makeContainer( [ null, 'auto' ],
             'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
+        tabs.add( 'Seguimiento', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
             trackingArea.root.innerHTML = "";
-            trackingArea.attach( this.core.getTrackingDataDropZone( this.area, this.showTrackingList.bind( this ) ) );
+            trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
         } } );
 
         const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
@@ -211,8 +210,7 @@ class TikTokApp
             return lRow;
         } );
 
-        this.core.setHeaderTitle( `TikTok: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.',
-            'TikTok' );
+        this.core.setHeaderTitle( `TikTok: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
 
         const tableWidget = new LX.Table( null, {
             head: TIKTOK_ORDERS_DATA.map( ( c ) => {
@@ -718,7 +716,7 @@ class TikTokApp
     open( params )
     {
         this.core.tool = 'tiktok';
-        this.core.setHeaderTitle( `TikTok`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'TikTok' );
+        this.core.setHeaderTitle( `TikTok`, this.subtitle, this.icon );
         this.area.root.classList.toggle( 'hidden', false );
     }
 

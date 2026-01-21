@@ -88,6 +88,12 @@ const core = {
         'France': 'FRANCIA',
         'FR': 'FRANCIA'
     },
+    countryIVA: {
+        'ESPAÑA': 1.21,
+        'PORTUGAL': 1.23,
+        'FRANCIA': 1.2,
+        'ITALIA': 1.22
+    },
     orderStatus: {
         'pending': 'Pendiente de pago',
         'processing': 'Procesando',
@@ -214,33 +220,52 @@ const core = {
         // } );
     },
 
-    onLoadFile: function( file )
+    readExcelFile: function( file )
     {
-        if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
-        {
+        return new Promise( ( resolve, reject ) => {
             const reader = new FileReader();
-            reader.onload = function( e )
-            {
-                const data = e.target.result;
+            reader.onload = (e) => {
+                try {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const rowsData = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
-                try
-                {
-                    const workbook = XLSX.read( data, { type: 'binary' } );
-                    core.sheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[core.sheetName];
-                    if ( core.processData( XLSX.utils.sheet_to_json( sheet, { raw: false } ) ) )
-                    {
-                        LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
-                    }
-                }
-                catch ( e )
-                {
-                    LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
+                    resolve({
+                        sheetName,
+                        rowsData,
+                        fileName: file.name
+                    });
+                } catch (err) {
+                    reject(err);
                 }
             };
 
-            // Read the data as binary
+            reader.onerror = () => reject( reader.error );
             reader.readAsArrayBuffer( file );
+        });
+    },
+
+    onLoadFile: async function( file, callback )
+    {
+        callback = callback ?? this.processData.bind( this );
+
+        if( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
+        {
+            try {
+                const result = await this.readExcelFile( file );
+                if ( callback )
+                {
+                    const r = callback( result.rowsData );
+                    if( r )
+                    {
+                        LX.toast( 'Hecho!', `✅ Datos cargados: ${result.fileName}`, { timeout: 5000, position: 'top-center' } );
+                    }
+                }
+            } catch (e) {
+                LX.toast( 'Error', '❌ No se pudo leer el archivo: ' + e, { timeout: -1, position: 'top-center' } );
+            }
         }
         // else if ( file.name.endsWith( '.csv' ) )
         // {
@@ -622,15 +647,40 @@ const core = {
         return r;
     },
 
-    getTrackingDataDropZone( area, callback )
+    createDropZone( area, callback, string )
     {
-        const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center rounded-xl text-center border-color gap-4 px-12 py-12', `
+        const dropZone = LX.makeContainer( [ null, 'auto' ], 'flex flex-col items-center rounded-xl text-center border-color gap-4 px-12 py-12 cursor-pointer', `
             <div class="flex flex-row gap-2 items-center">
                 ${LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML}
             </div>
-            <p class="font-light" style="max-width:32rem">Arrastra un .xlsx aquí para cargar un listado de trackings.</p>
+            <p class="font-light" style="max-width:32rem">Arrastra un .xlsx o haz click aquí para cargar ${string}.</p>
         `, area );
         dropZone.style.transition = 'transform 0.1s ease-in';
+
+        // add click to load events
+        {
+            const fileInput = document.createElement( 'input' );
+            fileInput.type = 'file';
+            fileInput.multiple = true;
+    
+            fileInput.addEventListener( 'change', async ( e ) => {
+                const files = e.target.files;
+                if ( !files.length ) return;
+                const allDataRows = [];
+                const innerCallback = ( d ) => allDataRows.push( ...d );
+                for( const file of files )
+                {
+                    await this.onLoadFile( file, innerCallback );
+                }
+                if( callback ) callback( allDataRows );
+            } );
+    
+            dropZone.addEventListener( 'click', ( event ) => {
+                event.preventDefault();
+                event.stopPropagation();
+                fileInput.click();
+            } );
+        }
 
         // add file drag and drop event to dropZone
         dropZone.addEventListener( 'dragover', ( event ) => {
@@ -645,49 +695,21 @@ const core = {
             dropZone.classList.remove( 'draggingover' );
         } );
 
-        dropZone.addEventListener( 'drop', ( event ) => {
+        dropZone.addEventListener( 'drop', async ( event ) => {
             event.preventDefault();
             event.stopPropagation();
             dropZone.classList.remove( 'draggingover' );
-
             // Check if a file was dropped
-            if ( event.dataTransfer.files.length > 0 )
+            const files = event.dataTransfer.files;
+            if ( !files.length ) return;
+
+            const allDataRows = [];
+            const innerCallback = ( d ) => allDataRows.push( ...d );
+            for( const file of files )
             {
-                const file = event.dataTransfer.files[0];
-                if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
-                {
-                    const reader = new FileReader();
-                    reader.onload = ( e ) => {
-                        const data = e.target.result;
-
-                        try
-                        {
-                            const workbook = XLSX.read( data, { type: 'binary' } );
-                            core.sheetName = workbook.SheetNames[0];
-                            const sheet = workbook.Sheets[core.sheetName];
-                            const rowsData = XLSX.utils.sheet_to_json( sheet, { raw: false } );
-
-                            if( callback )
-                            {
-                                callback( rowsData );
-                            }
-
-                            LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
-                        }
-                        catch ( e )
-                        {
-                            LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
-                        }
-                    };
-
-                    // Read the data as binary
-                    reader.readAsArrayBuffer( file );
-                }
-                else
-                {
-                    alert( 'Please drop a valid .xlsx file.' );
-                }
+                await this.onLoadFile( file, innerCallback );
             }
+            if( callback ) callback( allDataRows );
         } );
 
         return dropZone;
@@ -699,6 +721,21 @@ const core = {
             const spinner = new LX.Spinner( { size: '2xl', icon: 'LoaderCircle', iconClass: 'p-2' } );
             p.attach( spinner.root );
         }, { modal: true, position: [ 'calc(50% - 150px)', '250px' ], size: [ '300px', null ], closable: false, draggable: false } );
+    },
+
+    getWeekNumber( date = new Date() )
+    {
+        const d = new Date(Date.UTC(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        ));
+
+        const day = d.getUTCDay() || 7; // lunes = 1, domingo = 7
+        d.setUTCDate(d.getUTCDate() + 4 - day);
+
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
     },
 
     _request: function( request )

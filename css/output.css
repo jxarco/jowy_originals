@@ -219,6 +219,9 @@
   .z-1000 {
     z-index: 1000;
   }
+  .m-0 {
+    margin: calc(var(--spacing) * 0);
+  }
   .m-1 {
     margin: calc(var(--spacing) * 1);
   }

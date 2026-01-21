@@ -190,9 +190,9 @@ class LabelsApp
 
         // Tracking info
         const trackingContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
+        tabs.add( 'Seguimiento', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
             trackingArea.root.innerHTML = '';
-            trackingArea.attach( this.core.getTrackingDataDropZone( this.area, this.showTrackingList.bind( this ) ) );
+            trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
         } } );
 
         const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );

@@ -1,5 +1,6 @@
 import { LX } from 'lexgui';
 import { Data } from '../data.js';
+import { NumberFormatter } from '../constants.js';
 
 const VOLUME_BRACKETS_CBL = [ 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 500, 750, 1000, 3000 ];
 const VOLUME_BRACKETS_SEUR = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30 ];
@@ -7,8 +8,6 @@ const VOLUME_BRACKETS_SALVAT = [ 30, 50, 100, 200, 300, 400, 500, 600, 700, 800,
     2500, 2600, 2700, 2800, 2900, 3000 ];
 
 const TRANSPORT_NAMES = [ 'CBL', 'SEUR', 'SALVAT' ];
-
-const NumberFormatter = new Intl.NumberFormat( 'es-ES', { style: 'currency', currency: 'EUR' } );
 
 let lastTotalPrice = [];
 // let lastTotalPackages = 0;

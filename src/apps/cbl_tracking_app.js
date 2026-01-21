@@ -1135,7 +1135,7 @@ class CblTrackingApp
     open( params )
     {
         this.core.tool = 'tracking-messages';
-        this.core.setHeaderTitle( 'Gestión de pedidos <i>WEB</i>', 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'TextSearch' );
+        this.core.setHeaderTitle( 'Gestión de pedidos <i>WEB</i>', 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.', 'TextSearch' );
         this.area.root.classList.toggle( 'hidden', false );
     }
 

@@ -128,7 +128,7 @@ class ManualApp
             } } );
 
             docMaker.header( 'Carga del listado de envíos (CBL).', 'h2', area.root, { className: collapsibleClass, collapsable: true, collapsed: true, collapsableContentCallback: () => {
-                docMaker.paragraph( `En la parte superior de la aplicación se encuentra el área de carga de archivos, donde se debe arrastrar el archivo XLSX generado desde CBL para cargar el listado de envíos. Al realizar la carga, la aplicación leerá el listado de envíos y relacionará cada una de las filas con los pedidos existentes en WooCommerce, <b>sincronizando únicamente aquellos pedidos cuyo número de pedido esté incluido en el campo de referencia</b>.` );
+                docMaker.paragraph( `En la parte superior de la aplicación se encuentra el área de carga de archivos, donde se puede arrastrar el archivo XLSX generado desde CBL (o hacer click para buscarlo) para cargar el listado de envíos. Al realizar la carga, la aplicación leerá el listado de envíos y relacionará cada una de las filas con los pedidos existentes en WooCommerce, <b>sincronizando únicamente aquellos pedidos cuyo número de pedido esté incluido en el campo de referencia</b>.` );
                 docMaker.paragraph( `Si un pedido no dispone de número de referencia, <b>no podrá ser leído ni sincronizado por la aplicación</b>. En listados con más de 100 pedidos, el proceso puede comenzar a funcionar de forma más lenta, lo cual es un comportamiento normal del sistema.` );
             } } );
 
