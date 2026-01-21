@@ -1,5 +1,7 @@
 import { LX } from 'lexgui';
 
+const isFriday = ( new Date().getDay() === 5 );
+
 class ChillApp
 {
     constructor( core )
@@ -93,7 +95,6 @@ class ChillApp
             popPanel.addToggle( 'Ondas', this.waves, ( v ) => this.waves = v, { nameWidth: '60%', className: 'primary', skipReset: true } );
             popPanel.addToggle( 'Mantener música', this.keepMusic, ( v ) => this.keepMusic = v, { nameWidth: '60%', className: 'primary', skipReset: true } );
             popPanel.addSeparator();
-            const isFriday = ( new Date().getDay() === 5 );
             popPanel.addButton( null, isFriday ? '¡YA ES VIERNES!' : 'AÚN NO ES VIERNES...', () => {
                 this.audio.pause();
                 this.audio.src = 'data/OutKast -- Hey Ya Lyrics.mp3';
@@ -102,7 +103,7 @@ class ChillApp
 
             const optButton = panel.addButton( null, 'OpcionesBtn', () => {
                 new LX.Popover( optButton.root, [ popPanel ], { side: 'bottom', align: 'start' } );
-            }, { icon: 'Menu', width: 'fit-content', className: 'absolute top-0 mt-6 ml-2 z-1000' } );
+            }, { icon: 'Menu', width: 'fit-content', className: 'absolute top-0 mt-6 ml-2 z-1000 p-4', buttonClass: `lg ${isFriday ? 'glowing-container' : 'outline'}` } );
 
             const cont = LX.makeElement( 'div', 'relative h-full', '', panel );
 
@@ -145,7 +146,7 @@ class ChillApp
     open( params )
     {
         this.core.tool = 'chill';
-        this.core.setHeaderTitle( `Time to Chill :)`, '', 'Panda' );
+        this.core.setHeaderTitle( `Time to ${isFriday?"be HAPPY, IT'S FRIDAAAY":'Chill'} :)`, '', 'Panda' );
         this.area.root.classList.toggle( 'hidden', false );
 
         if ( this.img )
