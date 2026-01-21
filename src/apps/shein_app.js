@@ -1,4 +1,6 @@
 import { LX } from 'lexgui';
+import { Data } from '../data.js';
+import { Constants, NumberFormatter } from '../constants.js';
 
 const SHEIN_ORDERS_DATA = [
     [ 'Número del pedido' ],
@@ -66,13 +68,14 @@ class SheinApp
 {
     constructor( core )
     {
-        this.icon = 'FileText';
+        this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
+        this.icon = 'Shein';
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         utilButtonsPanel.sameLine();
         utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), {
             buttonClass: 'lg outline',
@@ -98,34 +101,41 @@ class SheinApp
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
 
         // SEUR
-        const seurContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const seurContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.showSheinList() } );
-
-        const seurArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        const seurArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         seurContainer.appendChild( seurArea.root );
 
         // Groups List
-        const groupsListContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const groupsListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
-
-        const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        const groupsListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         groupsListContainer.appendChild( groupsListArea.root );
 
         // Tracking info
-        const trackingContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        tabs.add( 'Tracking', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
+        const trackingContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'Seguimiento', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
             trackingArea.root.innerHTML = '';
-            trackingArea.attach( this.core.getTrackingDataDropZone( this.area, this.showTrackingList.bind( this ) ) );
+            trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
         } } );
-
-        const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        const trackingArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         trackingContainer.appendChild( trackingArea.root );
+
+        // Albaran/IVA/Etc List
+        const albaranContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
+            albaranArea.root.innerHTML = '';
+            albaranArea.attach( this.core.createDropZone( this.area, this.showAlbaranRelatedInfo.bind( this ), 'listados de envíos' ) );
+        } } );
+        const albaranArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        albaranContainer.appendChild( albaranArea.root );
 
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
 
         this.seurDataArea = seurArea;
         this.groupsListArea = groupsListArea;
+        this.albaranArea = albaranArea;
         this.trackingArea = trackingArea;
         this._trackingSyncErrors = [];
 
@@ -186,8 +196,7 @@ class SheinApp
             return lRow;
         } );
 
-        this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.',
-            'Shein' );
+        this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
 
         const tableWidget = new LX.Table( null, {
             head: SHEIN_ORDERS_DATA.map( ( c ) => {
@@ -697,10 +706,201 @@ class SheinApp
         this.core.exportXLSXData( data, filename );
     }
 
+    showAlbaranRelatedInfo( data )
+    {
+        data = data ?? this.lastSeurData;
+
+        const dom = this.albaranArea.root;
+        while ( dom.children.length > 0 )
+        {
+            dom.removeChild( dom.children[0] );
+        }
+
+        // Sort by ref
+        {
+            data = data.sort( ( a, b ) => {
+                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
+                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                return sku_a.localeCompare( sku_b );
+            } );
+        }
+
+        console.log(data);
+        
+        const tmpArea = new LX.Area( { className: 'w-full h-full p-0 m-0', skipAppend: true } );
+        this.albaranArea.attach( tmpArea );
+
+        // Create utility buttons
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
+        utilButtonsPanel.sameLine();
+        utilButtonsPanel.addButton( null, 'ExportIVAButton', () => this.exportIVA(), {
+            buttonClass: 'lg outline',
+            icon: 'Euro',
+            title: 'Exportar IVA',
+            tooltip: true
+        } );
+        utilButtonsPanel.endLine();
+        tmpArea.attach( utilButtonsPanel.root );
+
+        const tabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
+
+        // IVA
+        {
+            const IVAContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            tabs.add( 'IVA', IVAContainer, { selected: true } );
+
+            const getPriceWithoutIVA = ( str, row ) => {
+                let country = row['País'];
+                country = core.countryFormat[country] ?? country;
+                const iva = core.countryIVA[country];
+                if( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: 5000, position: 'top-center' } );
+                const priceWithoutIVA = parseFloat( row['precio de los productos básicos'] ) / ( iva ?? 1.21 );
+                const formatted = NumberFormatter.format( priceWithoutIVA );
+                return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+            };
+
+            const IVA_COLS = [
+                [ 'Número del pedido' ],
+                [ 'Fecha y hora de creación de pedido' ],
+                [ 'SKU del vendedor', 'REF', ( str, row ) => {
+                    return core.getFinalSku( str );
+                } ],
+                [ 'precio de los productos básicos', 'PVP', ( str, row ) => {
+                    const formatted = NumberFormatter.format( str );
+                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ],
+                [ 'PRECIO SIN IVA', null, getPriceWithoutIVA ],
+                [ 'IVA', null, ( str, row ) => {
+                    const priceWithoutIVA = getPriceWithoutIVA( str, row );
+                    const totalIva = parseFloat( row['precio de los productos básicos'] ) - priceWithoutIVA;
+                    const formatted = NumberFormatter.format( totalIva );
+                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ]
+            ];
+
+            // Create table data from the list
+            const tableData = data.map( ( row ) => {
+                const lRow = [];
+                for ( let c of IVA_COLS )
+                {
+                    const ogColName = c[0];
+                    if( ogColName === '' ) continue;
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row ) );
+                }
+                return lRow;
+            } );
+
+            const tableWidget = new LX.Table( null, {
+                head: IVA_COLS.map( ( c ) => {
+                    return c[1] ?? c[0];
+                } ),
+                body: tableData
+            }, {
+                selectable: false,
+                sortable: false,
+                toggleColumns: true,
+                centered: [ 'PVP', 'PRECIO SIN IVA', 'IVA' ],
+                filter: 'Número del pedido'
+            } );
+
+            IVAContainer.appendChild( tableWidget.root );
+
+            this.lastSeurIVAColumnData = tableWidget.data.head;
+            this.lastShownSeurIVAData = tableWidget.data.body;
+        }
+
+        // LAL
+        // {
+        //     const LALContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        //     tabs.add( 'LAL', LALContainer, { xselected: true } );
+
+        //     const LAL_COLS = [
+        //         [ 'Serie', null, () => '1' ], // 'A',
+        //         [ 'Número', null, () => 'Número' ], // 'B',
+        //         [ 'Posición', null, () => 'Posición' ], // 'C',
+        //         [ 'Artículo', null, () => 'Artículo' ], // 'D',
+        //         [ 'Descripción', null, () => 'Descripción' ], // 'E',
+        //         [ 'Cantidad', null, () => 'Cantidad' ], // 'F',
+        //         [ '' ], // 'G',
+        //         [ '' ], // 'H',
+        //         [ '' ], // 'I',
+        //         [ 'Precio', null, () => 'Precio' ], // 'J',
+        //         [ 'Base', null, () => 'Base' ], // 'K',
+        //         [ 'T', null, () => 'T' ], // 'L',
+        //         [ '' ], // 'M',
+        //         [ '' ], // 'N',
+        //         [ '' ], // 'O',
+        //         [ '' ], // 'P',
+        //         [ '' ], // 'Q',
+        //         [ '' ], // 'R',
+        //         [ '' ], // 'S',
+        //         [ '' ], // 'T',
+        //         [ '' ], // 'U',
+        //         [ '' ], // 'V',
+        //         [ '' ], // 'W',
+        //         [ '' ], // 'X',
+        //         [ '' ], // 'Y',
+        //         [ 'I', null, () => 'I' ], // 'Z',
+        //         [ '' ], // 'AA'
+        //         [ '' ], // 'AB'
+        //         [ '' ], // 'AC'
+        //         [ '' ], // 'AD'
+        //         [ '' ], // 'AE'
+        //         [ 'Total', null, () => 'Cantidad' ], // 'AF'
+        //         [ 'CantidadR', null, () => 'Cantidad' ], // 'AG'
+        //     ];
+
+        //     const products = Object.keys( Data.sku );
+
+        //     // for
+
+        //     // Create table data from the list
+        //     const tableData = data.map( ( row ) => {
+        //         const lRow = [];
+        //         for ( let c of LAL_COLS )
+        //         {
+        //             const ogColName = c[0];
+        //             if( ogColName === '' ) continue;
+        //             const fn = c[2] ?? ( ( str ) => str );
+        //             lRow.push( fn( row[ogColName] ?? '?', row ) );
+        //         }
+        //         return lRow;
+        //     } );
+
+        //     const tableWidget = new LX.Table( null, {
+        //         head: LAL_COLS.map( ( c ) => {
+        //             return c[0];
+        //         } ).filter( v => v !== '' ),
+        //         body: tableData
+        //     }, {
+        //         selectable: false,
+        //         sortable: false,
+        //         toggleColumns: true,
+        //         centered: [ 'Serie', 'Posición', 'Número', 'Cantidad', 'Precio', 'Base', 'T', 'I', 'Total', 'CantidadR' ],
+        //         filter: 'Artículo',
+        //         // hiddenColumns: []
+        //     } );
+
+        //     LALContainer.appendChild( tableWidget.root );
+        // }
+
+        // Move up into the panel section
+        utilButtonsPanel.attach( tabs.root );
+    }
+
+    exportIVA()
+    {
+        const weekN = this.core.getWeekNumber();
+        const filename = `IVA_SHEIN_semana${weekN}.xlsx`;
+        const data = [ this.lastSeurIVAColumnData, ...this.lastShownSeurIVAData ];
+        this.core.exportXLSXData( data, filename );
+    }
+
     open( params )
     {
         this.core.tool = 'shein';
-        this.core.setHeaderTitle( `SHEIN`, 'Arrastra un <strong>.xlsx</strong> aquí para cargar un nuevo listado de envíos.', 'Shein' );
+        this.core.setHeaderTitle( `SHEIN`, this.subtitle, this.icon );
         this.area.root.classList.toggle( 'hidden', false );
     }
 
