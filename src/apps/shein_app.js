@@ -706,8 +706,17 @@ class SheinApp
         this.core.exportXLSXData( data, filename );
     }
 
-    showAlbaranRelatedInfo( data )
+    showAlbaranRelatedInfo( data, albNumber )
     {
+        if( !albNumber || Number.isNaN( albNumber ) )
+        {
+            LX.prompt( null, "Número de albarán", (v) => {
+                albNumber = parseFloat( v );
+                this.showAlbaranRelatedInfo( data, albNumber );
+            } );
+            return;
+        }
+
         data = data ?? this.lastSeurData;
 
         const dom = this.albaranArea.root;
@@ -744,38 +753,45 @@ class SheinApp
 
         const tabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
 
+        const getPriceWithoutIVA = ( row ) => {
+            let country = row['País'];
+            country = core.countryFormat[country] ?? country;
+            const iva = core.countryIVA[country];
+            if( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: 5000, position: 'top-center' } );
+            const priceWithoutIVA = parseFloat( row['precio de los productos básicos'] ) / ( iva ?? 1.21 );
+            const formatted = NumberFormatter.format( priceWithoutIVA );
+            return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+        };
+
         // IVA
         {
             const IVAContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
             tabs.add( 'IVA', IVAContainer, { selected: true } );
 
-            const getPriceWithoutIVA = ( str, row ) => {
-                let country = row['País'];
-                country = core.countryFormat[country] ?? country;
-                const iva = core.countryIVA[country];
-                if( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: 5000, position: 'top-center' } );
-                const priceWithoutIVA = parseFloat( row['precio de los productos básicos'] ) / ( iva ?? 1.21 );
-                const formatted = NumberFormatter.format( priceWithoutIVA );
-                return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-            };
-
             const IVA_COLS = [
-                [ 'Número del pedido' ],
-                [ 'Fecha y hora de creación de pedido' ],
+                [ 'País', null, ( str, row ) => {
+                    return core.countryFormat[str] ?? str;
+                } ],
+                [ 'Número del pedido', 'NÚMERO PEDIDO' ],
+                [ 'Fecha y hora de creación de pedido', 'FECHA PEDIDO' ],
                 [ 'SKU del vendedor', 'REF', ( str, row ) => {
                     return core.getFinalSku( str );
+                } ],
+                [ 'CANTIDAD', null, ( str, row ) => {
+                    const sku = core.getFinalSku( row['SKU del vendedor'] );
+                    return core.getIndividualQuantityPerPack( sku, 1 );
+                } ],
+                [ 'PRECIO SIN IVA', null, ( str, row ) => getPriceWithoutIVA( row ) ],
+                [ 'IVA', null, ( str, row ) => {
+                    const priceWithoutIVA = getPriceWithoutIVA( row );
+                    const totalIva = parseFloat( row['precio de los productos básicos'] ) - priceWithoutIVA;
+                    const formatted = NumberFormatter.format( totalIva );
+                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
                 } ],
                 [ 'precio de los productos básicos', 'PVP', ( str, row ) => {
                     const formatted = NumberFormatter.format( str );
                     return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
                 } ],
-                [ 'PRECIO SIN IVA', null, getPriceWithoutIVA ],
-                [ 'IVA', null, ( str, row ) => {
-                    const priceWithoutIVA = getPriceWithoutIVA( str, row );
-                    const totalIva = parseFloat( row['precio de los productos básicos'] ) - priceWithoutIVA;
-                    const formatted = NumberFormatter.format( totalIva );
-                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-                } ]
             ];
 
             // Create table data from the list
@@ -784,7 +800,6 @@ class SheinApp
                 for ( let c of IVA_COLS )
                 {
                     const ogColName = c[0];
-                    if( ogColName === '' ) continue;
                     const fn = c[2] ?? ( ( str ) => str );
                     lRow.push( fn( row[ogColName] ?? '?', row ) );
                 }
@@ -800,8 +815,8 @@ class SheinApp
                 selectable: false,
                 sortable: false,
                 toggleColumns: true,
-                centered: [ 'PVP', 'PRECIO SIN IVA', 'IVA' ],
-                filter: 'Número del pedido'
+                centered: [ 'CANTIDAD', 'PRECIO SIN IVA', 'IVA', 'PVP' ],
+                filter: 'NÚMERO PEDIDO'
             } );
 
             IVAContainer.appendChild( tableWidget.root );
@@ -811,79 +826,141 @@ class SheinApp
         }
 
         // LAL
-        // {
-        //     const LALContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-        //     tabs.add( 'LAL', LALContainer, { xselected: true } );
+        {
+            const LALContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            tabs.add( 'LAL', LALContainer, { xselected: true } );
 
-        //     const LAL_COLS = [
-        //         [ 'Serie', null, () => '1' ], // 'A',
-        //         [ 'Número', null, () => 'Número' ], // 'B',
-        //         [ 'Posición', null, () => 'Posición' ], // 'C',
-        //         [ 'Artículo', null, () => 'Artículo' ], // 'D',
-        //         [ 'Descripción', null, () => 'Descripción' ], // 'E',
-        //         [ 'Cantidad', null, () => 'Cantidad' ], // 'F',
-        //         [ '' ], // 'G',
-        //         [ '' ], // 'H',
-        //         [ '' ], // 'I',
-        //         [ 'Precio', null, () => 'Precio' ], // 'J',
-        //         [ 'Base', null, () => 'Base' ], // 'K',
-        //         [ 'T', null, () => 'T' ], // 'L',
-        //         [ '' ], // 'M',
-        //         [ '' ], // 'N',
-        //         [ '' ], // 'O',
-        //         [ '' ], // 'P',
-        //         [ '' ], // 'Q',
-        //         [ '' ], // 'R',
-        //         [ '' ], // 'S',
-        //         [ '' ], // 'T',
-        //         [ '' ], // 'U',
-        //         [ '' ], // 'V',
-        //         [ '' ], // 'W',
-        //         [ '' ], // 'X',
-        //         [ '' ], // 'Y',
-        //         [ 'I', null, () => 'I' ], // 'Z',
-        //         [ '' ], // 'AA'
-        //         [ '' ], // 'AB'
-        //         [ '' ], // 'AC'
-        //         [ '' ], // 'AD'
-        //         [ '' ], // 'AE'
-        //         [ 'Total', null, () => 'Cantidad' ], // 'AF'
-        //         [ 'CantidadR', null, () => 'Cantidad' ], // 'AG'
-        //     ];
+            const getProductPrice = ( row ) => {
+                const totalFormatted = NumberFormatter.format( row['Total'] );
+                const total = parseFloat( totalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                const productPrice = total / row['Cantidad'];
+                const productPriceFormatted = NumberFormatter.format( productPrice );
+                return parseFloat( productPriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+            };
 
-        //     const products = Object.keys( Data.sku );
+            const LAL_COLS = [
+                [ 'Serie', null, () => '1' ], // 'A',
+                [ 'Número', null, () => albNumber ], // 'B',
+                [ 'Posición', null, () => -1 ], // 'C',
+                [ 'Artículo' ], // 'D',
+                [ 'Descripción' ], // 'E',
+                [ 'Cantidad' ], // 'F',
+                [ '' ], // 'G',
+                [ '' ], // 'H',
+                [ '' ], // 'I',
+                [ 'Precio', null, ( str, row ) => getProductPrice( row ) ], // 'J',
+                [ 'Base', null, ( str, row ) => {
+                    const productPrice = getProductPrice( row );
+                    const basePrice = productPrice * row['Cantidad'];
+                    const basePriceFormatted = NumberFormatter.format( basePrice );
+                    return parseFloat( basePriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ], // 'K',
+                [ 'T', null, () => 0 ], // 'L',
+                [ '' ], // 'M',
+                [ '' ], // 'N',
+                [ '' ], // 'O',
+                [ '' ], // 'P',
+                [ '' ], // 'Q',
+                [ '' ], // 'R',
+                [ '' ], // 'S',
+                [ '' ], // 'T',
+                [ '' ], // 'U',
+                [ '' ], // 'V',
+                [ '' ], // 'W',
+                [ '' ], // 'X',
+                [ '' ], // 'Y',
+                [ 'I', null, () => 0 ], // 'Z',
+                [ '' ], // 'AA'
+                [ '' ], // 'AB'
+                [ '' ], // 'AC'
+                [ '' ], // 'AD'
+                [ '' ], // 'AE'
+                [ 'Total', null, ( str ) => {
+                    const formatted = NumberFormatter.format( str );
+                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ], // 'AF'
+                [ 'Cantidad', 'CantidadR' ], // 'AG'
+            ];
 
-        //     // for
+            const skus = {};
+            const totalTransportPerComp = {
+                'JW': 0,
+                'HG': 0,
+                'FL': 0,
+                'BY': 0,
+            };
 
-        //     // Create table data from the list
-        //     const tableData = data.map( ( row ) => {
-        //         const lRow = [];
-        //         for ( let c of LAL_COLS )
-        //         {
-        //             const ogColName = c[0];
-        //             if( ogColName === '' ) continue;
-        //             const fn = c[2] ?? ( ( str ) => str );
-        //             lRow.push( fn( row[ogColName] ?? '?', row ) );
-        //         }
-        //         return lRow;
-        //     } );
+            data.forEach( ( row ) => {
+                const sku = this.core.getFinalSku( row['SKU del vendedor'] );
+                const prefix = sku.substring( 0, sku.indexOf( '-' ) );
+                let country = row['País'];
+                country = core.countryFormat[country] ?? country;
+                const priceWithoutIVA = getPriceWithoutIVA( row );
+                const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
+                const totalProductTransport = priceWithoutIVA * transportPrice;
+                totalTransportPerComp[prefix] += totalProductTransport;
+                const productTotalFormatted = NumberFormatter.format( priceWithoutIVA - totalProductTransport );
+                const productTotal = parseFloat( productTotalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                const totalQuantity = this.core.getIndividualQuantityPerPack( sku, 1 );
 
-        //     const tableWidget = new LX.Table( null, {
-        //         head: LAL_COLS.map( ( c ) => {
-        //             return c[0];
-        //         } ).filter( v => v !== '' ),
-        //         body: tableData
-        //     }, {
-        //         selectable: false,
-        //         sortable: false,
-        //         toggleColumns: true,
-        //         centered: [ 'Serie', 'Posición', 'Número', 'Cantidad', 'Precio', 'Base', 'T', 'I', 'Total', 'CantidadR' ],
-        //         filter: 'Artículo',
-        //         // hiddenColumns: []
-        //     } );
+                if( !skus[sku] )
+                {
+                    const product = Data.sku[sku];
+                    skus[sku] = {
+                        'Artículo': sku,
+                        'Descripción': product?.['DESCRIPCIÓN'] ?? '',
+                        'Cantidad': totalQuantity,
+                        'Total': productTotal
+                    }
+                }
+                else
+                {
+                    const product = skus[sku];
+                    product['Cantidad'] += totalQuantity;
+                    product['Total'] += productTotal;
+                }
+            } );
 
-        //     LALContainer.appendChild( tableWidget.root );
-        // }
+            // Create table data from the list
+            const modifiedData = Object.values( skus );
+
+            // ORDER: TODO
+
+            modifiedData.push(
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW'] },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG'] },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL'] },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY'] },
+            );
+
+            const tableData = modifiedData.map( ( row ) => {
+                const lRow = [];
+                for ( let c of LAL_COLS )
+                {
+                    const ogColName = c[0];
+                    if( ogColName === '' ) continue;
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row ) );
+                }
+                return lRow;
+            } );
+
+            const tableWidget = new LX.Table( null, {
+                head: LAL_COLS.map( ( c ) => {
+                    return c[1] ?? c[0];
+                } ).filter( v => v !== '' ),
+                body: tableData
+            }, {
+                selectable: false,
+                sortable: false,
+                toggleColumns: true,
+                centered: [ 'Serie', 'Posición', 'Número', 'Cantidad', 'Precio', 'Base', 'T', 'I', 'Total', 'CantidadR' ],
+                filter: 'Artículo',
+                // hiddenColumns: []
+            } );
+
+            LALContainer.appendChild( tableWidget.root );
+        }
 
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
@@ -893,8 +970,26 @@ class SheinApp
     {
         const weekN = this.core.getWeekNumber();
         const filename = `IVA_SHEIN_semana${weekN}.xlsx`;
-        const data = [ this.lastSeurIVAColumnData, ...this.lastShownSeurIVAData ];
-        this.core.exportXLSXData( data, filename );
+        const sheets = [];
+
+        {
+            const spainFilteredRows = LX.deepCopy( this.lastShownSeurIVAData )
+                .filter( row => ( row[0] === 'ESPAÑA' ) )
+                .map( row => row.slice( Constants.IVA_EXPORTS_COUNTRY ? 0 : 1 ) );
+            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( Constants.IVA_EXPORTS_COUNTRY ? 0 : 1 ), ...spainFilteredRows ];
+            sheets.push( this.core.createXLSXSheet( data ) );
+        }
+
+        {
+            const portugalFilteredRows = LX.deepCopy( this.lastShownSeurIVAData )
+                .filter( row => ( row[0] === 'PORTUGAL' ) )
+                .map( row => row.slice( Constants.IVA_EXPORTS_COUNTRY ? 0 : 1 ) );
+            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( Constants.IVA_EXPORTS_COUNTRY ? 0 : 1 ), ...portugalFilteredRows ];
+            sheets.push( this.core.createXLSXSheet( data ) );
+        }
+
+        const workbook = this.core.createXLSXWorkbook( sheets, [ 'ESPAÑA', 'PORTUGAL' ] );
+        this.core.exportXLSXWorkbook( workbook, filename );
     }
 
     open( params )

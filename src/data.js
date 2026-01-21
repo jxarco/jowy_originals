@@ -223,8 +223,8 @@ LX.requestBinary( "data/products.xlsx", (binary) => {
         p['EXCLUIR'] = !!parseFloat( p['EXCLUIR'] ?? 0 );
 
         // Remove prefix and store
-        const ogSku = p['CÓDIGO'];
-        p['CÓDIGO'] = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
+        // const ogSku = p['CÓDIGO'];
+        // p['CÓDIGO'] = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
 
         Data.sku[ p['CÓDIGO'] ] = p;
     }

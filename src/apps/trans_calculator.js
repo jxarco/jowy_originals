@@ -15,7 +15,7 @@ let lastTotalPrice = [];
 class TransportCalculatorApp
 {
     // _sku = "Vacío";
-    _sku = 'AD12';
+    _sku = 'HG-AD12';
     get sku()
     {
         return this._sku;

@@ -469,6 +469,36 @@ const core = {
         return true;
     },
 
+    createXLSXSheet( data )
+    {
+        return XLSX.utils.aoa_to_sheet( data );
+    },
+
+    createXLSXWorkbook( sheets, sheetNames = [] )
+    {
+        const workbook = XLSX.utils.book_new();
+        sheets.forEach( ( sheet, index ) => {
+            XLSX.utils.book_append_sheet( workbook, sheet, sheetNames[index] );
+        } );
+        return workbook;
+    },
+
+    exportXLSXWorkbook( workbook, filename, ignoreErrors )
+    {
+        if ( !( workbook?.SheetNames.length ) )
+        {
+            LX.toast( 'Error', `❌ No se pudo exportar el archivo "${filename}". No existen datos.`, { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
+        XLSX.writeFile( workbook, filename );
+
+        if ( !ignoreErrors )
+        {
+            LX.toast( 'Hecho!', `✅ Datos exportados correctamente: ${filename}`, { timeout: 5000, position: 'top-center' } );
+        }
+    },
+
     exportXLSXData( data, filename, ignoreErrors )
     {
         if ( !( data?.length ) )
@@ -477,8 +507,8 @@ const core = {
             return;
         }
 
-        const worksheet = XLSX.utils.aoa_to_sheet( data );
         const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.aoa_to_sheet( data );
         XLSX.utils.book_append_sheet( workbook, worksheet, this.sheetName ?? 'Sheet1' );
         XLSX.writeFile( workbook, filename );
 
