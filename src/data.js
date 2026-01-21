@@ -3,8 +3,7 @@ let xlsx_loaded = 0;
 
 const Data = {
     'ready': false,
-    // LOADED USING THE XLSX
-    'sku': {},
+    'sku': {}, // LOADED USING THE XLSX
     'zoneRules': {
         'España': [
             { 'prefix': '04', city: 'ALMERÍA', zone: [ [ 6 ], [ 3 ] ] },
@@ -134,27 +133,14 @@ const Data = {
             '10': { '5': 40.34, '10': 40.34, '20': 43.66, '30': 48.96, '40': 52.55, '50': 60.21, '60': 62.04, '70': 67.76, '80': 74.96, '90': 80.88, '100': 87.15, '150': 118.24, '200': 136.52, '250': 151.80, '300': 170.73, '500': 0.510, '750': 0.489, '1000': 0.465, '3000': 0.477, 'max': 0.477 },
             '11': { '5': 63.20, '10': 63.20, '20': 66.07, '30': 67.88, '40': 68.91, '50': 70.71, '60': 71.75, '70': 73.23, '80': 74.59, '90': 75.88, '100': 77.42, '150': 86.36, '200': 98.70, '250': 105.77, '300': 111.02, '500': 0.268, '750': 0.166, '1000': 0.158, '3000': 0.143, 'max': 0.143 }
         },
-        'SEUR': {
-            '1': { '1': 3.1, '2': 3.43, '3': 3.66, '4': 3.89, '5': 4.12, '6': 4.48, '7': 4.79, '8': 5.11, '9': 5.41, '10': 5.72, '15': 6.96, '20': 8.60, '25': 10.50, '30': 12.06, 'max': 0.33 },
-            '2': { '1': 3.44, '2': 3.82, '3': 4.07, '4': 4.33, '5': 4.58, '6': 4.98, '7': 5.32, '8': 5.67, '9': 6.01, '10': 6.35, '15': 7.73, '20': 9.56, '25': 11.67, '30': 13.41, 'max': 0.36 },
-            '3': { '1': 3.44, '2': 3.82, '3': 4.07, '4': 4.33, '5': 4.58, '6': 5.06, '7': 5.51, '8': 6.01, '9': 6.59, '10': 7.36, '15': 9.22, '20': 11.79, '25': 15.16, '30': 18.10, 'max': 0.5 },
-            // PORTUGAL
-            '4': { '1': 3.44, '2': 3.82, '3': 4.07, '4': 4.33, '5': 4.58, '6': 5.06, '7': 5.51, '8': 6.01, '9': 6.59, '10': 7.36, '15': 9.22, '20': 11.79, '25': 15.16, '30': 18.10, 'max': 0.5 },
-            // BALEARES
-            '5': { '1': 5.89, '2': 6.88, '3': 7.68, '4': 8.25, '5': 8.92, '6': 9.85, '7': 10.76, '8': 11.79, '9': 12.89, '10': 13.97, '15': 17.76, '20': 22.17, '25': 27.52, '30': 33.43, 'max': 0.71 },
-            // CANARIAS
-            '6': { '1': 9.45, '2': 12.99, '3': 16.17, '4': 19.22, '5': 22.28, '6': 25.75, '7': 30.05, '8': 35.03, '9': 41.11, '10': 48.96, '15': 62.13, '20': 85.63, '25': 110.52, '30': 142.92, 'max': 3.53 },
-            // CEUTA/MELILLA
-            '7': { '1': 10.71, '2': 12.49, '3': 13.81, '4': 15.02, '5': 16.21, '6': 19.49, '7': 22.53, '8': 23.13, '9': 24.23, '10': 25.58, '15': 32.10, '20': 41.35, '25': 47.67, '30': 60.33, 'max': 1.31 }
-        },
-        // LOADED USING THE XLSX
-        'SALVAT': {}
+        'SEUR': {}, // LOADED USING THE XLSX
+        'SALVAT': {} // LOADED USING THE XLSX
     }
 };
 
 const onLoad = () => {
     xlsx_loaded++;
-    if( xlsx_loaded === 2 )
+    if( xlsx_loaded === 3 )
     {
         Data.ready = true;
         console.log("Data ready")
@@ -170,6 +156,7 @@ LX.requestBinary( "data/salvat.xlsx", (binary) => {
     for( let i = 1; i <= 49; ++i )
     {
         const zone = `ZONA ${i}`;
+        Data.pricesByZone.SALVAT[ i ] = {};
 
         for( const row of data )
         {
@@ -178,12 +165,40 @@ LX.requestBinary( "data/salvat.xlsx", (binary) => {
                 throw( 'Something happened reading SALVAT prices' );
             const kgs = row[ 'KG' ];
 
-            Data.pricesByZone.SALVAT[ i ] = Data.pricesByZone.SALVAT[ i ] ?? {};
-            Data.pricesByZone.SALVAT[ i ][ kgs ] = price;
+            Data.pricesByZone.SALVAT[ i ][ kgs ] = parseFloat( price );
         }
     }
 
+    // console.log(Data.pricesByZone.SALVAT)
+
     onLoad();
+} );
+
+LX.requestBinary( "data/seur.xlsx", (binary) => {
+    const workbook = XLSX.read(binary, {type: "binary"});
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[ sheetName ];
+    const data = XLSX.utils.sheet_to_json(sheet, { raw: false });
+
+    for( let i = 1; i <= 7; ++i )
+    {
+        Data.pricesByZone.SEUR[ i ] = {};
+
+        for( const row of data )
+        {
+            const price = row[ i ];
+            if( !price )
+                throw( 'Something happened reading SALVAT prices' );
+            const kgs = row[ 'Kilos' ];
+
+            Data.pricesByZone.SEUR[ i ][ kgs ] = parseFloat( price );
+        }
+    }
+
+    // console.log(Data.pricesByZone.SEUR)
+
+    onLoad();
+
 } );
 
 LX.requestBinary( "data/products.xlsx", (binary) => {
@@ -213,7 +228,7 @@ LX.requestBinary( "data/products.xlsx", (binary) => {
         Data.sku[ p['CÓDIGO'] ] = p;
     }
 
-    console.log(Data.sku)
+    // console.log(Data.sku)
 
     onLoad();
 
