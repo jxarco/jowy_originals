@@ -123,7 +123,7 @@ class SheinApp
 
         // Albaran/IVA/Etc List
         const albaranContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-        tabs.add( 'Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
+        tabs.add( 'IVA/Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
             albaranArea.root.innerHTML = '';
             albaranArea.attach( this.core.createDropZone( this.area, this.showAlbaranRelatedInfo.bind( this ), 'listados de envíos' ) );
         } } );

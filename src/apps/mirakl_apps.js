@@ -1,6 +1,7 @@
 import { LX } from 'lexgui';
 import { MiraklClient } from '../mirakl-api.js';
 import { Data } from '../data.js';
+import { Constants, NumberFormatter } from '../constants.js';
 
 const VENDOR_TEMPLATES = {
 
@@ -134,7 +135,7 @@ class LabelsApp
         const vendor_lc = vendorName.toLowerCase();
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         utilButtonsPanel.sameLine();
 
         utilButtonsPanel.addButton( null, 'ClearButton', () => core.clearData(), {
@@ -170,32 +171,32 @@ class LabelsApp
 
         // Marketplace orders
         {
-            const ordersContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const ordersContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
             tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( vendor_lc ) } );
 
-            const jowyArea = new LX.Area( { className: 'rounded-lg' } );
-            ordersContainer.appendChild( jowyArea.root );
+            const ordersArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+            ordersContainer.appendChild( ordersArea.root );
             core.data[vendor_lc].domO = ordersContainer;
         }
 
         // Groups List
         {
-            const groupsListContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const groupsListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
             tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
 
-            const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+            const groupsListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
             groupsListContainer.appendChild( groupsListArea.root );
             this.groupsListArea = groupsListArea;
         }
 
         // Tracking info
-        const trackingContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const trackingContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'Seguimiento', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
             trackingArea.root.innerHTML = '';
             trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
         } } );
 
-        const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        const trackingArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         trackingContainer.appendChild( trackingArea.root );
 
         // Move up into the panel section

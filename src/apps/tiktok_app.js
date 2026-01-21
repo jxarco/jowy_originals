@@ -1,5 +1,6 @@
 import { LX } from 'lexgui';
 import { Data } from '../data.js';
+import { Constants, NumberFormatter } from '../constants.js';
 
 const TIKTOK_ORDERS_DATA = [
     [ 'Order ID', 'Número del pedido' ],
@@ -86,7 +87,7 @@ class TikTokApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         utilButtonsPanel.sameLine();
         utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), {
             buttonClass: 'lg outline',
@@ -112,28 +113,27 @@ class TikTokApp
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
 
         // SEUR
-        const seurContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const seurContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.showTiktokList() } );
 
-        const seurArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        const seurArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         seurContainer.appendChild( seurArea.root );
 
         // Groups List
-        const groupsListContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const groupsListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
 
-        const groupsListArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        const groupsListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         groupsListContainer.appendChild( groupsListArea.root );
 
         // Tracking info
-        const trackingContainer = LX.makeContainer( [ null, 'auto' ],
-            'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+        const trackingContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'Seguimiento', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
             trackingArea.root.innerHTML = "";
             trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
         } } );
 
-        const trackingArea = new LX.Area( { className: 'bg-inherit rounded-lg' } );
+        const trackingArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         trackingContainer.appendChild( trackingArea.root );
 
         // Move up into the panel section

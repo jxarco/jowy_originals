@@ -1,4 +1,5 @@
 import { LX } from 'lexgui';
+import { Constants, NumberFormatter } from '../constants.js';
 
 const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.aspx`;
 const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
@@ -23,7 +24,7 @@ class CblTrackingApp
         core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-none p-2 flex flex-row gap-2' } );
+        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         utilButtonsPanel.sameLine( 4 );
 
         const seeMessagesButton = utilButtonsPanel.addButton( null, 'SeeMessagesButton', () => {
@@ -94,30 +95,30 @@ class CblTrackingApp
 
         // Jowy
         {
-            const jowyContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const jowyContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
             tabs.add( 'Jowy', jowyContainer, { selected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
-            const jowyArea = new LX.Area( { className: 'rounded-lg' } );
+            const jowyArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
             jowyContainer.appendChild( jowyArea.root );
             core.data['jowy'].dom = jowyContainer;
         }
 
         // HxG
         {
-            const hxgContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const hxgContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
             tabs.add( 'HxG', hxgContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
-            const hxgArea = new LX.Area( { className: 'rounded-lg' } );
+            const hxgArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
             hxgContainer.appendChild( hxgArea.root );
             core.data['hxg'].dom = hxgContainer;
         }
 
         // Bathby
         {
-            const bathbyContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            const bathbyContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
             tabs.add( 'Bathby', bathbyContainer, { xselected: true, onSelect: ( event, name ) => this.showList( name.toLowerCase() ) } );
 
-            const bathbyArea = new LX.Area( { className: 'rounded-lg' } );
+            const bathbyArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
             bathbyContainer.appendChild( bathbyArea.root );
             core.data['bathby'].dom = bathbyContainer;
         }
