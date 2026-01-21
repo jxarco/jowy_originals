@@ -37,6 +37,12 @@ class ManualApp
             decathlonContainer.appendChild( this.createDecathlonDocs() );
         }
 
+        {
+            const transportCalcContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
+            tabs.add( 'Calc. Transporte', transportCalcContainer, { xselected: true, onSelect: ( event, name ) => {} } );
+            transportCalcContainer.appendChild( this.createTransportCalcDocs() );
+        }
+
         this.clear();
     }
 
@@ -213,6 +219,18 @@ class ManualApp
         docMaker.setDomTarget( area.root );
 
         docMaker.header( LX.makeIcon( 'Construction', { svgClass: 'mr-4 2xl inline-flex!' } ).innerHTML + 'Decathlon.', 'h1' );
+
+        return area.root;
+    }
+
+    createTransportCalcDocs()
+    {
+        const area = new LX.Area( { className: 'help-content rounded-lg bg-card p-8' } );
+
+        const docMaker = new DocMaker();
+        docMaker.setDomTarget( area.root );
+
+        docMaker.header( LX.makeIcon( 'Construction', { svgClass: 'mr-4 2xl inline-flex!' } ).innerHTML + 'Calculadora de transporte.', 'h1' );
 
         return area.root;
     }

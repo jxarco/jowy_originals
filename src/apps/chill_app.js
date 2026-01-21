@@ -12,7 +12,9 @@ class ChillApp
         this.area.attach( panel.root );
 
         this.waves = true;
+        this.keepMusic = false;
         this.audio = new Audio( 'data/KATO - Turn The Lights Off (Dany Coast Edit).mp3' );
+        this.audio.loop = true;
 
         this.canvas = LX.makeElement( 'canvas', 'absolute top-0 left-0 w-full opacity-50', '', panel );
         const ctx = this.canvas.getContext( '2d' );
@@ -81,20 +83,22 @@ class ChillApp
             t += 0.01;
         };
 
-        panel.addButton( null, 'Click here', ( v ) => {
+        panel.addButton( null, 'Iniciar app', ( v ) => {
             panel.clear();
 
             const popPanel = new LX.Panel( { height: 'h-fit', className: '' } );
             popPanel.addRange( 'Volumen', 1, ( v ) => {
                 this.audio.volume = v;
             }, { className: 'primary', min: 0, max: 1, step: 0.01, skipReset: true } );
-            popPanel.addToggle( 'Ondas', this.waves, ( v ) => this.waves = v, { className: 'primary', skipReset: true } );
+            popPanel.addToggle( 'Ondas', this.waves, ( v ) => this.waves = v, { nameWidth: '60%', className: 'primary', skipReset: true } );
+            popPanel.addToggle( 'Mantener música', this.keepMusic, ( v ) => this.keepMusic = v, { nameWidth: '60%', className: 'primary', skipReset: true } );
             popPanel.addSeparator();
-            popPanel.addButton( null, 'YA ES VIERNES', () => {
+            const isFriday = ( new Date().getDay() === 5 );
+            popPanel.addButton( null, isFriday ? '¡YA ES VIERNES!' : 'AÚN NO ES VIERNES...', () => {
                 this.audio.pause();
                 this.audio.src = 'data/OutKast -- Hey Ya Lyrics.mp3';
                 this.audio.play();
-            }, { buttonClass: 'primary' } );
+            }, { icon: isFriday ? 'PartyPopper' : 'Frown', iconPosition: 'end', className: 'px-16 py-4', buttonClass: `lg ${isFriday ? 'glowing-container' : ''}`, disabled: !isFriday } );
 
             const optButton = panel.addButton( null, 'OpcionesBtn', () => {
                 new LX.Popover( optButton.root, [ popPanel ], { side: 'bottom', align: 'start' } );
@@ -133,7 +137,7 @@ class ChillApp
             }, false );
 
             this.audio.play();
-        }, { className: 'block z-100 primary self-center', width: 'fit-content' } );
+        }, { className: 'block z-100 self-center', buttonClass: 'primary lg', width: 'fit-content' } );
 
         this.clear();
     }
@@ -155,8 +159,11 @@ class ChillApp
 
     close()
     {
-        this.audio.pause();
-        this.audio.currentTime = 0;
+        if( !this.keepMusic )
+        {
+            this.audio.pause();
+            this.audio.currentTime = 0;
+        }
     }
 
     clear()

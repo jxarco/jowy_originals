@@ -432,6 +432,9 @@
   .px-12 {
     padding-inline: calc(var(--spacing) * 12);
   }
+  .px-16 {
+    padding-inline: calc(var(--spacing) * 16);
+  }
   .py-3 {
     padding-block: calc(var(--spacing) * 3);
   }
@@ -724,6 +727,47 @@
   font-style: italic;
   padding-inline-start: 1rem;
 }
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 53deg;
+  inherits: false;
+}
+@keyframes glowing-border {
+  from {
+    --angle: 0deg;
+  }
+  to {
+    --angle: 365deg;
+  }
+}
+.glowing-container {
+  position: relative;
+  background: var(--background);
+  overflow: visible;
+  font-size: xx-large;
+}
+.glowing-container:hover {
+  background: var(--secondary);
+}
+.glowing-container::after, .glowing-container::before {
+  --angle: 0deg;
+  content: '';
+  position: absolute;
+  inset: -3px;
+  background: conic-gradient(from var(--angle), #d11149, #e68aff, #ff4800, #11ebff, #cdff58, #d11149);
+  border-radius: 0.5rem;
+  z-index: -1;
+}
+.glowing-container::before {
+  z-index: -1;
+  filter: blur(4px);
+}
+.glowing-container:hover::before, .glowing-container:hover::after {
+  animation: glowing-border 3.5s linear infinite;
+}
+.glowing-container:hover::after {
+  animation: glowing-border 3.5s linear infinite;
+}
 @property --tw-scale-x {
   syntax: "*";
   inherits: false;
@@ -937,6 +981,7 @@
       --tw-drop-shadow-alpha: 100%;
       --tw-drop-shadow-size: initial;
       --tw-ease: initial;
+      --angle: 53deg;
     }
   }
 }

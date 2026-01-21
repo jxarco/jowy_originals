@@ -33,15 +33,23 @@
     --color-info-foreground: var(--info-foreground);
 }
 
-@utility pad-* { padding: --value(--pad-*); }
+@utility pad-* {
+    padding: --value(--pad-*);
+}
 
 @layer utilities {
-    .scrollbar-hidden::-webkit-scrollbar { display: none; }
-    .scrollbar-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+    .scrollbar-hidden::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scrollbar-hidden {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 }
 
 * {
-	font-family: "Google Sans", sans-serif;
+    font-family: "Google Sans", sans-serif;
 }
 
 #lexroot {
@@ -49,61 +57,61 @@
 }
 
 .parallax-bg {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: linear-gradient(rgba(18, 18, 20, 0.75), rgba(18, 18, 20, 0.75)), url("../data/parallax.png") no-repeat center center / cover;
-	object-fit: cover;
-	z-index: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(18, 18, 20, 0.75), rgba(18, 18, 20, 0.75)), url("../data/parallax.png") no-repeat center center / cover;
+    object-fit: cover;
+    z-index: 0;
 }
 
 :root[data-mode="light"] .parallax-bg {
-	background: linear-gradient(rgba(256, 256, 256, 0.4), rgba(256, 256, 256, 0.4)), url("../data/parallax.png") no-repeat center center / cover;
-	filter: brightness(1.5);
+    background: linear-gradient(rgba(256, 256, 256, 0.4), rgba(256, 256, 256, 0.4)), url("../data/parallax.png") no-repeat center center / cover;
+    filter: brightness(1.5);
 }
 
 .lextable th,
 .lextable td {
-	max-width: 350px;
-	text-overflow: ellipsis;
+    max-width: 350px;
+    text-overflow: ellipsis;
 }
 
 .lextable {
-	overflow-x: scroll
+    overflow-x: scroll
 }
 
 .lextable table {
-	table-layout: auto;
+    table-layout: auto;
 }
 
 .lextable table th {
-	white-space: nowrap;
+    white-space: nowrap;
 }
 
 /* Hack to shrink Type and Method columns in reference docs */
 .lextable:has(input) table tbody tr:last-child td:not(:last-child) {
-	width: 1px;
-	white-space: nowrap;
+    width: 1px;
+    white-space: nowrap;
 }
 
 .lexbutton.array {
-	padding: var(--global-padding-xs) 0.75rem;
+    padding: var(--global-padding-xs) 0.75rem;
 }
 
 .notifications ol .lextoast .lextoastcontent .desc {
-	transition: all 0.5s cubic-bezier(.42, .97, .52, 1.19)
+    transition: all 0.5s cubic-bezier(.42, .97, .52, 1.19)
 }
 
 .notifications ol.list .lextoast .lextoastcontent .desc {
-	word-wrap: break-word;
-	white-space: normal;
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 .draggingover {
-	filter: brightness(1.1);
-	transform: scale(0.975)
+    filter: brightness(1.1);
+    transform: scale(0.975)
 }
 
 .lexselect .lexselectoptions {
@@ -111,14 +119,14 @@
 }
 
 .help-content {
-	margin-left: auto;
+    margin-left: auto;
     margin-right: auto;
     max-width: 1200px;
     padding-inline: 4rem;
-	/* https://pqina.nl/blog/fade-out-overflow-using-css-mask-image/ */
+    /* https://pqina.nl/blog/fade-out-overflow-using-css-mask-image/ */
     --scrollbar-width: 8px;
     --mask-height: 64px;
-	padding-bottom: var(--mask-height);
+    padding-bottom: var(--mask-height);
     --mask-image-content: linear-gradient(to bottom, black calc(100% - var(--mask-height)), transparent);
     --mask-size-content: calc(100% - var(--scrollbar-width)) 100%;
     --mask-image-scrollbar: linear-gradient(black, black);
@@ -129,36 +137,88 @@
     mask-repeat: no-repeat, no-repeat;
 }
 
-.help-content p, .help-content li {
-	color: var(--secondary-foreground);
-	list-style: initial;
-	padding-inline-start: 1rem;
+.help-content p,
+.help-content li {
+    color: var(--secondary-foreground);
+    list-style: initial;
+    padding-inline-start: 1rem;
     opacity: 0.9;
 }
 
 .help-content ul {
-	padding-inline-start: 3rem;
+    padding-inline-start: 3rem;
     margin-block: 0.5rem;
-	list-style: initial;
+    list-style: initial;
 }
 
 .help-content h1 {
-	font-weight: 600;
-	font-size: 2rem;
+    font-weight: 600;
+    font-size: 2rem;
     margin-block: 1.5rem;
 }
 
 .help-content h2 {
-	font-weight: 600;
-	font-size: 1.5rem;
+    font-weight: 600;
+    font-size: 1.5rem;
     margin-block: 0.75rem;
-	padding-inline-start: 0.5rem;
+    padding-inline-start: 0.5rem;
 }
 
 .help-content h3 {
-	font-weight: 600;
-	font-size: 1.2rem;
+    font-weight: 600;
+    font-size: 1.2rem;
     margin-block: 0.75rem;
     font-style: italic;
-	padding-inline-start: 1rem;
+    padding-inline-start: 1rem;
+}
+
+@property --angle {
+    syntax: "<angle>";
+    initial-value: 53deg;
+    inherits: false;
+}
+
+@keyframes glowing-border {
+    from {
+        --angle: 0deg;
+    }
+
+    to {
+        --angle: 365deg;
+    }
+}
+
+.glowing-container {
+    position: relative;
+    background: var(--background);
+    overflow: visible;
+    font-size: xx-large;
+}
+
+.glowing-container:hover {
+    background: var(--secondary);
+}
+
+.glowing-container::after, .glowing-container::before {
+    --angle: 0deg;
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: conic-gradient(from var(--angle), #d11149, #e68aff, #ff4800, #11ebff, #cdff58, #d11149);
+    border-radius: 0.5rem;
+    z-index: -1;
+}
+
+.glowing-container::before {
+    z-index: -1;
+    filter: blur(4px);
+}
+
+.glowing-container:hover::before,
+.glowing-container:hover::after {
+    animation: glowing-border 3.5s linear infinite;
+}
+
+.glowing-container:hover::after {
+    animation: glowing-border 3.5s linear infinite;
 }
