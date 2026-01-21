@@ -518,6 +518,32 @@ const core = {
         }
     },
 
+    dataToXLSXBuffer( data )
+    {
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet( data );
+        XLSX.utils.book_append_sheet( wb, ws, 'Sheet1' );
+        return XLSX.write( wb, { bookType: 'xlsx', type: 'array' });
+    },
+
+    async zipWorkbooks( structure )
+    {
+        const zip = new JSZip();
+
+        for( const folderPath in structure )
+        {
+            const folder = zip.folder( folderPath );
+
+            for( const file of structure[folderPath] )
+            {
+                const buffer = this.dataToXLSXBuffer( file.data );
+                folder.file( file.filename, buffer );
+            }
+        }
+
+        return await zip.generateAsync( { type: 'blob' } );
+    },
+
     getTransportForItem( sku, quantity )
     {
         if ( ( sku.startsWith( 'JW-DF20' ) && quantity > 3 )

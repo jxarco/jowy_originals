@@ -748,10 +748,10 @@ class SheinApp
             title: 'Exportar IVA',
             tooltip: true
         } );
-        utilButtonsPanel.addButton( null, 'ExportLALButton', () => this.exportLAL(), {
+        utilButtonsPanel.addButton( null, 'ExportAlbaranes', () => this.exportAlbaranes(), {
             buttonClass: 'lg outline',
-            icon: 'Sheet',
-            title: 'Exportar LAL',
+            icon: 'FileArchive',
+            title: 'Exportar Albaranes',
             tooltip: true
         } );
         utilButtonsPanel.endLine();
@@ -978,12 +978,164 @@ class SheinApp
                 toggleColumns: true,
                 centered: [ 'Serie', 'Posición', 'Número', 'Cantidad', 'Precio', 'Base', 'T', 'I', 'Total', 'CantidadR' ],
                 filter: 'Artículo',
-                // hiddenColumns: []
+                hiddenColumns: [ 'Serie', 'Posición', 'Número' ]
             } );
 
             LALContainer.appendChild( tableWidget.root );
 
             this.lastShownSeurLALData = tableWidget.data.body;
+        }
+
+        // ALB
+        {
+            const ALBContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
+            tabs.add( 'ALB', ALBContainer, { xselected: true } );
+
+            const getProductPrice = ( row ) => {
+                const totalFormatted = NumberFormatter.format( row['Total'] );
+                const total = parseFloat( totalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                const productPrice = total / row['Cantidad'];
+                const productPriceFormatted = NumberFormatter.format( productPrice );
+                return parseFloat( productPriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+            };
+
+            let orderColumnCounter = 1;
+
+            this.ALB_COLS = [
+                [ 'País' ],
+                [ 'Serie', null, () => '1' ], // 'A',
+                [ 'Número', null, () => albNumber ], // 'B',
+                [ 'Posición', null, () => orderColumnCounter++ ], // 'C',
+                [ 'Artículo' ], // 'D',
+                [ 'Descripción' ], // 'E',
+                [ 'Cantidad' ], // 'F',
+                [ '' ], // 'G',
+                [ '' ], // 'H',
+                [ '' ], // 'I',
+                [ 'Precio', null, ( str, row ) => getProductPrice( row ) ], // 'J',
+                [ 'Base', null, ( str, row ) => {
+                    const productPrice = getProductPrice( row );
+                    const basePrice = productPrice * row['Cantidad'];
+                    const basePriceFormatted = NumberFormatter.format( basePrice );
+                    return parseFloat( basePriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ], // 'K',
+                [ 'T', null, () => 0 ], // 'L',
+                [ '' ], // 'M',
+                [ '' ], // 'N',
+                [ '' ], // 'O',
+                [ '' ], // 'P',
+                [ '' ], // 'Q',
+                [ '' ], // 'R',
+                [ '' ], // 'S',
+                [ '' ], // 'T',
+                [ '' ], // 'U',
+                [ '' ], // 'V',
+                [ '' ], // 'W',
+                [ '' ], // 'X',
+                [ '' ], // 'Y',
+                [ 'I', null, () => 0 ], // 'Z',
+                [ '' ], // 'AA'
+                [ '' ], // 'AB'
+                [ '' ], // 'AC'
+                [ '' ], // 'AD'
+                [ '' ], // 'AE'
+                [ 'Total', null, ( str ) => {
+                    const formatted = NumberFormatter.format( str );
+                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ], // 'AF'
+                [ 'Cantidad', 'CantidadR' ], // 'AG'
+            ];
+
+            const skus = {};
+            const totalTransportPerComp = {};
+
+            data.forEach( ( row ) => {
+                const sku = this.core.getFinalSku( row['SKU del vendedor'] );
+                const prefix = sku.substring( 0, sku.indexOf( '-' ) );
+                let country = row['País'];
+                country = this.core.countryFormat[country] ?? country;
+                const priceWithoutIVA = getPriceWithoutIVA( row );
+                const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
+                const totalProductTransport = priceWithoutIVA * transportPrice;
+                
+                const productTotalFormatted = NumberFormatter.format( priceWithoutIVA - totalProductTransport );
+                const productTotal = parseFloat( productTotalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                const totalQuantity = this.core.getIndividualQuantityPerPack( sku, 1 );
+
+                let skuIdx = `${sku}_${country}`;
+                if( !skus[skuIdx] )
+                {
+                    const product = Data.sku[sku];
+                    skus[skuIdx] = {
+                        'Artículo': sku,
+                        'Descripción': product?.['DESCRIPCIÓN'] ?? '',
+                        'Cantidad': totalQuantity,
+                        'Total': productTotal,
+                        'País': country
+                    }
+                }
+                else
+                {
+                    const product = skus[skuIdx];
+                    product['Cantidad'] += totalQuantity;
+                    product['Total'] += productTotal;
+                }
+
+                // Update transport total per country
+                const tCompIdx = `${prefix}_${country}`;
+                if( !totalTransportPerComp[tCompIdx] ) totalTransportPerComp[tCompIdx] = 0;
+                totalTransportPerComp[tCompIdx] += totalProductTransport;
+            } );
+
+            // Create table data from the list
+            let modifiedData = Object.values( skus );
+
+            modifiedData.push(
+                // España
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                // Portugal
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+            );
+
+            // Remove rows with total = 0 (e.g. transports not used, etc)
+            modifiedData = modifiedData.filter( d => d['Total'] > 0 );
+
+            // Process with COL info
+            const tableData = modifiedData.map( ( row ) => {
+                const lRow = [];
+                for ( let c of this.ALB_COLS )
+                {
+                    const ogColName = c[0];
+                    if( ogColName === '' ) continue;
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row ) );
+                }
+                return lRow;
+            } );
+
+            const tableWidget = new LX.Table( null, {
+                head: this.ALB_COLS.map( ( c ) => {
+                    return c[1] ?? c[0];
+                } ).filter( v => v !== '' ),
+                body: tableData
+            }, {
+                selectable: false,
+                sortable: false,
+                toggleColumns: true,
+                centered: [ 'Serie', 'Posición', 'Número', 'Cantidad', 'Precio', 'Base', 'T', 'I', 'Total', 'CantidadR' ],
+                filter: 'Artículo',
+                // hiddenColumns: []
+            } );
+
+            ALBContainer.appendChild( tableWidget.root );
+
+            this.lastShownSeurALBData = tableWidget.data.body;
         }
 
         // Move up into the panel section
@@ -1019,34 +1171,75 @@ class SheinApp
         this.core.exportXLSXWorkbook( workbook, filename );
     }
 
-    exportLAL()
+    getLALData( country, albNumberOffset )
     {
-        // const weekN = this.core.getWeekNumber();
         const LALColumnData = this.LAL_COLS.map( ( c ) => {
             return c[1] ?? c[0];
         } ).slice( 1 );
 
-        [ 'ESPAÑA', 'PORTUGAL' ].forEach( c => {
-            const filename = `LAL_${c}.xlsx`;
-            const filteredRows = LX.deepCopy( this.lastShownSeurLALData )
-                .filter( row => ( row[0] === c ) )
-                .map( ( row, index ) => {
-                    const m = row.slice( 1 );
-                    m[2] = index + 1; // Update "POSICIÓN" based on new filtered data
-                    return m;
-                } );
-            const finalRowsWithEmptyColumns = [];
-            filteredRows.forEach( ( row, index ) => {
-                let lastFilledIndex = 0;
-                const newRow = LALColumnData.map( d => {
-                    if( d === '' ) return '';
-                    else return row[ lastFilledIndex++ ];
-                } );
-                finalRowsWithEmptyColumns.push( newRow );
+        const filename = `LAL.xlsx`;
+        const filteredRows = LX.deepCopy( this.lastShownSeurLALData )
+            .filter( row => ( row[0] === country ) )
+            .map( ( row, index ) => {
+                const m = row.slice( 1 );
+                m[1] += albNumberOffset ?? 0; // Add NUMBER offset based on new ALBARAN
+                m[2] = index + 1; // Update "POSICIÓN" based on new filtered data
+                return m;
             } );
-            const data = [ LALColumnData, ...finalRowsWithEmptyColumns ];
-            this.core.exportXLSXData( data, filename );
+        const finalRowsWithEmptyColumns = [];
+        filteredRows.forEach( ( row, index ) => {
+            let lastFilledIndex = 0;
+            const newRow = LALColumnData.map( d => {
+                if( d === '' ) return '';
+                else return row[ lastFilledIndex++ ];
+            } );
+            finalRowsWithEmptyColumns.push( newRow );
         } );
+        const data = [ LALColumnData, ...finalRowsWithEmptyColumns ];
+        return { filename, data  };
+    }
+
+    getALBData( country )
+    {
+        const ALBColumnData = this.ALB_COLS.map( ( c ) => {
+            return c[1] ?? c[0];
+        } ).slice( 1 );
+
+        const filename = `ALB.xlsx`;
+        const filteredRows = LX.deepCopy( this.lastShownSeurALBData )
+            .filter( row => ( row[0] === country ) )
+            .map( ( row, index ) => {
+                const m = row.slice( 1 );
+                m[2] = index + 1; // Update "POSICIÓN" based on new filtered data
+                return m;
+            } );
+        const finalRowsWithEmptyColumns = [];
+        filteredRows.forEach( ( row, index ) => {
+            let lastFilledIndex = 0;
+            const newRow = ALBColumnData.map( d => {
+                if( d === '' ) return '';
+                else return row[ lastFilledIndex++ ];
+            } );
+            finalRowsWithEmptyColumns.push( newRow );
+        } );
+        const data = [ ALBColumnData, ...finalRowsWithEmptyColumns ];
+        return { filename, data  };
+    }
+
+    async exportAlbaranes()
+    {
+        const countries = [ 'ESPAÑA', 'PORTUGAL' ];
+        const albaranFiles = countries.map( ( c, i ) => {
+            return [ this.getLALData( c, i ), this.getALBData( c, i ) ];
+        } );
+
+        const folders = {
+            'ESPAÑA': albaranFiles[countries.indexOf('ESPAÑA')],
+            'PORTUGAL': albaranFiles[countries.indexOf('PORTUGAL')],
+        };
+
+        const zip = await this.core.zipWorkbooks( folders );
+        LX.downloadFile( 'ALBARANES.zip', zip );
     }
 
     open( params )
