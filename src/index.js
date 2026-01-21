@@ -315,7 +315,7 @@ const core = {
             <div class="flex flex-row gap-2 items-center">${
             LX.makeIcon( 'Info', { svgClass: '2xl  scale-350 p-2' } ).innerHTML
         }<span class="text-3xl font-semibold">Jowy Originals</span></div>
-            <p class="font-light" style="max-width:32rem">Elige una de las herramientas para empezar.</p>
+            <p class="font-light max-w-1/2">Elige una de las herramientas para empezar.</p>
         `, this.area );
         header.style.background = `url('data/banner_${LX.getMode()}.png') no-repeat center center / cover`;
         header.style.transition = 'transform 0.1s ease-in';
@@ -683,7 +683,7 @@ const core = {
             <div class="flex flex-row gap-2 items-center">
                 ${LX.makeIcon( 'FileChartColumn', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML}
             </div>
-            <p class="font-light" style="max-width:32rem">Arrastra un .xlsx o haz click aquí para cargar ${string}.</p>
+            <p class="font-light max-w-1/2">Arrastra un .xlsx o haz click aquí para cargar ${string}.</p>
         `, area );
         dropZone.style.transition = 'transform 0.1s ease-in';
 

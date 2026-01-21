@@ -748,6 +748,12 @@ class SheinApp
             title: 'Exportar IVA',
             tooltip: true
         } );
+        utilButtonsPanel.addButton( null, 'ExportLALButton', () => this.exportLAL(), {
+            buttonClass: 'lg outline',
+            icon: 'Sheet',
+            title: 'Exportar LAL',
+            tooltip: true
+        } );
         utilButtonsPanel.endLine();
         tmpArea.attach( utilButtonsPanel.root );
 
@@ -816,7 +822,10 @@ class SheinApp
                 sortable: false,
                 toggleColumns: true,
                 centered: [ 'CANTIDAD', 'PRECIO SIN IVA', 'IVA', 'PVP' ],
-                filter: 'NÚMERO PEDIDO'
+                filter: 'NÚMERO PEDIDO',
+                customFilters: [
+                    { name: 'País', options: Object.keys( this.core.countryIVA ) }
+                ]
             } );
 
             IVAContainer.appendChild( tableWidget.root );
@@ -838,10 +847,13 @@ class SheinApp
                 return parseFloat( productPriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
             };
 
-            const LAL_COLS = [
+            let orderColumnCounter = 1;
+
+            this.LAL_COLS = [
+                [ 'País' ],
                 [ 'Serie', null, () => '1' ], // 'A',
                 [ 'Número', null, () => albNumber ], // 'B',
-                [ 'Posición', null, () => -1 ], // 'C',
+                [ 'Posición', null, () => orderColumnCounter++ ], // 'C',
                 [ 'Artículo' ], // 'D',
                 [ 'Descripción' ], // 'E',
                 [ 'Cantidad' ], // 'F',
@@ -883,59 +895,69 @@ class SheinApp
             ];
 
             const skus = {};
-            const totalTransportPerComp = {
-                'JW': 0,
-                'HG': 0,
-                'FL': 0,
-                'BY': 0,
-            };
+            const totalTransportPerComp = {};
 
             data.forEach( ( row ) => {
                 const sku = this.core.getFinalSku( row['SKU del vendedor'] );
                 const prefix = sku.substring( 0, sku.indexOf( '-' ) );
                 let country = row['País'];
-                country = core.countryFormat[country] ?? country;
+                country = this.core.countryFormat[country] ?? country;
                 const priceWithoutIVA = getPriceWithoutIVA( row );
                 const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
                 const totalProductTransport = priceWithoutIVA * transportPrice;
-                totalTransportPerComp[prefix] += totalProductTransport;
+                
                 const productTotalFormatted = NumberFormatter.format( priceWithoutIVA - totalProductTransport );
                 const productTotal = parseFloat( productTotalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
                 const totalQuantity = this.core.getIndividualQuantityPerPack( sku, 1 );
 
-                if( !skus[sku] )
+                let skuIdx = `${sku}_${country}`;
+                if( !skus[skuIdx] )
                 {
                     const product = Data.sku[sku];
-                    skus[sku] = {
+                    skus[skuIdx] = {
                         'Artículo': sku,
                         'Descripción': product?.['DESCRIPCIÓN'] ?? '',
                         'Cantidad': totalQuantity,
-                        'Total': productTotal
+                        'Total': productTotal,
+                        'País': country
                     }
                 }
                 else
                 {
-                    const product = skus[sku];
+                    const product = skus[skuIdx];
                     product['Cantidad'] += totalQuantity;
                     product['Total'] += productTotal;
                 }
+
+                // Update transport total per country
+                const tCompIdx = `${prefix}_${country}`;
+                if( !totalTransportPerComp[tCompIdx] ) totalTransportPerComp[tCompIdx] = 0;
+                totalTransportPerComp[tCompIdx] += totalProductTransport;
             } );
 
             // Create table data from the list
-            const modifiedData = Object.values( skus );
-
-            // ORDER: TODO
+            let modifiedData = Object.values( skus );
 
             modifiedData.push(
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW'] },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG'] },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL'] },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY'] },
+                // España
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                // Portugal
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
             );
 
+            // Remove rows with total = 0 (e.g. transports not used, etc)
+            modifiedData = modifiedData.filter( d => d['Total'] > 0 );
+
+            // Process with COL info
             const tableData = modifiedData.map( ( row ) => {
                 const lRow = [];
-                for ( let c of LAL_COLS )
+                for ( let c of this.LAL_COLS )
                 {
                     const ogColName = c[0];
                     if( ogColName === '' ) continue;
@@ -946,7 +968,7 @@ class SheinApp
             } );
 
             const tableWidget = new LX.Table( null, {
-                head: LAL_COLS.map( ( c ) => {
+                head: this.LAL_COLS.map( ( c ) => {
                     return c[1] ?? c[0];
                 } ).filter( v => v !== '' ),
                 body: tableData
@@ -960,6 +982,8 @@ class SheinApp
             } );
 
             LALContainer.appendChild( tableWidget.root );
+
+            this.lastShownSeurLALData = tableWidget.data.body;
         }
 
         // Move up into the panel section
@@ -978,21 +1002,51 @@ class SheinApp
         {
             const spainFilteredRows = LX.deepCopy( this.lastShownSeurIVAData )
                 .filter( row => ( row[0] === 'ESPAÑA' ) )
-                .map( row => row.slice( Constants.IVA_EXPORTS_COUNTRY ? 0 : 1 ) );
-            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( Constants.IVA_EXPORTS_COUNTRY ? 0 : 1 ), ...spainFilteredRows ];
+                .map( row => row.slice( 1 ) );
+            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...spainFilteredRows ];
             sheets.push( this.core.createXLSXSheet( data ) );
         }
 
         {
             const portugalFilteredRows = LX.deepCopy( this.lastShownSeurIVAData )
                 .filter( row => ( row[0] === 'PORTUGAL' ) )
-                .map( row => row.slice( Constants.IVA_EXPORTS_COUNTRY ? 0 : 1 ) );
-            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( Constants.IVA_EXPORTS_COUNTRY ? 0 : 1 ), ...portugalFilteredRows ];
+                .map( row => row.slice( 1 ) );
+            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...portugalFilteredRows ];
             sheets.push( this.core.createXLSXSheet( data ) );
         }
 
         const workbook = this.core.createXLSXWorkbook( sheets, [ 'ESPAÑA', 'PORTUGAL' ] );
         this.core.exportXLSXWorkbook( workbook, filename );
+    }
+
+    exportLAL()
+    {
+        // const weekN = this.core.getWeekNumber();
+        const LALColumnData = this.LAL_COLS.map( ( c ) => {
+            return c[1] ?? c[0];
+        } ).slice( 1 );
+
+        [ 'ESPAÑA', 'PORTUGAL' ].forEach( c => {
+            const filename = `LAL_${c}.xlsx`;
+            const filteredRows = LX.deepCopy( this.lastShownSeurLALData )
+                .filter( row => ( row[0] === c ) )
+                .map( ( row, index ) => {
+                    const m = row.slice( 1 );
+                    m[2] = index + 1; // Update "POSICIÓN" based on new filtered data
+                    return m;
+                } );
+            const finalRowsWithEmptyColumns = [];
+            filteredRows.forEach( ( row, index ) => {
+                let lastFilledIndex = 0;
+                const newRow = LALColumnData.map( d => {
+                    if( d === '' ) return '';
+                    else return row[ lastFilledIndex++ ];
+                } );
+                finalRowsWithEmptyColumns.push( newRow );
+            } );
+            const data = [ LALColumnData, ...finalRowsWithEmptyColumns ];
+            this.core.exportXLSXData( data, filename );
+        } );
     }
 
     open( params )

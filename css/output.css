@@ -309,6 +309,9 @@
   .w-full {
     width: 100%;
   }
+  .max-w-1\/2 {
+    max-width: calc(1/2 * 100%);
+  }
   .scale-350 {
     --tw-scale-x: 350%;
     --tw-scale-y: 350%;
