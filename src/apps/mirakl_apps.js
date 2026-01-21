@@ -871,7 +871,7 @@ class LabelsApp
 
                 for ( const { name, uid } of this._trackingSyncErrors )
                 {
-                    LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${order_line_id})`, pTop );
+                    LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${uid})`, pTop );
                     const possibleIndex = data.findIndex( d => d[7] === uid );
                     // console.log(possibleIndex)
                     const trackAttrName = "tracking-number";
