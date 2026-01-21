@@ -214,9 +214,79 @@ const core = {
         // } );
     },
 
+    onLoadFile: function( file )
+    {
+        if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
+        {
+            const reader = new FileReader();
+            reader.onload = function( e )
+            {
+                const data = e.target.result;
+
+                try
+                {
+                    const workbook = XLSX.read( data, { type: 'binary' } );
+                    core.sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[core.sheetName];
+                    if ( core.processData( XLSX.utils.sheet_to_json( sheet, { raw: false } ) ) )
+                    {
+                        LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
+                    }
+                }
+                catch ( e )
+                {
+                    LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
+                }
+            };
+
+            // Read the data as binary
+            reader.readAsArrayBuffer( file );
+        }
+        // else if ( file.name.endsWith( '.csv' ) )
+        // {
+        //     const reader = new FileReader();
+        //     reader.onload = function( e )
+        //     {
+        //         const data = e.target.result.split( '\n' );
+        //         const colData = data[0].split( ';' );
+        //         const sheetData = [];
+
+        //         for ( const l of data.slice( 1 ) )
+        //         {
+        //             if ( !l || !l.length )
+        //             {
+        //                 continue;
+        //             }
+
+        //             const json = {};
+
+        //             const rowData = l.split( ';' );
+
+        //             colData.forEach( ( v, i ) => {
+        //                 json[v] = rowData[i];
+        //             } );
+
+        //             sheetData.push( json );
+        //         }
+
+        //         if ( core.processData( sheetData ) )
+        //         {
+        //             LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
+        //         }
+        //     };
+
+        //     // Read the data as binary
+        //     reader.readAsText( file );
+        // }
+        else
+        {
+            alert( 'Please drop a valid .xlsx file.' );
+        }
+    },
+
     createHeaderHtml: function()
     {
-        const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-8 py-8', `
+        const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-8 py-8 cursor-pointer hover:brightness-110', `
             <div class="flex flex-row gap-2 items-center">${
             LX.makeIcon( 'Info', { svgClass: '2xl  scale-350 p-2' } ).innerHTML
         }<span class="text-3xl font-semibold">Jowy Originals</span></div>
@@ -225,6 +295,24 @@ const core = {
         header.style.background = `url('data/banner_${LX.getMode()}.png') no-repeat center center / cover`;
         header.style.transition = 'transform 0.1s ease-in';
         this.header = header;
+
+        // add click to load events
+        {
+            const fileInput = document.createElement( 'input' );
+            fileInput.type = 'file';
+    
+            fileInput.addEventListener( 'change', ( e ) => {
+                const files = e.target.files;
+                if ( !files.length ) return;
+                this.onLoadFile( files[0] );
+            } );
+    
+            header.addEventListener( 'click', ( event ) => {
+                event.preventDefault();
+                event.stopPropagation();
+                fileInput.click();
+            } );
+        }
 
         // add file drag and drop event to header
         header.addEventListener( 'dragover', ( event ) => {
@@ -248,72 +336,7 @@ const core = {
             if ( event.dataTransfer.files.length > 0 )
             {
                 const file = event.dataTransfer.files[0];
-                if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
-                {
-                    const reader = new FileReader();
-                    reader.onload = function( e )
-                    {
-                        const data = e.target.result;
-
-                        try
-                        {
-                            const workbook = XLSX.read( data, { type: 'binary' } );
-                            core.sheetName = workbook.SheetNames[0];
-                            const sheet = workbook.Sheets[core.sheetName];
-                            if ( core.processData( XLSX.utils.sheet_to_json( sheet, { raw: false } ) ) )
-                            {
-                                LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
-                            }
-                        }
-                        catch ( e )
-                        {
-                            LX.toast( 'Error', '❌ No se pudo leer el archivo.' + e, { timeout: -1, position: 'top-center' } );
-                        }
-                    };
-
-                    // Read the data as binary
-                    reader.readAsArrayBuffer( file );
-                }
-                // else if ( file.name.endsWith( '.csv' ) )
-                // {
-                //     const reader = new FileReader();
-                //     reader.onload = function( e )
-                //     {
-                //         const data = e.target.result.split( '\n' );
-                //         const colData = data[0].split( ';' );
-                //         const sheetData = [];
-
-                //         for ( const l of data.slice( 1 ) )
-                //         {
-                //             if ( !l || !l.length )
-                //             {
-                //                 continue;
-                //             }
-
-                //             const json = {};
-
-                //             const rowData = l.split( ';' );
-
-                //             colData.forEach( ( v, i ) => {
-                //                 json[v] = rowData[i];
-                //             } );
-
-                //             sheetData.push( json );
-                //         }
-
-                //         if ( core.processData( sheetData ) )
-                //         {
-                //             LX.toast( 'Hecho!', `✅ Datos cargados: ${file.name}`, { timeout: 5000, position: 'top-center' } );
-                //         }
-                //     };
-
-                //     // Read the data as binary
-                //     reader.readAsText( file );
-                // }
-                else
-                {
-                    alert( 'Please drop a valid .xlsx file.' );
-                }
+                this.onLoadFile( file );
             }
         } );
 
