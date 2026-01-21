@@ -1,13 +1,22 @@
 import { LX } from 'lexgui';
+import { Data } from '../data.js';
 
 const TIKTOK_ORDERS_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'SKU ID', 'ID del artículo' ],
     [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.getFinalSku( str ) ],
-    [ 'Product Name', null, ( str, row ) => {
+    [ 'Product Name', 'Nombre del producto', ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
     } ],
     [ 'Quantity', 'Cantidad' ],
+    [ 'Bultos', null, ( str, row ) => {
+        const ogSku = core.getFinalSku( row['Seller SKU'] );
+        const q = core.getIndividualQuantityPerPack( ogSku, parseInt( row['Quantity'] ) );
+        const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
+        const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
+        if( udsPerPackage === undefined ) return 'SKU no encontrado';
+        return Math.ceil( q / udsPerPackage );
+    } ],
     [ 'Recipient', 'Nombre de usuario completo' ],
     [ 'Zipcode', 'Código Postal', ( str ) => str.replaceAll( /[ -]/g, '' ) ],
     [ 'Country', 'País', ( str, row ) => {

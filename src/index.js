@@ -58,6 +58,7 @@ const REFERENCE_MAPPING = {
     'BY-FBT03GN': 'BY-FBT03V',
     'BY-FBT04GN': 'BY-FBT04V',
     'BY-BCS01': 'BY-BCS02',
+    // Change prefix
     'HG-AT20G1': 'JW-AT20G1',
     'HG-AT20G2': 'JW-AT20G2',
     'HG-AT30G1': 'JW-AT30G1',

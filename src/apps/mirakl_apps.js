@@ -1,5 +1,6 @@
 import { LX } from 'lexgui';
 import { MiraklClient } from '../mirakl-api.js';
+import { Data } from '../data.js';
 
 const VENDOR_TEMPLATES = {
 
@@ -16,6 +17,14 @@ const VENDOR_TEMPLATES = {
         [ 'offer_sku', 'SKU del vendedor', ( row, i ) => core.getFinalSku( i['offer_sku'] ) ],
         [ 'product_title', 'Nombre del producto' ],
         [ 'quantity', 'Cantidad' ],
+        [ 'Bultos', null, ( row, i ) => {
+            const ogSku = core.getFinalSku( i['offer_sku'] );
+            const q = core.getIndividualQuantityPerPack( ogSku, parseInt( i['quantity'] ) );
+            const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
+            const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
+            if( udsPerPackage === undefined ) return 'SKU no encontrado';
+            return Math.ceil( q / udsPerPackage );
+        } ],
         [ 'Nombre de usuario completo', null, ( row, i ) => {
             const customer = row.customer;
             const str1 = customer?.firstname;
