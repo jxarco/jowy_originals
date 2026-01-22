@@ -717,6 +717,8 @@ class SheinApp
             return;
         }
 
+        this.albNumber = albNumber;
+
         data = data ?? this.lastSeurData;
 
         const dom = this.albaranArea.root;
@@ -754,10 +756,50 @@ class SheinApp
             title: 'Exportar Albaranes',
             tooltip: true
         } );
+        const exportOptionsButton = utilButtonsPanel.addButton( null, 'ExportOptions', () => {
+            LX.addDropdownMenu( exportOptionsButton.root, [
+                {
+                    name: 'Exportar LAL',
+                    icon: 'List',
+                    submenu: [
+                        {
+                            name: 'España',
+                            callback: ( v ) => this.exportLAL( v.toUpperCase() )
+                        },
+                        {
+                            name: 'Portugal',
+                            callback: ( v ) => this.exportLAL( v.toUpperCase() )
+                        },
+                    ]
+                },
+                null,
+                {
+                    name: 'Exportar ALB',
+                    icon: 'File',
+                    submenu: [
+                        {
+                            name: 'España',
+                            callback: ( v ) => this.exportALB( v.toUpperCase() )
+                        },
+                        {
+                            name: 'Portugal',
+                            callback: ( v ) => this.exportALB( v.toUpperCase() )
+                        },
+                    ]
+                },
+            ], { side: 'bottom', align: 'start' } );
+        }, {
+            buttonClass: 'lg outline',
+            icon: 'EllipsisVertical',
+            title: 'Más opciones',
+            tooltip: true
+        } );
+        utilButtonsPanel.addLabel( `NÚMERO ALBARÁN: ${this.albNumber}`, { fit: true } );
         utilButtonsPanel.endLine();
         tmpArea.attach( utilButtonsPanel.root );
 
         const tabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
+        const weekN = this.core.getWeekNumber();
 
         const getPriceWithoutIVA = ( row ) => {
             let country = row['País'];
@@ -847,13 +889,11 @@ class SheinApp
                 return parseFloat( productPriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
             };
 
-            let orderColumnCounter = 1;
-
             this.LAL_COLS = [
                 [ 'País' ],
                 [ 'Serie', null, () => '1' ], // 'A',
-                [ 'Número', null, () => albNumber ], // 'B',
-                [ 'Posición', null, () => orderColumnCounter++ ], // 'C',
+                [ 'Número', null, () => -1 ], // 'B',   -> fixed on export
+                [ 'Posición', null, () => -1 ], // 'C', -> fixed on export
                 [ 'Artículo' ], // 'D',
                 [ 'Descripción' ], // 'E',
                 [ 'Cantidad' ], // 'F',
@@ -991,120 +1031,60 @@ class SheinApp
             const ALBContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
             tabs.add( 'ALB', ALBContainer, { xselected: true } );
 
-            const getProductPrice = ( row ) => {
-                const totalFormatted = NumberFormatter.format( row['Total'] );
-                const total = parseFloat( totalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-                const productPrice = total / row['Cantidad'];
-                const productPriceFormatted = NumberFormatter.format( productPrice );
-                return parseFloat( productPriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-            };
-
-            let orderColumnCounter = 1;
-
             this.ALB_COLS = [
                 [ 'País' ],
                 [ 'Serie', null, () => '1' ], // 'A',
-                [ 'Número', null, () => albNumber ], // 'B',
-                [ 'Posición', null, () => orderColumnCounter++ ], // 'C',
-                [ 'Artículo' ], // 'D',
-                [ 'Descripción' ], // 'E',
-                [ 'Cantidad' ], // 'F',
-                [ '' ], // 'G',
+                [ 'Número', null, () => -1 ], // 'B',
+                [ '' ], // 'C',
+                [ 'Fecha', null, () => {
+                    const date = new Date();
+                    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                } ], // 'D',
+                [ 'Estado', null, () => 0 ], // 'E',
+                [ 'Alm', null, () => 'LLA' ], // 'F',
+                [ 'Agente', null, () => 7 ], // 'G',
                 [ '' ], // 'H',
-                [ '' ], // 'I',
-                [ 'Precio', null, ( str, row ) => getProductPrice( row ) ], // 'J',
-                [ 'Base', null, ( str, row ) => {
-                    const productPrice = getProductPrice( row );
-                    const basePrice = productPrice * row['Cantidad'];
-                    const basePriceFormatted = NumberFormatter.format( basePrice );
-                    return parseFloat( basePriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-                } ], // 'K',
-                [ 'T', null, () => 0 ], // 'L',
-                [ '' ], // 'M',
-                [ '' ], // 'N',
-                [ '' ], // 'O',
-                [ '' ], // 'P',
-                [ '' ], // 'Q',
+                [ 'CD.Cliente', 'Cliente' ], // 'I',
+                [ 'Cliente' ], // 'J',
+                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],// 'K', 'L', 'M', 'N', 'O',
+                [ 'IVA', null, () => 0 ], // 'P',
+                [ 'Recargo', null, () => 0 ], // 'Q',
                 [ '' ], // 'R',
-                [ '' ], // 'S',
-                [ '' ], // 'T',
-                [ '' ], // 'U',
-                [ '' ], // 'V',
-                [ '' ], // 'W',
-                [ '' ], // 'X',
-                [ '' ], // 'Y',
-                [ 'I', null, () => 0 ], // 'Z',
-                [ '' ], // 'AA'
-                [ '' ], // 'AB'
-                [ '' ], // 'AC'
-                [ '' ], // 'AD'
-                [ '' ], // 'AE'
-                [ 'Total', null, ( str ) => {
-                    const formatted = NumberFormatter.format( str );
-                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-                } ], // 'AF'
-                [ 'Cantidad', 'CantidadR' ], // 'AG'
+                [ 'Neto' ], // 'S',
+                // 'T' -> 'AS'
+                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
+                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
+                [ 'Neto', 'Base' ], // 'AT'
+                [ '' ], [ '' ], // 'AU', 'AV'
+                [ 'IVA' ], // 'AW'
+                [ '' ], [ '' ], // 'AX', 'AY'
+                [ 'Cuota', null, ( str, row ) => {
+                    const net = row['Neto'];
+                    return net * parseInt( row['IVA'] ) * 0.01;
+                } ], // 'AZ'
+                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],// 'BA', 'BB', 'BC', 'BD', 'BE','BF', 'BG','BH', 'BI', 'BJ'
+                [ 'Total', null, ( str, row ) => {
+                    const net = row['Neto'];
+                    return net * ( 1.0 + parseInt( row['IVA'] ) * 0.01 );
+                } ], // 'BK'
+                [ 'Pago', null, () => 'TR' ], // 'BL'
+                [ 'Portes', null, () => 0 ], // 'BM'
+                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],// 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW'
+                [ 'Cobrado', null, () => 0 ], // 'BX'
+                [ 'Traspaso', null, () => 0 ], // 'BY'
+                [ 'Impreso', null, () => 'N' ], // 'BZ'
+                [ 'Transporte', null, () => 9 ], // 'CA'
+                // 'CB' -> 'DH'
+                // [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
+                // [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
             ];
 
-            const skus = {};
-            const totalTransportPerComp = {};
-
-            data.forEach( ( row ) => {
-                const sku = this.core.getFinalSku( row['SKU del vendedor'] );
-                const prefix = sku.substring( 0, sku.indexOf( '-' ) );
-                let country = row['País'];
-                country = this.core.countryFormat[country] ?? country;
-                const priceWithoutIVA = getPriceWithoutIVA( row );
-                const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
-                const totalProductTransport = priceWithoutIVA * transportPrice;
-                
-                const productTotalFormatted = NumberFormatter.format( priceWithoutIVA - totalProductTransport );
-                const productTotal = parseFloat( productTotalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-                const totalQuantity = this.core.getIndividualQuantityPerPack( sku, 1 );
-
-                let skuIdx = `${sku}_${country}`;
-                if( !skus[skuIdx] )
-                {
-                    const product = Data.sku[sku];
-                    skus[skuIdx] = {
-                        'Artículo': sku,
-                        'Descripción': product?.['DESCRIPCIÓN'] ?? '',
-                        'Cantidad': totalQuantity,
-                        'Total': productTotal,
-                        'País': country
-                    }
-                }
-                else
-                {
-                    const product = skus[skuIdx];
-                    product['Cantidad'] += totalQuantity;
-                    product['Total'] += productTotal;
-                }
-
-                // Update transport total per country
-                const tCompIdx = `${prefix}_${country}`;
-                if( !totalTransportPerComp[tCompIdx] ) totalTransportPerComp[tCompIdx] = 0;
-                totalTransportPerComp[tCompIdx] += totalProductTransport;
-            } );
-
-            // Create table data from the list
-            let modifiedData = Object.values( skus );
-
-            modifiedData.push(
+            let modifiedData = [
                 // España
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Neto': -200, 'País': 'ESPAÑA', 'IVA': '21%', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': '131' },
                 // Portugal
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-            );
-
-            // Remove rows with total = 0 (e.g. transports not used, etc)
-            modifiedData = modifiedData.filter( d => d['Total'] > 0 );
+                { 'Neto': -200, 'País': 'PORTUGAL', 'IVA': '23%', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': '132' },
+            ];
 
             // Process with COL info
             const tableData = modifiedData.map( ( row ) => {
@@ -1130,7 +1110,7 @@ class SheinApp
                 toggleColumns: true,
                 centered: [ 'Serie', 'Posición', 'Número', 'Cantidad', 'Precio', 'Base', 'T', 'I', 'Total', 'CantidadR' ],
                 filter: 'Artículo',
-                // hiddenColumns: []
+                hiddenColumns: [ 'Serie', 'Número' ]
             } );
 
             ALBContainer.appendChild( tableWidget.root );
@@ -1182,7 +1162,7 @@ class SheinApp
             .filter( row => ( row[0] === country ) )
             .map( ( row, index ) => {
                 const m = row.slice( 1 );
-                m[1] += albNumberOffset ?? 0; // Add NUMBER offset based on new ALBARAN
+                m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
                 m[2] = index + 1; // Update "POSICIÓN" based on new filtered data
                 return m;
             } );
@@ -1199,7 +1179,7 @@ class SheinApp
         return { filename, data  };
     }
 
-    getALBData( country )
+    getALBData( country, albNumberOffset )
     {
         const ALBColumnData = this.ALB_COLS.map( ( c ) => {
             return c[1] ?? c[0];
@@ -1210,7 +1190,7 @@ class SheinApp
             .filter( row => ( row[0] === country ) )
             .map( ( row, index ) => {
                 const m = row.slice( 1 );
-                m[2] = index + 1; // Update "POSICIÓN" based on new filtered data
+                m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
                 return m;
             } );
         const finalRowsWithEmptyColumns = [];
@@ -1226,6 +1206,22 @@ class SheinApp
         return { filename, data  };
     }
 
+    exportLAL( country )
+    {
+        const countries = [ 'ESPAÑA', 'PORTUGAL' ];
+        const offset = countries.indexOf( country );
+        const { filename, data } = this.getLALData( country, offset );
+        this.core.exportXLSXData( data, filename );
+    }
+
+    exportALB( country )
+    {
+        const countries = [ 'ESPAÑA', 'PORTUGAL' ];
+        const offset = countries.indexOf( country );
+        const { filename, data } = this.getALBData( country, offset );
+        this.core.exportXLSXData( data, filename );
+    }
+
     async exportAlbaranes()
     {
         const countries = [ 'ESPAÑA', 'PORTUGAL' ];
@@ -1234,8 +1230,8 @@ class SheinApp
         } );
 
         const folders = {
-            'ESPAÑA': albaranFiles[countries.indexOf('ESPAÑA')],
-            'PORTUGAL': albaranFiles[countries.indexOf('PORTUGAL')],
+            'ESPAÑA': albaranFiles[countries.indexOf( 'ESPAÑA' )],
+            'PORTUGAL': albaranFiles[countries.indexOf( 'PORTUGAL' )],
         };
 
         const zip = await this.core.zipWorkbooks( folders );
