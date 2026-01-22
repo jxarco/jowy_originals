@@ -137,6 +137,7 @@ class SheinApp
         this.albaranArea = albaranArea;
         this.trackingArea = trackingArea;
         this._trackingSyncErrors = [];
+        this.albNumber = -1;
 
         this.clear();
     }
@@ -689,20 +690,9 @@ class SheinApp
         this.core.exportXLSXData( data, filename );
     }
 
-    showAlbaranRelatedInfo( data, albNumber )
+    showAlbaranRelatedInfo( data )
     {
-        if( albNumber === undefined || Number.isNaN( albNumber ) )
-        {
-            this.core.openPrompt( 'Número de albarán', null, (v) => {
-                albNumber = parseFloat( v );
-                this.showAlbaranRelatedInfo( data, albNumber );
-            }, 'Hash' );
-            return;
-        }
-
         this.core.clearArea( this.albaranArea );
-
-        this.albNumber = albNumber;
 
         data = data ?? this.lastSeurData;
 
@@ -728,6 +718,16 @@ class SheinApp
                 return sku_a.localeCompare( sku_b );
             } );
         }
+
+        const totalIncome_ES = LX.round( data.reduce( ( acc, row ) => {
+            if( row[PAIS_ATTR] !== "ESPAÑA" ) return acc;
+            return acc + parseFloat( row['precio de los productos básicos'] );
+        }, 0 ) );
+
+        const totalIncome_PT = LX.round( data.reduce( ( acc, row ) => {
+            if( row[PAIS_ATTR] !== "PORTUGAL" ) return acc;
+            return acc + parseFloat( row['precio de los productos básicos'] );
+        }, 0 ) );
 
         // console.log(data);
         
@@ -787,11 +787,12 @@ class SheinApp
             title: 'Más opciones',
             tooltip: true
         } );
-        utilButtonsPanel.addLabel( `NÚMERO ALBARÁN: ${this.albNumber}`, { fit: true } );
         utilButtonsPanel.endLine();
         tmpArea.attach( utilButtonsPanel.root );
 
         const tabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
+        utilButtonsPanel.attach( tabs.root ); // Move up into the panel section
+
         const weekN = this.core.getWeekNumber();
 
         const getPriceWithoutIVA = ( row ) => {
@@ -799,8 +800,7 @@ class SheinApp
             const iva = core.countryIVA[country];
             if( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: -1, position: 'top-center' } );
             const priceWithoutIVA = parseFloat( row['precio de los productos básicos'] ) / ( iva ?? 1.21 );
-            const formatted = NumberFormatter.format( priceWithoutIVA );
-            return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+            return LX.round( priceWithoutIVA );
         };
 
         // IVA
@@ -931,16 +931,14 @@ class SheinApp
                 // console.log(skus);
                 skus.forEach( skuObj => {
                     const mappedSku = this.core.mapSku( skuObj.sku );// mapping here shouldn't be necessary
-                    const skuPriceFactor = skuObj.price;
                     const prefix = mappedSku.substring( 0, mappedSku.indexOf( '-' ) );
+                    const totalQuantity = this.core.getIndividualQuantityPerPack( mappedSku, 1 );
                     const country = row[PAIS_ATTR];
+                    const skuPriceFactor = skuObj.price;
                     const priceWithoutIVA = getPriceWithoutIVA( row ) * skuPriceFactor;
                     const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
-                    const totalProductTransport = priceWithoutIVA * transportPrice;
-                    
-                    const productTotalFormatted = NumberFormatter.format( priceWithoutIVA - totalProductTransport );
-                    const productTotal = parseFloat( productTotalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-                    const totalQuantity = this.core.getIndividualQuantityPerPack( mappedSku, 1 );
+                    const totalProductTransport = LX.round( priceWithoutIVA * transportPrice );
+                    const productTotal = LX.round( priceWithoutIVA - totalProductTransport );
 
                     let skuIdx = `${mappedSku}_${country}`;
                     if( !skuMap[skuIdx] )
@@ -976,13 +974,40 @@ class SheinApp
                 { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
                 { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
                 { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' }
+            );
+
+            // TOTAL SPAIN
+            const totalIncomeNetPlusIVA_ES = LX.round( modifiedData.reduce( ( acc, row ) => {
+                if( row[PAIS_ATTR] !== "ESPAÑA" ) return acc;
+                return acc + parseFloat( row['Total'] );
+            }, 0 ) * this.core.countryIVA[ "ESPAÑA" ] );
+
+            {
+                const lastTransportRow = modifiedData.at( -1 );
+                const incomeDiff = totalIncome_ES - totalIncomeNetPlusIVA_ES;
+                lastTransportRow['Total'] += LX.round( incomeDiff );
+            }
+
+            modifiedData.push(
                 // Portugal
                 { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
                 { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
                 { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
                 { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
             );
+
+            // TOTAL PORTUGAL
+            const totalIncomeNetPlusIVA_PT = LX.round( modifiedData.reduce( ( acc, row ) => {
+                if( row[PAIS_ATTR] !== "PORTUGAL" ) return acc;
+                return acc + parseFloat( row['Total'] );
+            }, 0 ) * this.core.countryIVA[ "PORTUGAL" ] );
+
+            {
+                const lastTransportRow = modifiedData.at( -1 );
+                const incomeDiff = totalIncome_PT - totalIncomeNetPlusIVA_PT;
+                lastTransportRow['Total'] += LX.round( incomeDiff );
+            }
 
             // Remove rows with total = 0 (e.g. transports not used, etc)
             modifiedData = modifiedData.filter( d => d['Total'] > 0 );
@@ -1015,6 +1040,33 @@ class SheinApp
             } );
 
             LALContainer.appendChild( tableWidget.root );
+
+            // Add data labels
+            utilButtonsPanel.sameLine();
+            utilButtonsPanel.addText( 'NÚMERO ALBARÁN', this.albNumber, v => this.albNumber = parseFloat( v ),
+                { placeholder: '# Albarán', nameWidth: 'fit-content', className: '[&_input]:px-4!', fit: true, skipReset: true } );
+            const popoverButton = utilButtonsPanel.addButton( null, 'Ver Ingresos', () => {
+                const incomeArea = new LX.Area( { skipAppend: true } );
+                const tabs = incomeArea.addTabs({ fit: true });
+                {
+                    const p = new LX.Panel();
+                    p.addText( 'Total brutos', totalIncome_ES + ' €', null,
+                        { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
+                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA_ES + ' €', null,
+                        { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true, signal: '@no-iva-income' } );
+                    tabs.add( 'ESPAÑA', p.root );
+                }
+                {
+                    const p = new LX.Panel();
+                    p.addText( 'Total brutos', totalIncome_PT + ' €', null,
+                        { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
+                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA_PT + ' €', null,
+                        { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true, signal: '@no-iva-income' } );
+                    tabs.add( 'PORTUGAL', p.root );
+                }
+                new LX.Popover( popoverButton.root, [ incomeArea ], { align: 'end' } );
+            }, { icon: 'Eye', iconPosition: 'start' } );
+            utilButtonsPanel.endLine( 'ml-auto' );
 
             this.lastShownSeurLALData = tableWidget.data.body;
         }
@@ -1111,9 +1163,6 @@ class SheinApp
             this.lastShownSeurALBData = tableWidget.data.body;
         }
 
-        // Move up into the panel section
-        utilButtonsPanel.attach( tabs.root );
-
         // i don't know what is this.. removing it by now
         tmpArea.root.children[1].remove();
     }
@@ -1201,6 +1250,12 @@ class SheinApp
 
     exportLAL( country )
     {
+        if( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        {
+            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
         const countries = [ 'ESPAÑA', 'PORTUGAL' ];
         const offset = countries.indexOf( country );
         const { filename, data } = this.getLALData( country, offset );
@@ -1209,6 +1264,12 @@ class SheinApp
 
     exportALB( country )
     {
+        if( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        {
+            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
         const countries = [ 'ESPAÑA', 'PORTUGAL' ];
         const offset = countries.indexOf( country );
         const { filename, data } = this.getALBData( country, offset );
@@ -1217,6 +1278,12 @@ class SheinApp
 
     async exportAlbaranes()
     {
+        if( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        {
+            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
         const countries = [ 'ESPAÑA', 'PORTUGAL' ];
         const albaranFiles = countries.map( ( c, i ) => {
             return [ this.getLALData( c, i ), this.getALBData( c, i ) ];
