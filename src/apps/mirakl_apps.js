@@ -838,20 +838,19 @@ class MiraklApp
                 rows[r] = undefined;
             } );
             finalRow[skuIdx] += trail; // Add REF trail
-            // Remove tmp quantity
-            finalRow = finalRow.slice( 0, -1 );
         }
 
-        // Remove tmp quantity
+        // Remove tmp quantity from col data
         data = data.slice( 0, -1 );
 
-        rows = rows.filter( ( r ) => r !== undefined );
-
-        // sort by sku
-        rows = rows.sort( ( a, b ) => {
-            const sku_a = a[skuIdx];
-            const sku_b = b[skuIdx];
-            return sku_a.localeCompare( sku_b );
+        // Filter empty, remove tmp quantity from ROW data, and sort by sku
+        rows = rows
+            .filter( ( r ) => r !== undefined )
+            .map( r => r.slice( 0, -1 ) )
+            .sort( ( a, b ) => {
+                const sku_a = a[skuIdx];
+                const sku_b = b[skuIdx];
+                return sku_a.localeCompare( sku_b );
         } );
 
         this.core.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
