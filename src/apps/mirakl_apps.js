@@ -467,8 +467,8 @@ class MiraklApp
 
         tableData = tableData.filter( ( r ) => r !== undefined );
 
-        // Remove unnecessary headers (order number)
-        columnData.splice( 6, 1 );
+        // Remove unnecessary headers (order number, at last pos)
+        columnData = columnData.slice( 0, -1 );
 
         const listSKU = [];
         const skus = {};
@@ -482,8 +482,8 @@ class MiraklApp
             let sku = `${row[0]}_${row[4]}`; // SKU _ País
             sku += sku.includes( 'JW-T60' ) ? `_${LX.guidGenerator()}` : '';
 
-            // Delete order num
-            row.splice( 6, 1 );
+            // Delete order num (last pos)
+            row = row.slice( 0, -1 );
 
             // If same order or more than 1 unit, do not merge items
             if ( q > 1 )
@@ -846,7 +846,14 @@ class MiraklApp
         // Filter empty, remove tmp quantity from ROW data, and sort by sku
         rows = rows
             .filter( ( r ) => r !== undefined )
-            .map( r => r.slice( 0, -1 ) )
+            .map( r => {
+                if( !r[skuIdx].includes( '+' ) )
+                {
+                    const q = r.at( -1 );
+                    r[skuIdx] += ` x ${q}`;
+                }
+                return r.slice( 0, -1 );
+            } )
             .sort( ( a, b ) => {
                 const sku_a = a[skuIdx];
                 const sku_b = b[skuIdx];
