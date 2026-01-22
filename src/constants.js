@@ -96,3 +96,11 @@ export const LAL_SKU_MAPPINGS = {
         { sku: 'BY-BCS02', price: 0.05 }
     ],
 };
+
+export const PLATFORM_CLIENT_CODES = {
+    'SHEIN_ESPAÑA_2025': '504',
+    'SHEIN_PORTUGAL_2025': '505',
+
+    'SHEIN_ESPAÑA_2026': '131',
+    'SHEIN_PORTUGAL_2026': '132',
+};

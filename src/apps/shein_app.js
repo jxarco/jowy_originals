@@ -139,6 +139,9 @@ class SheinApp
         this._trackingSyncErrors = [];
         this.albNumber = -1;
 
+        const date = new Date();
+        this.currentDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+
         this.clear();
     }
 
@@ -785,10 +788,13 @@ class SheinApp
         utilButtonsPanel.endLine();
         tmpArea.attach( utilButtonsPanel.root );
 
-        const tabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
-        utilButtonsPanel.attach( tabs.root ); // Move up into the panel section
+        const selectedTab = this.fiscalTabs?.selected;
+
+        this.fiscalTabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
+        utilButtonsPanel.attach( this.fiscalTabs.root ); // Move up into the panel section
 
         const weekN = this.core.getWeekNumber();
+        const currentYear = this.currentDate.split('/')[2];
 
         const getPriceWithoutIVA = ( row ) => {
             let country = row[PAIS_ATTR];
@@ -801,7 +807,7 @@ class SheinApp
         // IVA
         {
             const IVAContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
-            tabs.add( 'IVA', IVAContainer, { selected: true } );
+            this.fiscalTabs.add( 'IVA', IVAContainer, { selected: ( selectedTab === 'IVA' || !this.fiscalTabs ) } );
 
             const IVA_COLS = [
                 [ PAIS_ATTR ],
@@ -862,7 +868,7 @@ class SheinApp
         // LAL
         {
             const LALContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
-            tabs.add( 'LAL', LALContainer, { xselected: true } );
+            this.fiscalTabs.add( 'LAL', LALContainer, { selected: ( selectedTab === 'LAL' ) } );
 
             const getProductPrice = ( row ) => {
                 const totalFormatted = NumberFormatter.format( row['Total'] );
@@ -1040,6 +1046,10 @@ class SheinApp
             utilButtonsPanel.sameLine();
             utilButtonsPanel.addText( 'NÚMERO ALBARÁN', this.albNumber, v => this.albNumber = parseFloat( v ),
                 { placeholder: '# Albarán', nameWidth: 'fit-content', className: '[&_input]:px-4!', fit: true, skipReset: true } );
+            utilButtonsPanel.addDate( 'FECHA CREACIÓN', this.currentDate, v => {
+                this.currentDate = v;
+                LX.doAsync( () => this.showAlbaranRelatedInfo( data ) );
+            }, { nameWidth: 'fit-content' } )
             const popoverButton = utilButtonsPanel.addButton( null, 'Ver Ingresos', () => {
                 const incomeArea = new LX.Area( { skipAppend: true } );
                 const tabs = incomeArea.addTabs({ fit: true });
@@ -1069,17 +1079,14 @@ class SheinApp
         // ALB
         {
             const ALBContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
-            tabs.add( 'ALB', ALBContainer, { xselected: true } );
+            this.fiscalTabs.add( 'ALB', ALBContainer, { selected: ( selectedTab === 'ALB' ) } );
 
             this.ALB_COLS = [
                 [ PAIS_ATTR ],
                 [ 'Serie', null, () => '1' ], // 'A',
                 [ 'Número', null, () => -1 ], // 'B',
                 [ '' ], // 'C',
-                [ 'Fecha', null, () => {
-                    const date = new Date();
-                    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-                } ], // 'D',
+                [ 'Fecha', null, () => this.currentDate ], // 'D',
                 [ 'Estado', null, () => 0 ], // 'E',
                 [ 'Alm', null, () => 'LLA' ], // 'F',
                 [ 'Agente', null, () => 7 ], // 'G',
@@ -1134,9 +1141,9 @@ class SheinApp
 
             let modifiedData = [
                 // España
-                { 'Total': totalIncome_ES, 'País': 'ESPAÑA', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': '131' },
+                { 'Total': totalIncome_ES, 'País': 'ESPAÑA', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( 'SHEIN', 'ESPAÑA', currentYear ) },
                 // Portugal
-                { 'Total': totalIncome_PT, 'País': 'PORTUGAL', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': '132' },
+                { 'Total': totalIncome_PT, 'País': 'PORTUGAL', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( 'SHEIN', 'PORTUGAL', currentYear ) },
             ];
 
             // Process with COL info
