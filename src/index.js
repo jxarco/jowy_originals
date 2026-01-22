@@ -8,7 +8,7 @@ import { SheinApp } from './apps/shein_app.js';
 import { TikTokApp } from './apps/tiktok_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import { WooCommerceClient } from './woocomerce.js';
-import { REFERENCE_MAPPING } from './constants.js'
+import { SKU_MAPPING } from './constants.js'
 
 window.LX = LX;
 
@@ -519,12 +519,17 @@ const core = {
 
     mapSku( sku )
     {
-        return REFERENCE_MAPPING[sku] ?? sku;
+        return SKU_MAPPING[sku] ?? sku;
     },
 
     mapCountry( country )
     {
         return this.countryFormat[country] ?? country;
+    },
+
+    mapZipCode( zc )
+    {
+        return zc.replaceAll( /[ -]/g, '' );
     },
 
     getIndividualQuantityPerPack( sku, quantity )

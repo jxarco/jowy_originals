@@ -6,7 +6,7 @@ export const Constants = {
 
 export const NumberFormatter = new Intl.NumberFormat( 'es-ES', { style: 'currency', currency: 'EUR' } );
 
-export const REFERENCE_MAPPING = {
+export const SKU_MAPPING = {
     // Wrong and missing prefix
     'BER01G': 'BY-BER090G', 'BY-BER01G': 'BY-BER090G',
     'BER02G': 'BY-BER110G', 'BY-BER02G': 'BY-BER110G',
@@ -56,4 +56,43 @@ export const REFERENCE_MAPPING = {
     'AT40G2': 'JW-AT40G2',
     'AD32': 'HG-AD32',
     'AD40': 'HG-AD40' 
+};
+
+export const LAL_SKU_MAPPINGS = {
+    "BY-SUP01-FBT05V": [
+        { sku: 'BY-SUP01', price: 0.55 },
+        { sku: 'BY-FBT05V', price: 0.45 }
+    ],
+    "BY-SUP01-FBT05P": [
+        { sku: 'BY-SUP01', price: 0.55 },
+        { sku: 'BY-FBT05P', price: 0.45 }
+    ],
+    "BY-SUP01-FBT05G": [
+        { sku: 'BY-SUP01', price: 0.55 },
+        { sku: 'BY-FBT05G', price: 0.45 }
+    ],
+    "BY-SUP01-FBT05B": [
+        { sku: 'BY-SUP01', price: 0.55 },
+        { sku: 'BY-FBT05B', price: 0.45 }
+    ],
+    "BY-SBW01P/B": [
+        { sku: 'BY-SBW01P', price: 0.50 },
+        { sku: 'BY-SBW01B', price: 0.50 }
+    ],
+    "BY-SBW01GN/BW": [
+        { sku: 'BY-SBW01V', price: 0.50 },
+        { sku: 'BY-SBW01BW', price: 0.50 }
+    ],
+    "BY-SBW01W/G": [
+        { sku: 'BY-SBW01W', price: 0.50 },
+        { sku: 'BY-SBW01G', price: 0.50 }
+    ],
+    "BY-BTT01P1": [
+        { sku: 'BY-BTT01P', price: 0.95 },
+        { sku: 'BY-BCS02', price: 0.05 }
+    ],
+    "BY-BTT01G1": [
+        { sku: 'BY-BTT01G', price: 0.95 },
+        { sku: 'BY-BCS02', price: 0.05 }
+    ],
 };

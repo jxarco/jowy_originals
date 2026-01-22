@@ -4,6 +4,7 @@ import { Constants, NumberFormatter } from '../constants.js';
 
 const SKU_ATTR = 'SKU del vendedor';
 const PAIS_ATTR = 'País';
+const CP_ATTR = 'Código Postal';
 
 const SHEIN_ORDERS_DATA = [
     [ 'Número del pedido' ],
@@ -13,7 +14,7 @@ const SHEIN_ORDERS_DATA = [
         return `<span title='${str}'>${str}</span>`;
     } ],
     [ 'Nombre de usuario completo' ],
-    [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
+    [ CP_ATTR ],
     [ PAIS_ATTR ],
     [ 'Provincia', null ],
     [ 'Ciudad', null ],
@@ -26,7 +27,7 @@ const SHEIN_LABEL_DATA = [
     [ 'Número del pedido' ],
     [ 'Bultos', null, ( row, i ) => 1 ],
     [ SKU_ATTR ],
-    [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
+    [ CP_ATTR ],
     [ PAIS_ATTR ],
     [ 'Provincia', null ],
     [ 'Ciudad', null ],
@@ -152,6 +153,9 @@ class SheinApp
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
             // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
+            const ogZipCode = r[CP_ATTR];
+            r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
+            // if( ogZipCode !== r[CP_ATTR] ) console.warn( `Zip Code mapped from ${ogZipCode} to ${r[CP_ATTR]}` );
         });
 
         this.showSheinList( fileData );
@@ -212,7 +216,7 @@ class SheinApp
             toggleColumns: true,
             centered: [ 'Número del pedido', 'ID del artículo', SKU_ATTR ],
             filter: SKU_ATTR,
-            hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', 'Código Postal', 'Número de Teléfono', 'Correo electrónico de usuario' ]
+            hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', CP_ATTR, 'Número de Teléfono', 'Correo electrónico de usuario' ]
         } );
 
         dom.appendChild( tableWidget.root );
@@ -726,6 +730,9 @@ class SheinApp
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
             // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
+            const ogZipCode = r[CP_ATTR];
+            r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
+            // if( ogZipCode !== r[CP_ATTR] ) console.warn( `Zip Code mapped from ${ogZipCode} to ${r[CP_ATTR]}` );
         });
 
         const dom = this.albaranArea.root;
