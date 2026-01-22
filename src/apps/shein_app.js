@@ -152,6 +152,7 @@ class SheinApp
         fileData.forEach( r => {
             const ogSku = r[SKU_ATTR];
             r[SKU_ATTR] = this.core.mapSku( ogSku );
+            if( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: 5000, position: 'top-center' } );
             // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
@@ -709,6 +710,7 @@ class SheinApp
         data.forEach( r => {
             const ogSku = r[SKU_ATTR];
             r[SKU_ATTR] = this.core.mapSku( ogSku );
+            if( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: 5000, position: 'top-center' } );
             // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
@@ -920,48 +922,54 @@ class SheinApp
                 [ 'Cantidad', 'CantidadR' ], // 'AG'
             ];
 
-            const skus = {};
+            const skuMap = {};
             const totalTransportPerComp = {};
 
             data.forEach( ( row ) => {
                 const sku = row[SKU_ATTR];
-                const prefix = sku.substring( 0, sku.indexOf( '-' ) );
-                const country = row[PAIS_ATTR];
-                const priceWithoutIVA = getPriceWithoutIVA( row );
-                const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
-                const totalProductTransport = priceWithoutIVA * transportPrice;
-                
-                const productTotalFormatted = NumberFormatter.format( priceWithoutIVA - totalProductTransport );
-                const productTotal = parseFloat( productTotalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-                const totalQuantity = this.core.getIndividualQuantityPerPack( sku, 1 );
+                const skus = this.core.getIndividualSkusPerPack( sku );
+                // console.log(skus);
+                skus.forEach( skuObj => {
+                    const mappedSku = this.core.mapSku( skuObj.sku );// mapping here shouldn't be necessary
+                    const skuPriceFactor = skuObj.price;
+                    const prefix = mappedSku.substring( 0, mappedSku.indexOf( '-' ) );
+                    const country = row[PAIS_ATTR];
+                    const priceWithoutIVA = getPriceWithoutIVA( row ) * skuPriceFactor;
+                    const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
+                    const totalProductTransport = priceWithoutIVA * transportPrice;
+                    
+                    const productTotalFormatted = NumberFormatter.format( priceWithoutIVA - totalProductTransport );
+                    const productTotal = parseFloat( productTotalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                    const totalQuantity = this.core.getIndividualQuantityPerPack( mappedSku, 1 );
 
-                let skuIdx = `${sku}_${country}`;
-                if( !skus[skuIdx] )
-                {
-                    const product = Data.sku[sku];
-                    skus[skuIdx] = {
-                        'Artículo': sku,
-                        'Descripción': product?.['DESCRIPCIÓN'] ?? '',
-                        'Cantidad': totalQuantity,
-                        'Total': productTotal,
-                        'País': country
+                    let skuIdx = `${mappedSku}_${country}`;
+                    if( !skuMap[skuIdx] )
+                    {
+                        const product = Data.sku[mappedSku];
+                        skuMap[skuIdx] = {
+                            'Artículo': mappedSku,
+                            'Descripción': product?.['DESCRIPCIÓN'] ?? '',
+                            'Cantidad': totalQuantity,
+                            'Total': productTotal,
+                            'País': country
+                        }
                     }
-                }
-                else
-                {
-                    const product = skus[skuIdx];
-                    product['Cantidad'] += totalQuantity;
-                    product['Total'] += productTotal;
-                }
+                    else
+                    {
+                        const product = skuMap[skuIdx];
+                        product['Cantidad'] += totalQuantity;
+                        product['Total'] += productTotal;
+                    }
 
-                // Update transport total per country
-                const tCompIdx = `${prefix}_${country}`;
-                if( !totalTransportPerComp[tCompIdx] ) totalTransportPerComp[tCompIdx] = 0;
-                totalTransportPerComp[tCompIdx] += totalProductTransport;
+                    // Update transport total per country
+                    const tCompIdx = `${prefix}_${country}`;
+                    if( !totalTransportPerComp[tCompIdx] ) totalTransportPerComp[tCompIdx] = 0;
+                    totalTransportPerComp[tCompIdx] += totalProductTransport;
+                } );
             } );
 
             // Create table data from the list
-            let modifiedData = Object.values( skus );
+            let modifiedData = Object.values( skuMap );
 
             modifiedData.push(
                 // España
