@@ -538,6 +538,22 @@ const core = {
         return LAL_SKU_MAPPINGS[sku] ?? [ { sku, price: 1 } ];
     },
 
+    openPrompt( label, title, callback, icon )
+    {
+        const dialog = new LX.Dialog( title, ( p ) => {
+            const formData = {
+                data: { label, value: "", icon },
+            };
+            const form = p.addForm( null, formData, async (value) => {
+                form.syncInputs();
+                if( callback ) callback( value.data );
+                dialog.destroy();
+            }, { primaryActionName: "Continuar", secondaryButtonClass: "destructive", secondaryActionName: "Cancelar", secondaryActionCallback: () => {
+                dialog.destroy();
+            } });
+        }, { modal: true } );
+    },
+
     getIndividualQuantityPerPack( sku, quantity )
     {
         if ( sku.startsWith( 'JW-T60' ) )

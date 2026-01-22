@@ -152,7 +152,7 @@ class SheinApp
         fileData.forEach( r => {
             const ogSku = r[SKU_ATTR];
             r[SKU_ATTR] = this.core.mapSku( ogSku );
-            if( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: 5000, position: 'top-center' } );
+            if( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: -1, position: 'top-center' } );
             // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
@@ -693,10 +693,10 @@ class SheinApp
     {
         if( albNumber === undefined || Number.isNaN( albNumber ) )
         {
-            LX.prompt( null, 'Número de albarán', (v) => {
+            this.core.openPrompt( 'Número de albarán', null, (v) => {
                 albNumber = parseFloat( v );
                 this.showAlbaranRelatedInfo( data, albNumber );
-            } );
+            }, 'Hash' );
             return;
         }
 
@@ -710,7 +710,7 @@ class SheinApp
         data.forEach( r => {
             const ogSku = r[SKU_ATTR];
             r[SKU_ATTR] = this.core.mapSku( ogSku );
-            if( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: 5000, position: 'top-center' } );
+            if( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: -1, position: 'top-center' } );
             // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
@@ -797,7 +797,7 @@ class SheinApp
         const getPriceWithoutIVA = ( row ) => {
             let country = row[PAIS_ATTR];
             const iva = core.countryIVA[country];
-            if( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: 5000, position: 'top-center' } );
+            if( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: -1, position: 'top-center' } );
             const priceWithoutIVA = parseFloat( row['precio de los productos básicos'] ) / ( iva ?? 1.21 );
             const formatted = NumberFormatter.format( priceWithoutIVA );
             return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
