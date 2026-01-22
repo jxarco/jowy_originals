@@ -136,7 +136,7 @@ class OrdersApp
                 const d = new Date( r['date_created'] );
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
             } ],
-            [ 'sku', 'REFERENCIA', ( r, i ) => core.getFinalSku( i['sku'] ) ],
+            [ 'sku', 'REFERENCIA', ( r, i ) => core.mapSku( i['sku'] ) ],
             // [ "desc", "DESCRIPCIÓN", (r) => "" ],
             [ 'quantity', 'UNIDADES', ( r, i ) => i['quantity'] ],
             [ 'transport', 'TRANSPORTE', ( r, i ) => {
@@ -146,7 +146,7 @@ class OrdersApp
                     return 'PENDIENTE DE RECOGIDA';
                 }
                 const q = i['quantity'];
-                const sku = core.getFinalSku( i['sku'] );
+                const sku = core.mapSku( i['sku'] );
                 if ( ( sku.startsWith( 'JW-D' ) && q > 2 )
                     || sku.startsWith( 'JW-RT' )
                     || sku.startsWith( 'HG-AD' ) ) return 'CBL';

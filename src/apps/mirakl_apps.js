@@ -15,11 +15,11 @@ const VENDOR_TEMPLATES = {
             return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
         } ],
         [ 'ID del artículo', null, ( row, i ) => i['product_sku'] ],
-        [ 'offer_sku', 'SKU del vendedor', ( row, i ) => core.getFinalSku( i['offer_sku'] ) ],
+        [ 'offer_sku', 'SKU del vendedor', ( row, i ) => core.mapSku( i['offer_sku'] ) ],
         [ 'product_title', 'Nombre del producto' ],
         [ 'quantity', 'Cantidad' ],
         [ 'Bultos', null, ( row, i ) => {
-            const ogSku = core.getFinalSku( i['offer_sku'] );
+            const ogSku = core.mapSku( i['offer_sku'] );
             const q = core.getIndividualQuantityPerPack( ogSku, parseInt( i['quantity'] ) );
             const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
             const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
@@ -58,7 +58,7 @@ const VENDOR_TEMPLATES = {
     'DECATHLON_LABEL_DATA': [
         [ 'order_id', 'Número del pedido' ],
         [ 'Bultos', null, ( str, row, i ) => 1 ],
-        [ 'offer_sku', 'SKU del vendedor', ( str, row, i ) => core.getFinalSku( i['offer_sku'] ) ],
+        [ 'offer_sku', 'SKU del vendedor', ( str, row, i ) => core.mapSku( i['offer_sku'] ) ],
         [ 'Código Postal', null, ( str, row ) => {
             return row.customer?.shipping_address?.zip_code;
         } ],
@@ -116,7 +116,7 @@ const VENDOR_TEMPLATES = {
             }
             return tentry['LOCALIZADOR'];
         } ],
-        [ 'offer_sku', 'offer-sku', ( str ) => core.getFinalSku( str ) ],
+        [ 'offer_sku', 'offer-sku', ( str ) => core.mapSku( str ) ],
         [ 'order_line_id', 'order-line-id' ],
         [ 'quantity' ]
     ]
@@ -387,13 +387,13 @@ class MiraklApp
 
         let columnData = [
             [ 'SKU del vendedor', null, ( row, i ) => {
-                return this.core.getFinalSku( i['offer_sku'] );
+                return this.core.mapSku( i['offer_sku'] );
             } ],
             [ 'Cantidad', null, ( row, i ) => {
                 return i['quantity'];
             } ],
             [ 'Transporte', null, ( r, i ) => {
-                const sku = this.core.getFinalSku( i['offer_sku'] );
+                const sku = this.core.mapSku( i['offer_sku'] );
                 return this.core.getTransportForItem( sku, i['quantity'] );
             } ],
             [ 'Plataforma', null, () => this.vendor.toUpperCase() ],
@@ -590,7 +590,7 @@ class MiraklApp
             for ( let item of items )
             {
                 // discard orders sent with CBL
-                const sku = this.core.getFinalSku( item['offer_sku'] );
+                const sku = this.core.mapSku( item['offer_sku'] );
                 const transport = this.core.getTransportForItem( sku, item['quantity'] );
                 if( transport === 'CBL' ) continue;
 
@@ -757,7 +757,7 @@ class MiraklApp
             for ( let item of items )
             {
                 // discard orders sent with CBL
-                const sku = this.core.getFinalSku( item['offer_sku'] );
+                const sku = this.core.mapSku( item['offer_sku'] );
                 const transport = this.core.getTransportForItem( sku, item['quantity'] );
                 if( transport === 'CBL' ) continue;
 

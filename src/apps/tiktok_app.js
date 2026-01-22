@@ -5,13 +5,13 @@ import { Constants, NumberFormatter } from '../constants.js';
 const TIKTOK_ORDERS_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'SKU ID', 'ID del artículo' ],
-    [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.getFinalSku( str ) ],
+    [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.mapSku( str ) ],
     [ 'Product Name', 'Nombre del producto', ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
     } ],
     [ 'Quantity', 'Cantidad' ],
     [ 'Bultos', null, ( str, row ) => {
-        const ogSku = core.getFinalSku( row['Seller SKU'] );
+        const ogSku = core.mapSku( row['Seller SKU'] );
         const q = core.getIndividualQuantityPerPack( ogSku, parseInt( row['Quantity'] ) );
         const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
         const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
@@ -33,7 +33,7 @@ const TIKTOK_ORDERS_DATA = [
 const TIKTOK_LABEL_DATA = [
     [ 'Order ID', 'Número del pedido' ],
     [ 'Bultos', null, ( str, row ) => 1 ],
-    [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.getFinalSku( str ) ],
+    [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.mapSku( str ) ],
     [ 'Zipcode', 'Código Postal', ( str ) => str.replaceAll( /[ -]/g, '' ) ],
     [ 'Country', 'País', ( str, row ) => {
         return core.countryFormat[str] ?? str;
@@ -183,8 +183,8 @@ class TikTokApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                const sku_a = this.core.getFinalSku( a['Seller SKU'] ) ?? '?';
-                const sku_b = this.core.getFinalSku( b['Seller SKU'] ) ?? '?';
+                const sku_a = this.core.mapSku( a['Seller SKU'] ) ?? '?';
+                const sku_b = this.core.mapSku( b['Seller SKU'] ) ?? '?';
                 return sku_a.localeCompare( sku_b );
             } );
         }
@@ -250,19 +250,19 @@ class TikTokApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
-                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                const sku_a = this.core.mapSku( a['SKU del vendedor'] ) ?? '?';
+                const sku_b = this.core.mapSku( b['SKU del vendedor'] ) ?? '?';
                 return sku_a.localeCompare( sku_b );
             } );
         }
 
         let columnData = [
             [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => {
-                return core.getFinalSku( str );
+                return core.mapSku( str );
             } ],
             [ 'Unidades', null, ( str, row ) => parseInt( row['Quantity'] ) ],
             [ 'Transporte', null, ( str, row ) => {
-                const sku = this.core.getFinalSku( row['Seller SKU'] );
+                const sku = this.core.mapSku( row['Seller SKU'] );
                 return core.getTransportForItem( row['Seller SKU'], parseInt( row['Quantity'] ) );
             } ],
             [ 'Plataforma', null, () => 'TIKTOK' ],
@@ -583,7 +583,7 @@ class TikTokApp
         let rows = currentTiktokData.map( ( row, index ) => {
 
             // discard orders sent with CBL
-            const sku = this.core.getFinalSku( row['Seller SKU'] );
+            const sku = this.core.mapSku( row['Seller SKU'] );
             const transport = this.core.getTransportForItem( sku, row['Quantity'] );
             if( transport === 'CBL' ) return;
 

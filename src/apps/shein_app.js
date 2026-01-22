@@ -2,20 +2,19 @@ import { LX } from 'lexgui';
 import { Data } from '../data.js';
 import { Constants, NumberFormatter } from '../constants.js';
 
+const SKU_ATTR = 'SKU del vendedor';
+const PAIS_ATTR = 'País';
+
 const SHEIN_ORDERS_DATA = [
     [ 'Número del pedido' ],
     [ 'ID del artículo' ],
-    [ 'SKU del vendedor', null, ( str, row ) => {
-        return core.getFinalSku( str );
-    } ],
+    [ SKU_ATTR ],
     [ 'Nombre del producto', null, ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
     } ],
     [ 'Nombre de usuario completo' ],
     [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-    [ 'País', null, ( str, row ) => {
-        return core.countryFormat[str] ?? str;
-    } ],
+    [ PAIS_ATTR ],
     [ 'Provincia', null ],
     [ 'Ciudad', null ],
     [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
@@ -26,13 +25,9 @@ const SHEIN_ORDERS_DATA = [
 const SHEIN_LABEL_DATA = [
     [ 'Número del pedido' ],
     [ 'Bultos', null, ( row, i ) => 1 ],
-    [ 'SKU del vendedor', null, ( str, row ) => {
-        return core.getFinalSku( str );
-    } ],
+    [ SKU_ATTR ],
     [ 'Código Postal', null, ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-    [ 'País', null, ( str, row ) => {
-        return core.countryFormat[str] ?? str;
-    } ],
+    [ PAIS_ATTR ],
     [ 'Provincia', null ],
     [ 'Ciudad', null ],
     [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
@@ -72,12 +67,12 @@ class SheinApp
         this.icon = 'Shein';
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        core.area.attach( this.area );
+        this.core.area.attach( this.area );
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         utilButtonsPanel.sameLine();
-        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), {
+        utilButtonsPanel.addButton( null, 'ClearButton', this.core.clearData.bind( this.core ), {
             buttonClass: 'lg outline',
             icon: 'Trash2',
             title: 'Limpiar datos anteriores',
@@ -144,12 +139,20 @@ class SheinApp
 
     openData( fileData )
     {
-        fileData = fileData ?? this.lastSeurData;
-
-        if ( !fileData.length )
+        if ( !fileData?.length )
         {
             return;
         }
+
+        // Map SKUs and Country once on load data
+        fileData.forEach( r => {
+            const ogSku = r[SKU_ATTR];
+            r[SKU_ATTR] = this.core.mapSku( ogSku );
+            // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
+            const ogCountry = r[PAIS_ATTR];
+            r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
+            // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
+        });
 
         this.showSheinList( fileData );
         this.showStockList( fileData );
@@ -168,13 +171,13 @@ class SheinApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
-                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                const sku_a = a[SKU_ATTR] ?? '?';
+                const sku_b = b[SKU_ATTR] ?? '?';
                 return sku_a.localeCompare( sku_b );
             } );
         }
 
-        console.log(data);
+        // console.log(data);
 
         // Create table data from the list
         const tableData = data.map( ( row ) => {
@@ -207,8 +210,8 @@ class SheinApp
             selectable: true,
             sortable: false,
             toggleColumns: true,
-            centered: [ 'Número del pedido', 'ID del artículo', 'SKU del vendedor' ],
-            filter: 'SKU del vendedor',
+            centered: [ 'Número del pedido', 'ID del artículo', SKU_ATTR ],
+            filter: SKU_ATTR,
             hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', 'Código Postal', 'Número de Teléfono', 'Correo electrónico de usuario' ]
         } );
 
@@ -217,8 +220,6 @@ class SheinApp
         this.lastSeurColumnData = tableWidget.data.head;
         this.lastShownSeurData = tableWidget.data.body;
         this.lastSeurData = data;
-
-        // console.log("shein", this.lastSeurData)
     }
 
     showStockList( ogData )
@@ -236,22 +237,18 @@ class SheinApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
-                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                const sku_a = a[SKU_ATTR] ?? '?';
+                const sku_b = b[SKU_ATTR] ?? '?';
                 return sku_a.localeCompare( sku_b );
             } );
         }
 
         let columnData = [
-            [ 'SKU del vendedor', null, ( str, row ) => {
-                return core.getFinalSku( str );
-            } ],
+            [ SKU_ATTR ],
             [ 'Unidades', null ],
             [ 'Transporte', null, () => 'SEUR' ],
             [ 'Plataforma', null, () => 'SHEIN' ],
-            [ 'País', null, ( str, row ) => {
-                return this.core.countryFormat[str] ?? str;
-            } ],
+            [ PAIS_ATTR ],
             [ 'Observaciones', null ],
             [ 'Número del pedido', null ]
         ];
@@ -314,7 +311,7 @@ class SheinApp
         {
             let sku = `${row[0]}_${row[4]}`; // SKU _ País
 
-            // if sku starts with "JW-T60", never combine with others, so we must
+            // if sku starts with 'JW-T60', never combine with others, so we must
             // add a unique identifier in the sku
             sku += sku.includes( 'JW-T60' ) ? `_${LX.guidGenerator()}` : '';
 
@@ -396,9 +393,9 @@ class SheinApp
                     }
                 }
             ],
-            filter: 'SKU del vendedor',
+            filter: SKU_ATTR,
             customFilters: [
-                { name: 'País', options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
+                { name: PAIS_ATTR, options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
             ]
         } );
 
@@ -550,7 +547,7 @@ class SheinApp
         } );
 
         let errorFn = () => {
-            LX.toast( 'Error de exportación', `❌ No se pudo exportar el archivo "${filename}. ${errMsg}`, {
+            LX.toast( 'Error de exportación', `❌ No se pudo exportar el archivo: ${filename}. ${errMsg}`, {
                 timeout: -1,
                 position: 'top-center'
             } );
@@ -606,7 +603,7 @@ class SheinApp
                     if ( !ignoreErrors && v === undefined )
                     {
                         err = 1;
-                        errMsg = `No existen datos de "${ogColName} (${row[uid]})".`;
+                        errMsg = `No existen datos de ${ogColName} (${row[uid]}).`;
                         return;
                     }
 
@@ -626,7 +623,7 @@ class SheinApp
 
         for ( const repeats of multipleItemsOrderNames )
         {
-            const skuIdx = data.indexOf( 'SKU del vendedor' );
+            const skuIdx = data.indexOf( SKU_ATTR );
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => p + ` + ${rows[c][skuIdx]}`, '' );
             rest.forEach( ( r ) => {
@@ -679,8 +676,8 @@ class SheinApp
                     LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${uid})`, pTop );
                     const possibleIndex = data.findIndex( d => `${d[0]}_${d[1]}` === uid );
                     // console.log(possibleIndex)
-                    const trackAttrName = "Tracking Number";
-                    pTop.addText( trackAttrName, "", ( v ) => {
+                    const trackAttrName = 'Tracking Number';
+                    pTop.addText( trackAttrName, '', ( v ) => {
                         const colIdx = this.lastSeurTrackingsColumnData.indexOf( trackAttrName );
                         data[possibleIndex][colIdx] = v;
                     } );
@@ -710,7 +707,7 @@ class SheinApp
     {
         if( !albNumber || Number.isNaN( albNumber ) )
         {
-            LX.prompt( null, "Número de albarán", (v) => {
+            LX.prompt( null, 'Número de albarán', (v) => {
                 albNumber = parseFloat( v );
                 this.showAlbaranRelatedInfo( data, albNumber );
             } );
@@ -721,6 +718,16 @@ class SheinApp
 
         data = data ?? this.lastSeurData;
 
+        // Map SKUs and Country once on load data
+        data.forEach( r => {
+            const ogSku = r[SKU_ATTR];
+            r[SKU_ATTR] = this.core.mapSku( ogSku );
+            // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
+            const ogCountry = r[PAIS_ATTR];
+            r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
+            // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
+        });
+
         const dom = this.albaranArea.root;
         while ( dom.children.length > 0 )
         {
@@ -730,8 +737,8 @@ class SheinApp
         // Sort by ref
         {
             data = data.sort( ( a, b ) => {
-                const sku_a = this.core.getFinalSku( a['SKU del vendedor'] ) ?? '?';
-                const sku_b = this.core.getFinalSku( b['SKU del vendedor'] ) ?? '?';
+                const sku_a = a[SKU_ATTR] ?? '?';
+                const sku_b = b[SKU_ATTR] ?? '?';
                 return sku_a.localeCompare( sku_b );
             } );
         }
@@ -802,8 +809,7 @@ class SheinApp
         const weekN = this.core.getWeekNumber();
 
         const getPriceWithoutIVA = ( row ) => {
-            let country = row['País'];
-            country = core.countryFormat[country] ?? country;
+            let country = row[PAIS_ATTR];
             const iva = core.countryIVA[country];
             if( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: 5000, position: 'top-center' } );
             const priceWithoutIVA = parseFloat( row['precio de los productos básicos'] ) / ( iva ?? 1.21 );
@@ -817,16 +823,12 @@ class SheinApp
             tabs.add( 'IVA', IVAContainer, { selected: true } );
 
             const IVA_COLS = [
-                [ 'País', null, ( str, row ) => {
-                    return core.countryFormat[str] ?? str;
-                } ],
+                [ PAIS_ATTR ],
                 [ 'Número del pedido', 'NÚMERO PEDIDO' ],
                 [ 'Fecha y hora de creación de pedido', 'FECHA PEDIDO' ],
-                [ 'SKU del vendedor', 'REF', ( str, row ) => {
-                    return core.getFinalSku( str );
-                } ],
+                [ SKU_ATTR, 'REF' ],
                 [ 'CANTIDAD', null, ( str, row ) => {
-                    const sku = core.getFinalSku( row['SKU del vendedor'] );
+                    const sku = row[SKU_ATTR];
                     return core.getIndividualQuantityPerPack( sku, 1 );
                 } ],
                 [ 'PRECIO SIN IVA', null, ( str, row ) => getPriceWithoutIVA( row ) ],
@@ -866,7 +868,7 @@ class SheinApp
                 centered: [ 'CANTIDAD', 'PRECIO SIN IVA', 'IVA', 'PVP' ],
                 filter: 'NÚMERO PEDIDO',
                 customFilters: [
-                    { name: 'País', options: Object.keys( this.core.countryIVA ) }
+                    { name: PAIS_ATTR, options: Object.keys( this.core.countryIVA ) }
                 ]
             } );
 
@@ -890,7 +892,7 @@ class SheinApp
             };
 
             this.LAL_COLS = [
-                [ 'País' ],
+                [ PAIS_ATTR ],
                 [ 'Serie', null, () => '1' ], // 'A',
                 [ 'Número', null, () => -1 ], // 'B',   -> fixed on export
                 [ 'Posición', null, () => -1 ], // 'C', -> fixed on export
@@ -938,10 +940,9 @@ class SheinApp
             const totalTransportPerComp = {};
 
             data.forEach( ( row ) => {
-                const sku = this.core.getFinalSku( row['SKU del vendedor'] );
+                const sku = row[SKU_ATTR];
                 const prefix = sku.substring( 0, sku.indexOf( '-' ) );
-                let country = row['País'];
-                country = this.core.countryFormat[country] ?? country;
+                const country = row[PAIS_ATTR];
                 const priceWithoutIVA = getPriceWithoutIVA( row );
                 const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
                 const totalProductTransport = priceWithoutIVA * transportPrice;
@@ -959,7 +960,7 @@ class SheinApp
                         'Descripción': product?.['DESCRIPCIÓN'] ?? '',
                         'Cantidad': totalQuantity,
                         'Total': productTotal,
-                        'País': country
+                        PAIS_ATTR: country
                     }
                 }
                 else
@@ -980,15 +981,15 @@ class SheinApp
 
             modifiedData.push(
                 // España
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, PAIS_ATTR: 'ESPAÑA' },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, PAIS_ATTR: 'ESPAÑA' },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, PAIS_ATTR: 'ESPAÑA' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, PAIS_ATTR: 'ESPAÑA' },
                 // Portugal
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, PAIS_ATTR: 'PORTUGAL' },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, PAIS_ATTR: 'PORTUGAL' },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, PAIS_ATTR: 'PORTUGAL' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, PAIS_ATTR: 'PORTUGAL' },
             );
 
             // Remove rows with total = 0 (e.g. transports not used, etc)
@@ -1032,7 +1033,7 @@ class SheinApp
             tabs.add( 'ALB', ALBContainer, { xselected: true } );
 
             this.ALB_COLS = [
-                [ 'País' ],
+                [ PAIS_ATTR ],
                 [ 'Serie', null, () => '1' ], // 'A',
                 [ 'Número', null, () => -1 ], // 'B',
                 [ '' ], // 'C',
@@ -1081,9 +1082,9 @@ class SheinApp
 
             let modifiedData = [
                 // España
-                { 'Neto': -200, 'País': 'ESPAÑA', 'IVA': '21%', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': '131' },
+                { 'Neto': -200, PAIS_ATTR: 'ESPAÑA', 'IVA': '21%', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': '131' },
                 // Portugal
-                { 'Neto': -200, 'País': 'PORTUGAL', 'IVA': '23%', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': '132' },
+                { 'Neto': -200, PAIS_ATTR: 'PORTUGAL', 'IVA': '23%', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': '132' },
             ];
 
             // Process with COL info
@@ -1163,7 +1164,7 @@ class SheinApp
             .map( ( row, index ) => {
                 const m = row.slice( 1 );
                 m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
-                m[2] = index + 1; // Update "POSICIÓN" based on new filtered data
+                m[2] = index + 1; // Update _POSICIÓN_ based on new filtered data
                 return m;
             } );
         const finalRowsWithEmptyColumns = [];
