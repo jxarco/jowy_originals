@@ -1095,23 +1095,36 @@ class SheinApp
                 [ 'IVA', null, () => 0 ], // 'P',
                 [ 'Recargo', null, () => 0 ], // 'Q',
                 [ '' ], // 'R',
-                [ 'Neto' ], // 'S',
+                [ 'Neto', null, ( str, row ) => {
+                    const net = row['Total'];
+                    const country = row[PAIS_ATTR];
+                    const iva = this.core.countryIVA[country];
+                    return LX.round( net / iva );
+                } ], // 'S',
                 // 'T' -> 'AS'
                 [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
                 [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
-                [ 'Neto', 'Base' ], // 'AT'
+                [ 'Base', null, ( str, row ) => {
+                    const net = row['Total'];
+                    const country = row[PAIS_ATTR];
+                    const iva = this.core.countryIVA[country];
+                    return LX.round( net / iva );
+                } ], // 'AT'
                 [ '' ], [ '' ], // 'AU', 'AV'
-                [ 'IVA' ], // 'AW'
+                [ 'IVA', null, ( str, row ) => {
+                    const country = row[PAIS_ATTR];
+                    const iva100 = LX.round( ( this.core.countryIVA[country] - 1 ) * 100 );
+                    return `${iva100}%`;
+                } ], // 'AW'
                 [ '' ], [ '' ], // 'AX', 'AY'
                 [ 'Cuota', null, ( str, row ) => {
-                    const net = row['Neto'];
-                    return net * parseInt( row['IVA'] ) * 0.01;
+                    const net = row['Total'];
+                    const country = row[PAIS_ATTR];
+                    const iva = this.core.countryIVA[country];
+                    return LX.round( net * ( iva - 1 ) );
                 } ], // 'AZ'
                 [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],// 'BA', 'BB', 'BC', 'BD', 'BE','BF', 'BG','BH', 'BI', 'BJ'
-                [ 'Total', null, ( str, row ) => {
-                    const net = row['Neto'];
-                    return net * ( 1.0 + parseInt( row['IVA'] ) * 0.01 );
-                } ], // 'BK'
+                [ 'Total' ], // 'BK'
                 [ 'Pago', null, () => 'TR' ], // 'BL'
                 [ 'Portes', null, () => 0 ], // 'BM'
                 [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],// 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW'
@@ -1126,9 +1139,9 @@ class SheinApp
 
             let modifiedData = [
                 // España
-                { 'Neto': -200, 'País': 'ESPAÑA', 'IVA': '21%', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': '131' },
+                { 'Total': totalIncome_ES, 'País': 'ESPAÑA', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': '131' },
                 // Portugal
-                { 'Neto': -200, 'País': 'PORTUGAL', 'IVA': '23%', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': '132' },
+                { 'Total': totalIncome_PT, 'País': 'PORTUGAL', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': '132' },
             ];
 
             // Process with COL info

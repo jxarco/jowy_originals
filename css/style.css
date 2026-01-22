@@ -78,10 +78,6 @@
     text-overflow: ellipsis;
 }
 
-.lextable {
-    overflow-x: scroll
-}
-
 .lextable table {
     table-layout: auto;
 }
