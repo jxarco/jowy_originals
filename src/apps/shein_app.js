@@ -64,6 +64,7 @@ class SheinApp
 {
     constructor( core )
     {
+        this.title = 'SHEIN';
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
         this.icon = 'Shein';
         this.core = core;
@@ -79,16 +80,18 @@ class SheinApp
             title: 'Limpiar datos anteriores',
             tooltip: true
         } );
-        utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
+        this.exportLabelsButton = utilButtonsPanel.addButton( null, 'ExportLabelsButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
             buttonClass: 'lg outline',
             icon: 'Download',
             title: 'Exportar Etiquetas',
+            disabled: true,
             tooltip: true
         } );
-        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', () => this.exportSEURTrackings(), {
+        this.exportTrackingsButton = utilButtonsPanel.addButton( null, 'ExportTrackingsButton', () => this.exportSEURTrackings(), {
             buttonClass: 'lg outline',
             icon: 'FileDown',
             title: 'Exportar Seguimiento',
+            disabled: true,
             tooltip: true
         } );
         utilButtonsPanel.endLine();
@@ -96,17 +99,17 @@ class SheinApp
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
 
-        // SEUR
-        const seurContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-        tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.showSheinList() } );
-        const seurArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
-        seurContainer.appendChild( seurArea.root );
+        // Orders
+        const ordersContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showSheinList() } );
+        const ordersArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        ordersContainer.appendChild( ordersArea.root );
 
-        // Groups List
-        const groupsListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-        tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
-        const groupsListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
-        groupsListContainer.appendChild( groupsListArea.root );
+        // Stock List
+        const stockListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'Listado Stock', stockListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
+        const stockListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        stockListContainer.appendChild( stockListArea.root );
 
         // Tracking info
         const trackingContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
@@ -129,8 +132,8 @@ class SheinApp
         // Move up into the panel section
         utilButtonsPanel.attach( tabs.root );
 
-        this.seurDataArea = seurArea;
-        this.groupsListArea = groupsListArea;
+        this.ordersArea = ordersArea;
+        this.stockListArea = stockListArea;
         this.albaranArea = albaranArea;
         this.trackingArea = trackingArea;
         this._trackingSyncErrors = [];
@@ -158,30 +161,26 @@ class SheinApp
             // if( ogZipCode !== r[CP_ATTR] ) console.warn( `Zip Code mapped from ${ogZipCode} to ${r[CP_ATTR]}` );
         });
 
-        this.showSheinList( fileData );
-        this.showStockList( fileData );
-    }
-
-    showSheinList( data )
-    {
-        data = data ?? this.lastSeurData;
-
-        const dom = this.seurDataArea.root;
-        while ( dom.children.length > 0 )
+        // Sort by ref once
         {
-            dom.removeChild( dom.children[0] );
-        }
-
-        // Sort by ref
-        {
-            data = data.sort( ( a, b ) => {
+            fileData = fileData.sort( ( a, b ) => {
                 const sku_a = a[SKU_ATTR] ?? '?';
                 const sku_b = b[SKU_ATTR] ?? '?';
                 return sku_a.localeCompare( sku_b );
             } );
         }
 
-        // console.log(data);
+        this.showSheinList( fileData );
+        this.showStockList( fileData );
+
+        this.core.toggleButtonDisabled( this.exportLabelsButton, false );
+    }
+
+    showSheinList( data )
+    {
+        data = data ?? this.lastSeurData;
+
+        this.core.clearArea( this.ordersArea );
 
         // Create table data from the list
         const tableData = data.map( ( row ) => {
@@ -203,23 +202,23 @@ class SheinApp
             return lRow;
         } );
 
-        this.core.setHeaderTitle( `SHEIN: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
+        this.core.setHeaderTitle( `${this.title}: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_ORDERS_DATA.map( ( c ) => {
-                return c[1] ?? c[0];
-            } ),
+            head: SHEIN_ORDERS_DATA.map( c => c[1] ?? c[0] ),
             body: tableData
         }, {
             selectable: true,
-            sortable: false,
             toggleColumns: true,
             centered: [ 'Número del pedido', 'ID del artículo', SKU_ATTR ],
             filter: SKU_ATTR,
+            customFilters: [
+                { name: PAIS_ATTR, options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
+            ],
             hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', CP_ATTR, 'Número de Teléfono', 'Correo electrónico de usuario' ]
         } );
 
-        dom.appendChild( tableWidget.root );
+        this.ordersArea.attach( tableWidget );
 
         this.lastSeurColumnData = tableWidget.data.head;
         this.lastShownSeurData = tableWidget.data.body;
@@ -232,20 +231,7 @@ class SheinApp
 
         let data = LX.deepCopy( ogData );
 
-        const dom = this.groupsListArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
-
-        // Sort by ref
-        {
-            data = data.sort( ( a, b ) => {
-                const sku_a = a[SKU_ATTR] ?? '?';
-                const sku_b = b[SKU_ATTR] ?? '?';
-                return sku_a.localeCompare( sku_b );
-            } );
-        }
+        this.core.clearArea( this.stockListArea );
 
         let columnData = [
             [ SKU_ATTR ],
@@ -257,11 +243,11 @@ class SheinApp
             [ 'Número del pedido', null ]
         ];
 
-        const uid = columnData[6][0];
+        const uid = columnData[6][0]; // This is to get in this case 'Número del pedido'
         const orderNumbers = new Map();
 
         // Create table data from the list
-        let tableData = data.map( ( row, index ) => {
+        let rows = data.map( ( row, index ) => {
             const lRow = [];
             for ( let c of columnData )
             {
@@ -288,32 +274,34 @@ class SheinApp
             return lRow;
         } );
 
+        // Remove unnecessary 'NUMERO PEDIDO', used only to combine
+        columnData = columnData.slice( 0, -1 );
+        const headData = columnData.map( c => c[1] ?? c[0] );
+
         const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
+        const skuIdx = headData.indexOf( SKU_ATTR );
 
         for ( const repeats of multipleItemsOrderNames )
         {
             const finalIndex = repeats[0];
-            const finalRow = tableData[finalIndex];
+            const finalRow = rows[finalIndex];
             const rest = repeats.slice( 1 );
-            const trail = rest.reduce( ( p, c ) => p + ` + ${tableData[c][0]}`, '' );
+            const trail = rest.reduce( ( p, c ) => p + ` + ${rows[c][skuIdx]}`, '' );
             rest.forEach( ( r ) => {
-                tableData[r] = undefined;
+                rows[r] = undefined;
             } );
-            finalRow[0] += trail;
+            finalRow[skuIdx] += trail;
             finalRow[5] = 'Mismo pedido';
         }
 
-        tableData = tableData.filter( ( r ) => r !== undefined );
-
-        // Remove unnecessary
-        columnData.splice( 6, 1 );
-
-        const listSKU = [];
+        const tableData = [];
         const skus = {};
 
-        for ( let row of tableData )
+        for ( let row of rows )
         {
-            let sku = `${row[0]}_${row[4]}`; // SKU _ País
+            if( row === undefined ) continue;
+
+            let sku = `${row[skuIdx]}_${row[4]}`; // SKU _ País
 
             // if sku starts with 'JW-T60', never combine with others, so we must
             // add a unique identifier in the sku
@@ -321,22 +309,22 @@ class SheinApp
 
             if ( !skus[sku] )
             {
-                skus[sku] = [ listSKU.length ];
+                skus[sku] = [ tableData.length ];
                 row[1] = 1;
                 row.splice( 6, 1 );  // Delete order num
-                listSKU.push( row );
+                tableData.push( row );
             }
             else
             {
-                const idx = skus[sku][0];
-                listSKU[idx][1] += 1;
+                const idx = skus[sku][skuIdx];
+                tableData[idx][1] += 1;
             }
         }
 
         // do it by individual units, not in item combined orders
-        for ( let row of listSKU )
+        for ( let row of tableData )
         {
-            const sku = row[0];
+            const sku = row[skuIdx];
 
             if ( sku.includes( '+' ) )
             {
@@ -348,9 +336,9 @@ class SheinApp
 
         // for the skus that contain '+', change the sku to sku x quantity in each of them
         // only for SHEIN, since we don't have the quantity until now
-        for ( let row of listSKU )
+        for ( let row of tableData )
         {
-            const sku = row[0];
+            const sku = row[skuIdx];
 
             if ( !sku.includes( '+' ) )
             {
@@ -364,19 +352,16 @@ class SheinApp
                 const q = quantities[i];
                 return `${s}${q > 1 ? ` x ${q}` : ''}`;
             } );
-            row[0] = newSkuParts.join( ' + ' );
+            row[skuIdx] = newSkuParts.join( ' + ' );
         }
 
         const tableWidget = new LX.Table( null, {
-            head: columnData.map( ( c ) => {
-                return c[1] ?? c[0];
-            } ),
-            body: listSKU
+            head: headData,
+            body: tableData
         }, {
-            selectable: false,
-            sortable: false,
+            selectable: true,
             sortColumns: false,
-            toggleColumns: false,
+            toggleColumns: true,
             centered: true,
             columnActions: [
                 {
@@ -406,18 +391,14 @@ class SheinApp
         this.lastSeurColumnData = tableWidget.data.head;
         this.lastShownSeurData = tableWidget.data.body;
 
-        dom.appendChild( tableWidget.root );
+        this.stockListArea.attach( tableWidget );
     }
 
     showTrackingList( trackingData )
     {
         const data = this.lastSeurData;
 
-        const dom = this.trackingArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
+        this.core.clearArea( this.trackingArea );
 
         this._trackingSyncErrors = [];
 
@@ -443,22 +424,22 @@ class SheinApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_TRACKING_DATA.map( ( c ) => {
-                return c[1] ?? c[0];
-            } ),
+            head: SHEIN_TRACKING_DATA.map( c => c[1] ?? c[0] ),
             body: tableData
         }, {
             selectable: true,
-            sortable: false,
             toggleColumns: true,
             centered: true,
-            filter: 'Tracking Number'
+            filter: 'Tracking Number',
+            hiddenColumns: [ 'Delete' ]
         } );
-
-        dom.appendChild( tableWidget.root );
 
         this.lastSeurTrackingsColumnData = tableWidget.data.head;
         this.lastShownSeurTrackingsData = tableWidget.data.body;
+
+        this.trackingArea.attach( tableWidget );
+
+        this.core.toggleButtonDisabled( this.exportTrackingsButton, false );
     }
 
     exportSEUR( ignoreErrors = false, sheinData )
@@ -466,7 +447,7 @@ class SheinApp
         let columnData = SHEIN_LABEL_DATA;
 
         const currentSheinData = sheinData ?? this.lastSeurData;
-        const uid = columnData[0][0];
+        const uid = columnData[0][0]; // 'Número del pedido'
 
         // Process the xlsx first to detect empty fields
         if ( !ignoreErrors )
@@ -546,9 +527,7 @@ class SheinApp
 
         let err = 0;
         let errMsg = '';
-        let data = columnData.map( ( c, index ) => {
-            return c[1] ?? c[0];
-        } );
+        let data = columnData.map( c => c[1] ?? c[0] );
 
         let errorFn = () => {
             LX.toast( 'Error de exportación', `❌ No se pudo exportar el archivo: ${filename}. ${errMsg}`, {
@@ -624,16 +603,18 @@ class SheinApp
         }
 
         const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
+        const skuIdx = data.indexOf( SKU_ATTR );
 
         for ( const repeats of multipleItemsOrderNames )
         {
-            const skuIdx = data.indexOf( SKU_ATTR );
+            const finalIndex = repeats[0];
+            const finalRow = rows[finalIndex];
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => p + ` + ${rows[c][skuIdx]}`, '' );
             rest.forEach( ( r ) => {
                 rows[r] = undefined;
             } );
-            rows[repeats[0]][skuIdx] += trail;
+            finalRow[skuIdx] += trail;
         }
 
         rows = rows.filter( ( r ) => r !== undefined );
@@ -656,7 +637,7 @@ class SheinApp
                 const q = quantities[i];
                 return `${s}${q > 1 ? ` x ${q}` : ''}`;
             } );
-            row[2] = newSkuParts.join( ' + ' );
+            row[skuIdx] = newSkuParts.join( ' + ' );
         }
 
         this.core.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
@@ -709,7 +690,7 @@ class SheinApp
 
     showAlbaranRelatedInfo( data, albNumber )
     {
-        if( !albNumber || Number.isNaN( albNumber ) )
+        if( albNumber === undefined || Number.isNaN( albNumber ) )
         {
             LX.prompt( null, 'Número de albarán', (v) => {
                 albNumber = parseFloat( v );
@@ -717,6 +698,8 @@ class SheinApp
             } );
             return;
         }
+
+        this.core.clearArea( this.albaranArea );
 
         this.albNumber = albNumber;
 
@@ -734,14 +717,8 @@ class SheinApp
             r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
             // if( ogZipCode !== r[CP_ATTR] ) console.warn( `Zip Code mapped from ${ogZipCode} to ${r[CP_ATTR]}` );
         });
-
-        const dom = this.albaranArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
-
-        // Sort by ref
+        
+        // Sort by ref once
         {
             data = data.sort( ( a, b ) => {
                 const sku_a = a[SKU_ATTR] ?? '?';
@@ -750,7 +727,7 @@ class SheinApp
             } );
         }
 
-        console.log(data);
+        // console.log(data);
         
         const tmpArea = new LX.Area( { className: 'w-full h-full p-0 m-0', skipAppend: true } );
         this.albaranArea.attach( tmpArea );
@@ -967,7 +944,7 @@ class SheinApp
                         'Descripción': product?.['DESCRIPCIÓN'] ?? '',
                         'Cantidad': totalQuantity,
                         'Total': productTotal,
-                        PAIS_ATTR: country
+                        'País': country
                     }
                 }
                 else
@@ -988,15 +965,15 @@ class SheinApp
 
             modifiedData.push(
                 // España
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, PAIS_ATTR: 'ESPAÑA' },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, PAIS_ATTR: 'ESPAÑA' },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, PAIS_ATTR: 'ESPAÑA' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, PAIS_ATTR: 'ESPAÑA' },
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
                 // Portugal
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, PAIS_ATTR: 'PORTUGAL' },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, PAIS_ATTR: 'PORTUGAL' },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, PAIS_ATTR: 'PORTUGAL' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, PAIS_ATTR: 'PORTUGAL' },
+                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
+                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
             );
 
             // Remove rows with total = 0 (e.g. transports not used, etc)
@@ -1089,9 +1066,9 @@ class SheinApp
 
             let modifiedData = [
                 // España
-                { 'Neto': -200, PAIS_ATTR: 'ESPAÑA', 'IVA': '21%', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': '131' },
+                { 'Neto': -200, 'País': 'ESPAÑA', 'IVA': '21%', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': '131' },
                 // Portugal
-                { 'Neto': -200, PAIS_ATTR: 'PORTUGAL', 'IVA': '23%', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': '132' },
+                { 'Neto': -200, 'País': 'PORTUGAL', 'IVA': '23%', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': '132' },
             ];
 
             // Process with COL info
@@ -1249,18 +1226,25 @@ class SheinApp
     open( params )
     {
         this.core.tool = 'shein';
-        this.core.setHeaderTitle( `SHEIN`, this.subtitle, this.icon );
+        this.core.setHeaderTitle( `${this.title}.`, this.subtitle, this.icon );
         this.area.root.classList.toggle( 'hidden', false );
     }
 
     close()
     {
+        this.clear();
     }
 
     clear()
     {
         delete this.lastSeurData;
         this.showSheinList( [] );
+        this.showStockList( [] );
+        this.showTrackingList( [] );
+        this.showAlbaranRelatedInfo( [], 0 );
+
+        this.core.toggleButtonDisabled( this.exportLabelsButton, true );
+        this.core.toggleButtonDisabled( this.exportTrackingsButton, true );
     }
 }
 

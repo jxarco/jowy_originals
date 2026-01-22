@@ -288,6 +288,7 @@ const core = {
                 const files = e.target.files;
                 if ( !files.length ) return;
                 this.onLoadFile( files[0] );
+                fileInput.value = '';
             } );
     
             header.addEventListener( 'click', ( event ) => {
@@ -697,6 +698,7 @@ const core = {
                     await this.onLoadFile( file, innerCallback );
                 }
                 if( callback ) callback( allDataRows );
+                fileInput.value = '';
             } );
     
             dropZone.addEventListener( 'click', ( event ) => {
@@ -760,6 +762,20 @@ const core = {
 
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
         return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    },
+
+    clearArea( area )
+    {
+        const dom = area.root;
+        while ( dom.children.length > 0 )
+        {
+            dom.removeChild( dom.children[0] );
+        }
+    },
+
+    toggleButtonDisabled( button, force )
+    {
+        button.root.querySelector( 'button' ).toggleAttribute( 'disabled', force );
     },
 
     _request: function( request )
