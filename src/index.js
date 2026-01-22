@@ -770,6 +770,15 @@ const core = {
         }, { modal: true, position: [ 'calc(50% - 150px)', '250px' ], size: [ '300px', null ], closable: false, draggable: false } );
     },
 
+    getTodayStringDate()
+    {
+        const date = new Date();
+        const day = `${date.getDate()}`;
+        const month = `${date.getMonth() + 1}`;
+        const year = `${date.getFullYear()}`;
+        return `${'0'.repeat( 2 - day.length )}${day}_${'0'.repeat( 2 - month.length )}${month}_${year}`;
+    },
+
     getWeekNumber( date = new Date() )
     {
         const d = new Date(Date.UTC(

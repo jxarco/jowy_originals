@@ -520,12 +520,7 @@ class SheinApp
             }
         }
 
-        const date = new Date();
-        const day = `${date.getDate()}`;
-        const month = `${date.getMonth() + 1}`;
-        const year = `${date.getFullYear()}`;
-        const todayStringDate = `${'0'.repeat( 2 - day.length )}${day}_${'0'.repeat( 2 - month.length )}${month}_${year}`;
-        const filename = `SEUR_shein_${todayStringDate}.xlsx`;
+        const filename = `ETIQUETAS_SEUR_${this.title}_${this.core.getTodayStringDate()}.xlsx`;
 
         let err = 0;
         let errMsg = '';
@@ -647,7 +642,7 @@ class SheinApp
 
     exportSEURTrackings( fixedData, ignoreErrors )
     {
-        const filename = 'NUMERODEGUIA_SHEIN.xlsx';
+        const filename = `NUMERODEGUIA_SEUR_${this.title}_${this.core.getTodayStringDate()}.xlsx`;
         const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
 
         if ( !ignoreErrors && this._trackingSyncErrors.length )
@@ -1183,7 +1178,7 @@ class SheinApp
     exportIVA()
     {
         const weekN = this.core.getWeekNumber();
-        const filename = `IVA_SHEIN_semana${weekN}.xlsx`;
+        const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
         const sheets = [];
 
         {
