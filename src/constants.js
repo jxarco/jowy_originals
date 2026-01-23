@@ -36,6 +36,7 @@ export const SKU_MAPPING = {
     'BY-FBT02GN': 'BY-FBT02V',
     'BY-FBT03GN': 'BY-FBT03V',
     'BY-FBT04GN': 'BY-FBT04V',
+    'BY-FBT01BSINCOJ': 'BY-FBT01B',
     'BY-BCS01': 'BY-BCS02',
     'BY-PT02': 'BY-WC02B',
     // Change prefix
@@ -101,7 +102,15 @@ export const LAL_SKU_MAPPINGS = {
 export const PLATFORM_CLIENT_CODES = {
     'SHEIN_ESPAÑA_2025': '504',
     'SHEIN_PORTUGAL_2025': '505',
+    'Miravia_ESPAÑA_2025': '497',
+    'Miravia_PORTUGAL_2025': '597',
+    'Miravia_FRANCIA_2025': '497', // Spain code for 2025
+    'Miravia_ITALIA_2025': '598',
 
     'SHEIN_ESPAÑA_2026': '131',
     'SHEIN_PORTUGAL_2026': '132',
+    'Miravia_ESPAÑA_2026': '121',
+    'Miravia_PORTUGAL_2026': '122',
+    'Miravia_FRANCIA_2026': '123',
+    'Miravia_ITALIA_2026': '124',
 };
