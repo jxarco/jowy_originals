@@ -720,19 +720,13 @@ class SheinApp
             } );
         }
 
-        // const totalIncome = {
-        //     'ESPAÑA': 0
-        // }
-
-        const totalIncome_ES = LX.round( data.reduce( ( acc, row ) => {
-            if( row[PAIS_ATTR] !== "ESPAÑA" ) return acc;
-            return acc + parseFloat( row['precio de los productos básicos'] );
-        }, 0 ) );
-
-        const totalIncome_PT = LX.round( data.reduce( ( acc, row ) => {
-            if( row[PAIS_ATTR] !== "PORTUGAL" ) return acc;
-            return acc + parseFloat( row['precio de los productos básicos'] );
-        }, 0 ) );
+        const totalIncome = countries.reduce( ( o, c ) => {
+            o[c] = LX.round( data.reduce( ( acc, row ) => {
+                if( row[PAIS_ATTR] !== c ) return acc;
+                return acc + parseFloat( row['precio de los productos básicos'] );
+            }, 0 ) );
+            return o;
+        }, {} );
 
         // console.log(data);
         
@@ -969,6 +963,8 @@ class SheinApp
             // Create table data from the list
             let modifiedData = Object.values( skuMap );
 
+            const totalIncomeNetPlusIVA = {};
+
             modifiedData.push(
                 // España
                 { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
@@ -978,14 +974,14 @@ class SheinApp
             );
 
             // TOTAL SPAIN
-            const totalIncomeNetPlusIVA_ES = LX.round( modifiedData.reduce( ( acc, row ) => {
+            totalIncomeNetPlusIVA['ESPAÑA'] = LX.round( modifiedData.reduce( ( acc, row ) => {
                 if( row[PAIS_ATTR] !== "ESPAÑA" ) return acc;
                 return acc + parseFloat( row['Total'] );
             }, 0 ) * this.core.countryIVA[ "ESPAÑA" ] );
 
             {
                 const lastTransportRow = modifiedData.at( -1 );
-                const incomeDiff = totalIncome_ES - totalIncomeNetPlusIVA_ES;
+                const incomeDiff = totalIncome['ESPAÑA'] - totalIncomeNetPlusIVA['ESPAÑA'];
                 lastTransportRow['Total'] += LX.round( incomeDiff );
             }
 
@@ -998,14 +994,14 @@ class SheinApp
             );
 
             // TOTAL PORTUGAL
-            const totalIncomeNetPlusIVA_PT = LX.round( modifiedData.reduce( ( acc, row ) => {
+            totalIncomeNetPlusIVA['PORTUGAL'] = LX.round( modifiedData.reduce( ( acc, row ) => {
                 if( row[PAIS_ATTR] !== "PORTUGAL" ) return acc;
                 return acc + parseFloat( row['Total'] );
             }, 0 ) * this.core.countryIVA[ "PORTUGAL" ] );
 
             {
                 const lastTransportRow = modifiedData.at( -1 );
-                const incomeDiff = totalIncome_PT - totalIncomeNetPlusIVA_PT;
+                const incomeDiff = totalIncome['PORTUGAL'] - totalIncomeNetPlusIVA['PORTUGAL'];
                 lastTransportRow['Total'] += LX.round( incomeDiff );
             }
 
@@ -1052,22 +1048,14 @@ class SheinApp
             const popoverButton = utilButtonsPanel.addButton( null, 'Ver Ingresos', () => {
                 const incomeArea = new LX.Area( { skipAppend: true } );
                 const tabs = incomeArea.addTabs({ fit: true });
-                {
+                countries.forEach( c => {
                     const p = new LX.Panel();
-                    p.addText( 'Total brutos', totalIncome_ES + ' €', null,
+                    p.addText( 'Total brutos', totalIncome[c] + ' €', null,
                         { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
-                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA_ES + ' €', null,
-                        { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true, signal: '@no-iva-income' } );
-                    tabs.add( 'ESPAÑA', p.root );
-                }
-                {
-                    const p = new LX.Panel();
-                    p.addText( 'Total brutos', totalIncome_PT + ' €', null,
+                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA[c] + ' €', null,
                         { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
-                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA_PT + ' €', null,
-                        { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true, signal: '@no-iva-income' } );
-                    tabs.add( 'PORTUGAL', p.root );
-                }
+                    tabs.add( c, p.root );
+                } );
                 new LX.Popover( popoverButton.root, [ incomeArea ], { align: 'end' } );
             }, { icon: 'Eye', iconPosition: 'start' } );
             utilButtonsPanel.endLine( 'ml-auto' );
@@ -1137,12 +1125,9 @@ class SheinApp
                 // [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
             ];
 
-            let modifiedData = [
-                // España
-                { 'Total': totalIncome_ES, 'País': 'ESPAÑA', 'Cliente': `Ventas ${LX.toTitleCase( this.title )} España Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( this.title, 'ESPAÑA', currentYear ) },
-                // Portugal
-                { 'Total': totalIncome_PT, 'País': 'PORTUGAL', 'Cliente': `Ventas ${LX.toTitleCase( this.title )} Portugal Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( this.title, 'PORTUGAL', currentYear ) },
-            ];
+            let modifiedData = countries.map( c => {
+                return { 'Total': totalIncome[c], 'País': c, 'Cliente': `Ventas ${LX.toTitleCase( this.title )} ${c} Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( this.title, c, currentYear ) };
+            } );
 
             // Process with COL info
             const tableData = modifiedData.map( ( row ) => {
