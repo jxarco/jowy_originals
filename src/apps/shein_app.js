@@ -2,6 +2,8 @@ import { LX } from 'lexgui';
 import { Data } from '../data.js';
 import { Constants, NumberFormatter } from '../constants.js';
 
+const countries = [ 'ESPAÑA', 'PORTUGAL' ];
+
 const SKU_ATTR = 'SKU del vendedor';
 const PAIS_ATTR = 'País';
 const CP_ATTR = 'Código Postal';
@@ -101,7 +103,7 @@ class SheinApp
 
         // Orders
         const ordersContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-        tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showSheinList() } );
+        tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showOrdersList() } );
         const ordersArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         ordersContainer.appendChild( ordersArea.root );
 
@@ -175,13 +177,13 @@ class SheinApp
             } );
         }
 
-        this.showSheinList( fileData );
+        this.showOrdersList( fileData );
         this.showStockList( fileData );
 
         this.core.toggleButtonDisabled( this.exportLabelsButton, false );
     }
 
-    showSheinList( data )
+    showOrdersList( data )
     {
         data = data ?? this.lastSeurData;
 
@@ -218,7 +220,7 @@ class SheinApp
             centered: [ 'Número del pedido', 'ID del artículo', SKU_ATTR ],
             filter: SKU_ATTR,
             customFilters: [
-                { name: PAIS_ATTR, options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
+                { name: PAIS_ATTR, options: countries }
             ],
             hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', CP_ATTR, 'Número de Teléfono', 'Correo electrónico de usuario' ]
         } );
@@ -389,7 +391,7 @@ class SheinApp
             ],
             filter: SKU_ATTR,
             customFilters: [
-                { name: PAIS_ATTR, options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
+                { name: PAIS_ATTR, options: countries }
             ]
         } );
 
@@ -451,14 +453,14 @@ class SheinApp
     {
         let columnData = SHEIN_LABEL_DATA;
 
-        const currentSheinData = sheinData ?? this.lastSeurData;
+        const currentPlatformData = sheinData ?? this.lastSeurData;
         const uid = columnData[0][0]; // 'Número del pedido'
 
         // Process the xlsx first to detect empty fields
         if ( !ignoreErrors )
         {
             const errorFields = [];
-            currentSheinData.forEach( ( row, index ) => {
+            currentPlatformData.forEach( ( row, index ) => {
                 for ( let c of columnData )
                 {
                     const ogColName = c[0];
@@ -494,7 +496,7 @@ class SheinApp
                         return c[0].split( '+' )[0];
                     } );
 
-                    const fixedData = LX.deepCopy( currentSheinData );
+                    const fixedData = LX.deepCopy( currentPlatformData );
 
                     for ( const [ errIndex, errName ] of errorFields )
                     {
@@ -536,7 +538,7 @@ class SheinApp
             } );
         };
 
-        if ( !currentSheinData?.length )
+        if ( !currentPlatformData?.length )
         {
             errMsg = `No existen datos.`;
             errorFn();
@@ -545,7 +547,7 @@ class SheinApp
 
         const orderNumbers = new Map();
 
-        let rows = currentSheinData.map( ( row, index ) => {
+        let rows = currentPlatformData.map( ( row, index ) => {
             const lRow = [];
             for ( let c of columnData )
             {
@@ -717,6 +719,10 @@ class SheinApp
             } );
         }
 
+        // const totalIncome = {
+        //     'ESPAÑA': 0
+        // }
+
         const totalIncome_ES = LX.round( data.reduce( ( acc, row ) => {
             if( row[PAIS_ATTR] !== "ESPAÑA" ) return acc;
             return acc + parseFloat( row['precio de los productos básicos'] );
@@ -752,31 +758,23 @@ class SheinApp
                 {
                     name: 'Exportar LAL',
                     icon: 'List',
-                    submenu: [
-                        {
-                            name: 'España',
-                            callback: ( v ) => this.exportLAL( v.toUpperCase() )
-                        },
-                        {
-                            name: 'Portugal',
-                            callback: ( v ) => this.exportLAL( v.toUpperCase() )
-                        },
-                    ]
+                    submenu: countries.map( c => {
+                        return {
+                            name: LX.toTitleCase( c ),
+                            callback: () => this.exportLAL( c )
+                        }
+                    } )
                 },
                 null,
                 {
                     name: 'Exportar ALB',
                     icon: 'File',
-                    submenu: [
-                        {
-                            name: 'España',
-                            callback: ( v ) => this.exportALB( v.toUpperCase() )
-                        },
-                        {
-                            name: 'Portugal',
-                            callback: ( v ) => this.exportALB( v.toUpperCase() )
-                        },
-                    ]
+                    submenu: countries.map( c => {
+                        return {
+                            name: LX.toTitleCase( c ),
+                            callback: () => this.exportALB( c )
+                        }
+                    } )
                 },
             ], { side: 'bottom', align: 'start' } );
         }, {
@@ -1140,9 +1138,9 @@ class SheinApp
 
             let modifiedData = [
                 // España
-                { 'Total': totalIncome_ES, 'País': 'ESPAÑA', 'Cliente': `Ventas Shein España Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( 'SHEIN', 'ESPAÑA', currentYear ) },
+                { 'Total': totalIncome_ES, 'País': 'ESPAÑA', 'Cliente': `Ventas ${LX.toTitleCase( this.title )} España Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( this.title, 'ESPAÑA', currentYear ) },
                 // Portugal
-                { 'Total': totalIncome_PT, 'País': 'PORTUGAL', 'Cliente': `Ventas Shein Portugal Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( 'SHEIN', 'PORTUGAL', currentYear ) },
+                { 'Total': totalIncome_PT, 'País': 'PORTUGAL', 'Cliente': `Ventas ${LX.toTitleCase( this.title )} Portugal Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( this.title, 'PORTUGAL', currentYear ) },
             ];
 
             // Process with COL info
@@ -1203,7 +1201,7 @@ class SheinApp
             sheets.push( this.core.createXLSXSheet( data ) );
         }
 
-        const workbook = this.core.createXLSXWorkbook( sheets, [ 'ESPAÑA', 'PORTUGAL' ] );
+        const workbook = this.core.createXLSXWorkbook( sheets, countries );
         this.core.exportXLSXWorkbook( workbook, filename );
     }
 
@@ -1270,7 +1268,6 @@ class SheinApp
             return;
         }
 
-        const countries = [ 'ESPAÑA', 'PORTUGAL' ];
         const offset = countries.indexOf( country );
         const { filename, data } = this.getLALData( country, offset );
         this.core.exportXLSXData( data, filename );
@@ -1284,7 +1281,6 @@ class SheinApp
             return;
         }
 
-        const countries = [ 'ESPAÑA', 'PORTUGAL' ];
         const offset = countries.indexOf( country );
         const { filename, data } = this.getALBData( country, offset );
         this.core.exportXLSXData( data, filename );
@@ -1298,15 +1294,11 @@ class SheinApp
             return;
         }
 
-        const countries = [ 'ESPAÑA', 'PORTUGAL' ];
-        const albaranFiles = countries.map( ( c, i ) => {
-            return [ this.getLALData( c, i ), this.getALBData( c, i ) ];
-        } );
+        const folders = {};
 
-        const folders = {
-            'ESPAÑA': albaranFiles[countries.indexOf( 'ESPAÑA' )],
-            'PORTUGAL': albaranFiles[countries.indexOf( 'PORTUGAL' )],
-        };
+        countries.forEach( ( c, i ) => {
+            folders[c] = [ this.getLALData( c, i ), this.getALBData( c, i ) ];
+        } );
 
         const zip = await this.core.zipWorkbooks( folders );
         LX.downloadFile( 'ALBARANES.zip', zip );
@@ -1314,7 +1306,7 @@ class SheinApp
 
     open( params )
     {
-        this.core.tool = 'shein';
+        this.core.tool = this.title.toLowerCase();
         this.core.setHeaderTitle( `${this.title}.`, this.subtitle, this.icon );
         this.area.root.classList.toggle( 'hidden', false );
     }
@@ -1327,7 +1319,7 @@ class SheinApp
     clear()
     {
         delete this.lastSeurData;
-        this.showSheinList( [] );
+        this.showOrdersList( [] );
         this.showStockList( [] );
         this.showTrackingList( [] );
         this.showAlbaranRelatedInfo( [], 0 );
