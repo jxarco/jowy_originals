@@ -48,6 +48,16 @@ export const toggleButtonDisabled = (button, force) => {
     button.root.querySelector('button').toggleAttribute('disabled', force);
 };
 
+export function addUtilityButton(p, name, icon, title, callback, disabled) {
+    return p.addButton( null, name, callback, {
+        buttonClass: 'lg outline',
+        icon,
+        title,
+        disabled,
+        tooltip: title?.length > 0
+    } );
+}
+
 export const request = (request) => {
     var dataType = request.dataType || 'text';
     if (dataType == 'json') { // parse it locally

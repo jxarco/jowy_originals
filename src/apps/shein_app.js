@@ -4,12 +4,11 @@ import { Constants, NumberFormatter } from '../constants.js';
 import * as Utils from '../utils.js';
 
 const countries = [ 'ESPAÑA', 'PORTUGAL' ];
-
 const SKU_ATTR = 'SKU del vendedor';
 const PAIS_ATTR = 'País';
 const CP_ATTR = 'Código Postal';
 
-const SHEIN_ORDERS_DATA = [
+const ORDERS_DATA = [
     [ 'Número del pedido' ],
     [ 'ID del artículo' ],
     [ SKU_ATTR ],
@@ -26,7 +25,7 @@ const SHEIN_ORDERS_DATA = [
     [ 'Correo electrónico de usuario' ]
 ];
 
-const SHEIN_LABEL_DATA = [
+const LABEL_DATA = [
     [ 'Número del pedido' ],
     [ 'Bultos', null, ( row, i ) => 1 ],
     [ SKU_ATTR ],
@@ -40,7 +39,7 @@ const SHEIN_LABEL_DATA = [
     [ 'Correo electrónico de usuario' ]
 ];
 
-const SHEIN_TRACKING_DATA = [
+const TRACKING_DATA = [
     [ 'Número del pedido', 'Order Number' ],
     [ 'ID del artículo', 'Item ID' ],
     [ 'Tracking Number', null, ( str, row, tdata, app ) => {
@@ -75,30 +74,15 @@ class SheinApp
         this.core.area.attach( this.area );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
-        utilButtonsPanel.sameLine();
-        utilButtonsPanel.addButton( null, 'ClearButton', this.core.clearData.bind( this.core ), {
-            buttonClass: 'lg outline',
-            icon: 'Trash2',
-            title: 'Limpiar datos anteriores',
-            tooltip: true
-        } );
-        this.exportLabelsButton = utilButtonsPanel.addButton( null, 'ExportLabelsButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
-            buttonClass: 'lg outline',
-            icon: 'Download',
-            title: 'Exportar Etiquetas',
-            disabled: true,
-            tooltip: true
-        } );
-        this.exportTrackingsButton = utilButtonsPanel.addButton( null, 'ExportTrackingsButton', () => this.exportSEURTrackings(), {
-            buttonClass: 'lg outline',
-            icon: 'FileDown',
-            title: 'Exportar Seguimiento',
-            disabled: true,
-            tooltip: true
-        } );
-        utilButtonsPanel.endLine();
-        this.area.attach( utilButtonsPanel.root );
+        const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
+        utilsPanel.sameLine();
+        Utils.addUtilityButton( utilsPanel, 'ClearButton', 'Trash2', 'Limpiar datos anteriores', () => this.core.clearData() );
+        this.exportLabelsButton = Utils.addUtilityButton( utilsPanel, 'ExportLabelsButton', 'Download', 'Exportar Etiquetas', 
+            () => this.exportSEUR( false, this.lastSeurData ), true );
+        this.exportTrackingsButton = Utils.addUtilityButton( utilsPanel, 'ExportTrackingsButton', 'FileDown', 'Exportar Seguimiento', 
+            () => this.exportSEURTrackings(), true );
+        utilsPanel.endLine();
+        this.area.attach( utilsPanel.root );
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
 
@@ -133,7 +117,7 @@ class SheinApp
         albaranContainer.appendChild( albaranArea.root );
 
         // Move up into the panel section
-        utilButtonsPanel.attach( tabs.root );
+        utilsPanel.attach( tabs.root );
 
         this.ordersArea = ordersArea;
         this.stockListArea = stockListArea;
@@ -193,7 +177,7 @@ class SheinApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of SHEIN_ORDERS_DATA )
+            for ( let c of ORDERS_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -213,7 +197,7 @@ class SheinApp
         this.core.setHeaderTitle( `${this.title}: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_ORDERS_DATA.map( c => c[1] ?? c[0] ),
+            head: ORDERS_DATA.map( c => c[1] ?? c[0] ),
             body: tableData
         }, {
             selectable: true,
@@ -413,7 +397,7 @@ class SheinApp
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of SHEIN_TRACKING_DATA )
+            for ( let c of TRACKING_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -432,7 +416,7 @@ class SheinApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: SHEIN_TRACKING_DATA.map( c => c[1] ?? c[0] ),
+            head: TRACKING_DATA.map( c => c[1] ?? c[0] ),
             body: tableData
         }, {
             selectable: true,
@@ -450,11 +434,11 @@ class SheinApp
         Utils.toggleButtonDisabled( this.exportTrackingsButton, false );
     }
 
-    exportSEUR( ignoreErrors = false, sheinData )
+    exportSEUR( ignoreErrors = false, rawData )
     {
-        let columnData = SHEIN_LABEL_DATA;
+        let columnData = LABEL_DATA;
 
-        const currentPlatformData = sheinData ?? this.lastSeurData;
+        const currentPlatformData = rawData ?? this.lastSeurData;
         const uid = columnData[0][0]; // 'Número del pedido'
 
         // Process the xlsx first to detect empty fields
@@ -734,30 +718,19 @@ class SheinApp
         this.albaranArea.attach( tmpArea );
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
-        utilButtonsPanel.sameLine();
-        utilButtonsPanel.addButton( null, 'ExportIVAButton', () => this.exportIVA(), {
-            buttonClass: 'lg outline',
-            icon: 'Euro',
-            title: 'Exportar IVA',
-            tooltip: true
-        } );
-        utilButtonsPanel.addButton( null, 'ExportAlbaranes', () => this.exportAlbaranes(), {
-            buttonClass: 'lg outline',
-            icon: 'FileArchive',
-            title: 'Exportar Albaranes',
-            tooltip: true
-        } );
-        const exportOptionsButton = utilButtonsPanel.addButton( null, 'ExportOptions', () => {
+        const subUtilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
+        subUtilsPanel.sameLine();
+        Utils.addUtilityButton( subUtilsPanel, 'ExportIVAButton', 'Euro', 'Exportar IVA',
+            () => this.exportIVA() );
+        Utils.addUtilityButton( subUtilsPanel, 'ExportAlbaranesButton', 'FileArchive', 'Exportar Albaranes',
+            () => this.exportAlbaranes() );
+        const exportOptionsButton = Utils.addUtilityButton( subUtilsPanel, 'ExportOptionsButton', 'EllipsisVertical', 'Más opciones', () => {
             LX.addDropdownMenu( exportOptionsButton.root, [
                 {
                     name: 'Exportar LAL',
                     icon: 'List',
                     submenu: countries.map( c => {
-                        return {
-                            name: LX.toTitleCase( c ),
-                            callback: () => this.exportLAL( c )
-                        }
+                        return { name: c, callback: () => this.exportLAL( c ) }
                     } )
                 },
                 null,
@@ -765,26 +738,18 @@ class SheinApp
                     name: 'Exportar ALB',
                     icon: 'File',
                     submenu: countries.map( c => {
-                        return {
-                            name: LX.toTitleCase( c ),
-                            callback: () => this.exportALB( c )
-                        }
+                        return { name: c, callback: () => this.exportALB( c ) }
                     } )
                 },
             ], { side: 'bottom', align: 'start' } );
-        }, {
-            buttonClass: 'lg outline',
-            icon: 'EllipsisVertical',
-            title: 'Más opciones',
-            tooltip: true
         } );
-        utilButtonsPanel.endLine();
-        tmpArea.attach( utilButtonsPanel.root );
+        subUtilsPanel.endLine();
+        tmpArea.attach( subUtilsPanel.root );
 
         const selectedTab = this.fiscalTabs?.selected;
 
         this.fiscalTabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
-        utilButtonsPanel.attach( this.fiscalTabs.root ); // Move up into the panel section
+        subUtilsPanel.attach( this.fiscalTabs.root ); // Move up into the panel section
 
         const weekN = Utils.getWeekNumber(Utils.convertDateDMYtoMDY(this.currentDate));
         const currentYear = this.currentDate.split('/')[2];
@@ -965,45 +930,23 @@ class SheinApp
 
             const totalIncomeNetPlusIVA = {};
 
-            modifiedData.push(
-                // España
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_ESPAÑA'] ?? 0, 'País': 'ESPAÑA' }
-            );
+            countries.forEach( c => {
+                modifiedData.push(
+                    { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp[`JW_${c}`] ?? 0, 'País': c },
+                    { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp[`HG_${c}`] ?? 0, 'País': c },
+                    { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp[`FL_${c}`] ?? 0, 'País': c },
+                    { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp[`BY_${c}`] ?? 0, 'País': c }
+                );
 
-            // TOTAL SPAIN
-            totalIncomeNetPlusIVA['ESPAÑA'] = LX.round( modifiedData.reduce( ( acc, row ) => {
-                if( row[PAIS_ATTR] !== "ESPAÑA" ) return acc;
-                return acc + parseFloat( row['Total'] );
-            }, 0 ) * this.core.countryIVA[ "ESPAÑA" ] );
+                totalIncomeNetPlusIVA[c] = LX.round( modifiedData.reduce( ( acc, row ) => {
+                    if( row[PAIS_ATTR] !== c ) return acc;
+                    return acc + parseFloat( row['Total'] );
+                }, 0 ) * this.core.countryIVA[ c ] );
 
-            {
                 const lastTransportRow = modifiedData.at( -1 );
-                const incomeDiff = totalIncome['ESPAÑA'] - totalIncomeNetPlusIVA['ESPAÑA'];
-                lastTransportRow['Total'] += LX.round( incomeDiff );
-            }
-
-            modifiedData.push(
-                // Portugal
-                { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp['JW_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp['HG_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp['FL_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-                { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp['BY_PORTUGAL'] ?? 0, 'País': 'PORTUGAL' },
-            );
-
-            // TOTAL PORTUGAL
-            totalIncomeNetPlusIVA['PORTUGAL'] = LX.round( modifiedData.reduce( ( acc, row ) => {
-                if( row[PAIS_ATTR] !== "PORTUGAL" ) return acc;
-                return acc + parseFloat( row['Total'] );
-            }, 0 ) * this.core.countryIVA[ "PORTUGAL" ] );
-
-            {
-                const lastTransportRow = modifiedData.at( -1 );
-                const incomeDiff = totalIncome['PORTUGAL'] - totalIncomeNetPlusIVA['PORTUGAL'];
-                lastTransportRow['Total'] += LX.round( incomeDiff );
-            }
+                const incomeDiff = totalIncome[c] - totalIncomeNetPlusIVA[c];
+                lastTransportRow['Total'] = LX.round( lastTransportRow['Total'] + incomeDiff );
+            } );
 
             // Remove rows with total = 0 (e.g. transports not used, etc)
             modifiedData = modifiedData.filter( d => d['Total'] > 0 );
@@ -1038,14 +981,14 @@ class SheinApp
             LALContainer.appendChild( tableWidget.root );
 
             // Add data labels
-            utilButtonsPanel.sameLine();
-            utilButtonsPanel.addText( 'NÚMERO ALBARÁN', this.albNumber, v => this.albNumber = parseFloat( v ),
+            subUtilsPanel.sameLine();
+            subUtilsPanel.addText( 'NÚMERO ALBARÁN', this.albNumber, v => this.albNumber = parseFloat( v ),
                 { placeholder: '# Albarán', nameWidth: 'fit-content', className: '[&_input]:px-4!', fit: true, skipReset: true } );
-            utilButtonsPanel.addDate( 'FECHA CREACIÓN', this.currentDate, v => {
+            subUtilsPanel.addDate( 'FECHA CREACIÓN', this.currentDate, v => {
                 this.currentDate = v;
                 LX.doAsync( () => this.showAlbaranRelatedInfo( data ) );
             }, { nameWidth: 'fit-content' } )
-            const popoverButton = utilButtonsPanel.addButton( null, 'Ver Ingresos', () => {
+            const popoverButton = subUtilsPanel.addButton( null, 'Ver Ingresos', () => {
                 const incomeArea = new LX.Area( { skipAppend: true } );
                 const tabs = incomeArea.addTabs({ fit: true });
                 countries.forEach( c => {
@@ -1058,7 +1001,7 @@ class SheinApp
                 } );
                 new LX.Popover( popoverButton.root, [ incomeArea ], { align: 'end' } );
             }, { icon: 'Eye', iconPosition: 'start' } );
-            utilButtonsPanel.endLine( 'ml-auto' );
+            subUtilsPanel.endLine( 'ml-auto' );
 
             this.lastShownSeurLALData = tableWidget.data.body;
         }
@@ -1169,23 +1112,13 @@ class SheinApp
     {
         const weekN = Utils.getWeekNumber(Utils.convertDateDMYtoMDY(this.currentDate));
         const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
-        const sheets = [];
-
-        {
-            const spainFilteredRows = LX.deepCopy( this.lastShownSeurIVAData )
-                .filter( row => ( row[0] === 'ESPAÑA' ) )
+        const sheets = countries.map( c => {
+            const filteredRows = LX.deepCopy( this.lastShownSeurIVAData )
+                .filter( row => ( row[0] === c ) )
                 .map( row => row.slice( 1 ) );
-            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...spainFilteredRows ];
-            sheets.push( this.core.createXLSXSheet( data ) );
-        }
-
-        {
-            const portugalFilteredRows = LX.deepCopy( this.lastShownSeurIVAData )
-                .filter( row => ( row[0] === 'PORTUGAL' ) )
-                .map( row => row.slice( 1 ) );
-            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...portugalFilteredRows ];
-            sheets.push( this.core.createXLSXSheet( data ) );
-        }
+            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...filteredRows ];
+            return this.core.createXLSXSheet( data );
+        } );
 
         const workbook = this.core.createXLSXWorkbook( sheets, countries );
         this.core.exportXLSXWorkbook( workbook, filename );
