@@ -24,8 +24,7 @@ class OrdersApp
         utilButtonsPanel.addNumber( null, this.ordersBeforeDays, ( v ) => {
             this.ordersBeforeDays = v;
         }, { step: 1, min: 1, max: 120, units: 'días', skipSlider: true } );
-        utilButtonsPanel.addButton( null, 'TooltipButton', null, { disabled: true, icon: 'Info', buttonClass: 'bg-none', title: "Ver pedidos de hasta 'N' días atrás",
-            tooltip: true } );
+        utilButtonsPanel.addButton( null, 'TooltipButton', null, { disabled: true, icon: 'Info', buttonClass: 'bg-none', title: "Ver pedidos de hasta 'N' días atrás", tooltip: true } );
         this.area.attach( utilButtonsPanel.root );
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
@@ -104,9 +103,9 @@ class OrdersApp
             const before = null;
             r = await wcc.getAllOrdersByFilter( after, before, [ 'processing', 'on-hold' ] );
             console.log( r );
-    
+
             core.setHeaderTitle( `Web (${name}): <i>Pedidos</i>`, `${r.length} pedidos pendientes (Últimos ${this.ordersBeforeDays} día/s)`, 'WooCommerce' );
-    
+
             dialog.destroy();
         }
         else

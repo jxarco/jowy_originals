@@ -1,6 +1,6 @@
 import { LX } from 'lexgui';
 
-const isFriday = ( new Date().getDay() === 5 );
+const isFriday = new Date().getDay() === 5;
 
 class ChillApp
 {
@@ -146,7 +146,7 @@ class ChillApp
     open( params )
     {
         this.core.tool = 'chill';
-        this.core.setHeaderTitle( `Time to ${isFriday?"be HAPPY, IT'S FRIDAAAY":'Chill'} :)`, '', 'Panda' );
+        this.core.setHeaderTitle( `Time to ${isFriday ? "be HAPPY, IT'S FRIDAAAY" : 'Chill'} :)`, '', 'Panda' );
         this.area.root.classList.toggle( 'hidden', false );
 
         if ( this.img )
@@ -160,7 +160,7 @@ class ChillApp
 
     close()
     {
-        if( !this.keepMusic )
+        if ( !this.keepMusic )
         {
             this.audio.pause();
             this.audio.currentTime = 0;

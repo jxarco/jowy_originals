@@ -7,9 +7,9 @@ import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
 import { TikTokApp } from './apps/tiktok_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
-import { WooCommerceClient } from './woocomerce.js';
-import { SKU_MAPPING, LAL_SKU_MAPPINGS, PLATFORM_CLIENT_CODES } from './constants.js'
+import { LAL_SKU_MAPPINGS, PLATFORM_CLIENT_CODES, SKU_MAPPING } from './constants.js';
 import * as Utils from './utils.js';
+import { WooCommerceClient } from './woocomerce.js';
 
 window.LX = LX;
 
@@ -57,7 +57,7 @@ const core = {
         'ESPAÑA': 0.303,
         'PORTUGAL': 0.32,
         'FRANCIA': 0.32,
-        'ITALIA': 0.32,
+        'ITALIA': 0.32
     },
     orderStatus: {
         'pending': 'Pendiente de pago',
@@ -189,46 +189,52 @@ const core = {
     {
         return new Promise( ( resolve, reject ) => {
             const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
+            reader.onload = ( e ) => {
+                try
+                {
                     const data = e.target.result;
-                    const workbook = XLSX.read(data, { type: 'binary' });
+                    const workbook = XLSX.read( data, { type: 'binary' } );
                     const sheetName = workbook.SheetNames[0];
                     const sheet = workbook.Sheets[sheetName];
-                    const rowsData = XLSX.utils.sheet_to_json(sheet, { raw: false });
+                    const rowsData = XLSX.utils.sheet_to_json( sheet, { raw: false } );
 
-                    resolve({
+                    resolve( {
                         sheetName,
                         rowsData,
                         fileName: file.name
-                    });
-                } catch (err) {
-                    reject(err);
+                    } );
+                }
+                catch ( err )
+                {
+                    reject( err );
                 }
             };
 
             reader.onerror = () => reject( reader.error );
             reader.readAsArrayBuffer( file );
-        });
+        } );
     },
 
     onLoadFile: async function( file, callback )
     {
         callback = callback ?? this.processData.bind( this );
 
-        if( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
+        if ( file.name.endsWith( '.xlsx' ) || file.name.endsWith( '.xlsm' ) )
         {
-            try {
+            try
+            {
                 const result = await this.readExcelFile( file );
                 if ( callback )
                 {
                     const r = callback( result.rowsData );
-                    if( r )
+                    if ( r )
                     {
                         LX.toast( 'Hecho!', `✅ Datos cargados: ${result.fileName}`, { timeout: 5000, position: 'top-center' } );
                     }
                 }
-            } catch (e) {
+            }
+            catch ( e )
+            {
                 LX.toast( 'Error', '❌ No se pudo leer el archivo: ' + e, { timeout: -1, position: 'top-center' } );
             }
         }
@@ -277,9 +283,7 @@ const core = {
     createHeaderHtml: function()
     {
         const header = LX.makeContainer( [ null, 'auto' ], 'flex flex-col border-top border-bottom gap-2 px-8 py-8 cursor-pointer hover:brightness-110', `
-            <div class="flex flex-row gap-2 items-center">${
-            LX.makeIcon( 'Info', { svgClass: '2xl  scale-350 p-2' } ).innerHTML
-        }<span class="text-3xl font-semibold">Jowy Originals</span></div>
+            <div class="flex flex-row gap-2 items-center">${LX.makeIcon( 'Info', { svgClass: '2xl  scale-350 p-2' } ).innerHTML}<span class="text-3xl font-semibold">Jowy Originals</span></div>
             <p class="font-light max-w-1/2">Elige una de las herramientas para empezar.</p>
         `, this.area );
         header.style.background = `url('data/banner_${LX.getMode()}.png') no-repeat center center / cover`;
@@ -290,14 +294,14 @@ const core = {
         {
             const fileInput = document.createElement( 'input' );
             fileInput.type = 'file';
-    
+
             fileInput.addEventListener( 'change', ( e ) => {
                 const files = e.target.files;
                 if ( !files.length ) return;
                 this.onLoadFile( files[0] );
                 fileInput.value = '';
             } );
-    
+
             header.addEventListener( 'click', ( event ) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -336,9 +340,7 @@ const core = {
 
     setHeaderTitle: function( title, subtitle, icon )
     {
-        this.header.querySelector( 'div' ).innerHTML = `${
-            LX.makeIcon( icon ?? 'Info', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML
-        }<span class="text-3xl font-semibold">${title}</span>`;
+        this.header.querySelector( 'div' ).innerHTML = `${LX.makeIcon( icon ?? 'Info', { svgClass: '2xl mr-2 scale-350 p-2' } ).innerHTML}<span class="text-3xl font-semibold">${title}</span>`;
         this.header.querySelector( 'p' ).innerHTML = subtitle ?? '';
     },
 
@@ -489,18 +491,18 @@ const core = {
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet( data );
         XLSX.utils.book_append_sheet( wb, ws, 'Sheet1' );
-        return XLSX.write( wb, { bookType: 'xlsx', type: 'array' });
+        return XLSX.write( wb, { bookType: 'xlsx', type: 'array' } );
     },
 
     async zipWorkbooks( structure )
     {
         const zip = new JSZip();
 
-        for( const folderPath in structure )
+        for ( const folderPath in structure )
         {
             const folder = zip.folder( folderPath );
 
-            for( const file of structure[folderPath] )
+            for ( const file of structure[folderPath] )
             {
                 const buffer = this.dataToXLSXBuffer( file.data );
                 folder.file( file.filename, buffer );
@@ -520,8 +522,7 @@ const core = {
             || ( sku.startsWith( 'JW-DF3' ) && quantity > 1 )
             || ( sku.startsWith( 'JW-DF4' ) && quantity > 1 )
             || ( sku.startsWith( 'JW-DT4' ) && quantity > 1 )
-            || [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku )
-        ) return 'CBL';
+            || [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku ) ) return 'CBL';
         return 'SEUR';
     },
 
@@ -549,15 +550,15 @@ const core = {
     {
         const dialog = new LX.Dialog( title, ( p ) => {
             const formData = {
-                data: { label, value: "", icon },
+                data: { label, value: '', icon }
             };
-            const form = p.addForm( null, formData, async (value) => {
+            const form = p.addForm( null, formData, async ( value ) => {
                 form.syncInputs();
-                if( callback ) callback( value.data );
+                if ( callback ) callback( value.data );
                 dialog.destroy();
-            }, { primaryActionName: "Continuar", secondaryButtonClass: "destructive", secondaryActionName: "Cancelar", secondaryActionCallback: () => {
+            }, { primaryActionName: 'Continuar', secondaryButtonClass: 'destructive', secondaryActionName: 'Cancelar', secondaryActionCallback: () => {
                 dialog.destroy();
-            } });
+            } } );
         }, { modal: true } );
     },
 
@@ -579,7 +580,7 @@ const core = {
     getClientCode( platform, country, year )
     {
         const id = [ platform, country, year ].join( '_' );
-        return PLATFORM_CLIENT_CODES[ id ] ?? -1;
+        return PLATFORM_CLIENT_CODES[id] ?? -1;
     },
 
     updateTransport: function( value )
@@ -721,20 +722,20 @@ const core = {
             const fileInput = document.createElement( 'input' );
             fileInput.type = 'file';
             fileInput.multiple = true;
-    
+
             fileInput.addEventListener( 'change', async ( e ) => {
                 const files = e.target.files;
                 if ( !files.length ) return;
                 const allDataRows = [];
                 const innerCallback = ( d ) => allDataRows.push( ...d );
-                for( const file of files )
+                for ( const file of files )
                 {
                     await this.onLoadFile( file, innerCallback );
                 }
-                if( callback ) callback( allDataRows );
+                if ( callback ) callback( allDataRows );
                 fileInput.value = '';
             } );
-    
+
             dropZone.addEventListener( 'click', ( event ) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -765,11 +766,11 @@ const core = {
 
             const allDataRows = [];
             const innerCallback = ( d ) => allDataRows.push( ...d );
-            for( const file of files )
+            for ( const file of files )
             {
                 await this.onLoadFile( file, innerCallback );
             }
-            if( callback ) callback( allDataRows );
+            if ( callback ) callback( allDataRows );
         } );
 
         return dropZone;

@@ -1,6 +1,6 @@
 import { LX } from 'lexgui';
-import { Data } from '../data.js';
 import { Constants, NumberFormatter } from '../constants.js';
+import { Data } from '../data.js';
 
 const TIKTOK_ORDERS_DATA = [
     [ 'Order ID', 'Número del pedido' ],
@@ -15,7 +15,7 @@ const TIKTOK_ORDERS_DATA = [
         const q = core.getIndividualQuantityPerPack( ogSku, parseInt( row['Quantity'] ) );
         const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
         const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
-        if( udsPerPackage === undefined ) return 'SKU no encontrado';
+        if ( udsPerPackage === undefined ) return 'SKU no encontrado';
         return Math.ceil( q / udsPerPackage );
     } ],
     [ 'Recipient', 'Nombre de usuario completo' ],
@@ -46,7 +46,7 @@ const TIKTOK_LABEL_DATA = [
     [ 'Email', 'Correo electrónico de usuario' ]
 ];
 
-    // (str, row, tracking_data, app)
+// (str, row, tracking_data, app)
 const TIKTOK_TRACKING_COLUMN_DATA = [
     [ 'Order ID', 'ID de pedido' ],
     [ 'Nombre del almacén', null, () => '' ],
@@ -56,18 +56,17 @@ const TIKTOK_TRACKING_COLUMN_DATA = [
     [ 'Variantes', null, () => '' ],
     [ 'Cantidad', null, () => '' ],
     [ 'Nombre del transportista', null, () => 'Seur' ],
-    [ 'ID de seguimiento', null, ( str, row, tdata, app) => {
+    [ 'ID de seguimiento', null, ( str, row, tdata, app ) => {
         const name = row['Recipient'].toUpperCase();
-        const tentry = tdata.find( (d) => d['CLIENTE DESTINATARIO'] === name );
-        if( !tentry )
+        const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
+        if ( !tentry )
         {
             app._trackingSyncErrors.push( { name, uid: `${row['Order ID']}` } );
             const status = core.trackStatusColors['Incidencia'];
             let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
             return `${
                 LX.badge( iconStr, 'text-xs font-bold border-none ', {
-                    style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '',
-                        color: status.fg ?? '' }
+                    style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
                 } )
             }`;
         }
@@ -81,7 +80,7 @@ class TikTokApp
     constructor( core )
     {
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
-        this.icon = 'TikTok'
+        this.icon = 'TikTok';
         this.core = core;
         this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
         core.area.attach( this.area );
@@ -129,7 +128,7 @@ class TikTokApp
         // Tracking info
         const trackingContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'Seguimiento', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
-            trackingArea.root.innerHTML = "";
+            trackingArea.root.innerHTML = '';
             trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
         } } );
 
@@ -581,12 +580,10 @@ class TikTokApp
         const orderNumbers = new Map();
 
         let rows = currentTiktokData.map( ( row, index ) => {
-
             // discard orders sent with CBL
             const sku = this.core.mapSku( row['Seller SKU'] );
             const transport = this.core.getTransportForItem( sku, row['Quantity'] );
-            if( transport === 'CBL' ) return;
-
+            if ( transport === 'CBL' ) return;
 
             const lRow = [];
             for ( let c of columnData )
@@ -678,16 +675,16 @@ class TikTokApp
             const dialog = new LX.Dialog( '❌ Solucionar errores', ( p ) => {
                 LX.addClass( p.root, 'p-2 flex flex-col overflow-scroll' );
 
-                const pTop = new LX.Panel({className: 'flex flex-col gap-1 overflow-scroll'});
+                const pTop = new LX.Panel( { className: 'flex flex-col gap-1 overflow-scroll' } );
                 p.attach( pTop );
 
                 for ( const { name, uid } of this._trackingSyncErrors )
                 {
                     LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${uid})`, pTop );
-                    const possibleIndex = data.findIndex( d => `${d[0]}` === uid );
+                    const possibleIndex = data.findIndex( ( d ) => `${d[0]}` === uid );
                     // console.log(possibleIndex)
-                    const trackAttrName = "ID de seguimiento";
-                    pTop.addText( trackAttrName, "", ( v ) => {
+                    const trackAttrName = 'ID de seguimiento';
+                    pTop.addText( trackAttrName, '', ( v ) => {
                         const colIdx = this.lastSeurTrackingsColumnData.indexOf( trackAttrName );
                         data[possibleIndex][colIdx] = v;
                     } );

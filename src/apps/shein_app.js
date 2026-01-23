@@ -1,6 +1,6 @@
 import { LX } from 'lexgui';
-import { Data } from '../data.js';
 import { Constants, NumberFormatter } from '../constants.js';
+import { Data } from '../data.js';
 import * as Utils from '../utils.js';
 
 const countries = [ 'ESPAÑA', 'PORTUGAL' ];
@@ -77,10 +77,8 @@ class SheinApp
         const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         utilsPanel.sameLine();
         Utils.addUtilityButton( utilsPanel, 'ClearButton', 'Trash2', 'Limpiar datos anteriores', () => this.core.clearData() );
-        this.exportLabelsButton = Utils.addUtilityButton( utilsPanel, 'ExportLabelsButton', 'Download', 'Exportar Etiquetas', 
-            () => this.exportSEUR( false, this.lastSeurData ), true );
-        this.exportTrackingsButton = Utils.addUtilityButton( utilsPanel, 'ExportTrackingsButton', 'FileDown', 'Exportar Seguimiento', 
-            () => this.exportSEURTrackings(), true );
+        this.exportLabelsButton = Utils.addUtilityButton( utilsPanel, 'ExportLabelsButton', 'Download', 'Exportar Etiquetas', () => this.exportSEUR( false, this.lastSeurData ), true );
+        this.exportTrackingsButton = Utils.addUtilityButton( utilsPanel, 'ExportTrackingsButton', 'FileDown', 'Exportar Seguimiento', () => this.exportSEURTrackings(), true );
         utilsPanel.endLine();
         this.area.attach( utilsPanel.root );
 
@@ -140,10 +138,10 @@ class SheinApp
         }
 
         // Map SKUs and Country once on load data
-        fileData.forEach( r => {
+        fileData.forEach( ( r ) => {
             const ogSku = r[SKU_ATTR];
             r[SKU_ATTR] = this.core.mapSku( ogSku );
-            if( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: -1, position: 'top-center' } );
+            if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: -1, position: 'top-center' } );
             // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
@@ -151,7 +149,7 @@ class SheinApp
             const ogZipCode = r[CP_ATTR];
             r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
             // if( ogZipCode !== r[CP_ATTR] ) console.warn( `Zip Code mapped from ${ogZipCode} to ${r[CP_ATTR]}` );
-        });
+        } );
 
         // Sort by ref once
         {
@@ -197,7 +195,7 @@ class SheinApp
         this.core.setHeaderTitle( `${this.title}: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
 
         const tableWidget = new LX.Table( null, {
-            head: ORDERS_DATA.map( c => c[1] ?? c[0] ),
+            head: ORDERS_DATA.map( ( c ) => c[1] ?? c[0] ),
             body: tableData
         }, {
             selectable: true,
@@ -268,7 +266,7 @@ class SheinApp
 
         // Remove unnecessary 'NUMERO PEDIDO', used only to combine
         columnData = columnData.slice( 0, -1 );
-        const headData = columnData.map( c => c[1] ?? c[0] );
+        const headData = columnData.map( ( c ) => c[1] ?? c[0] );
 
         const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
         const skuIdx = headData.indexOf( SKU_ATTR );
@@ -291,7 +289,7 @@ class SheinApp
 
         for ( let row of rows )
         {
-            if( row === undefined ) continue;
+            if ( row === undefined ) continue;
 
             let sku = `${row[skuIdx]}_${row[4]}`; // SKU _ País
 
@@ -303,7 +301,7 @@ class SheinApp
             {
                 skus[sku] = [ tableData.length ];
                 row[1] = 1;
-                row.splice( 6, 1 );  // Delete order num
+                row.splice( 6, 1 ); // Delete order num
                 tableData.push( row );
             }
             else
@@ -416,7 +414,7 @@ class SheinApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: TRACKING_DATA.map( c => c[1] ?? c[0] ),
+            head: TRACKING_DATA.map( ( c ) => c[1] ?? c[0] ),
             body: tableData
         }, {
             selectable: true,
@@ -514,7 +512,7 @@ class SheinApp
 
         let err = 0;
         let errMsg = '';
-        let data = columnData.map( c => c[1] ?? c[0] );
+        let data = columnData.map( ( c ) => c[1] ?? c[0] );
 
         let errorFn = () => {
             LX.toast( 'Error de exportación', `❌ No se pudo exportar el archivo: ${filename}. ${errMsg}`, {
@@ -640,13 +638,13 @@ class SheinApp
             const dialog = new LX.Dialog( '❌ Solucionar errores', ( p ) => {
                 LX.addClass( p.root, 'p-2 flex flex-col overflow-scroll' );
 
-                const pTop = new LX.Panel({className: 'flex flex-col gap-1 overflow-scroll'});
+                const pTop = new LX.Panel( { className: 'flex flex-col gap-1 overflow-scroll' } );
                 p.attach( pTop );
 
                 for ( const { name, uid } of this._trackingSyncErrors )
                 {
                     LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${uid})`, pTop );
-                    const possibleIndex = data.findIndex( d => `${d[0]}_${d[1]}` === uid );
+                    const possibleIndex = data.findIndex( ( d ) => `${d[0]}_${d[1]}` === uid );
                     // console.log(possibleIndex)
                     const trackAttrName = 'Tracking Number';
                     pTop.addText( trackAttrName, '', ( v ) => {
@@ -671,7 +669,7 @@ class SheinApp
             }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
             return;
         }
-        
+
         this.core.exportXLSXData( data, filename );
     }
 
@@ -682,10 +680,10 @@ class SheinApp
         data = data ?? this.lastSeurData;
 
         // Map SKUs and Country once on load data
-        data.forEach( r => {
+        data.forEach( ( r ) => {
             const ogSku = r[SKU_ATTR];
             r[SKU_ATTR] = this.core.mapSku( ogSku );
-            if( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: -1, position: 'top-center' } );
+            if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r['Número del pedido']}.`, { timeout: -1, position: 'top-center' } );
             // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
@@ -693,8 +691,8 @@ class SheinApp
             const ogZipCode = r[CP_ATTR];
             r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
             // if( ogZipCode !== r[CP_ATTR] ) console.warn( `Zip Code mapped from ${ogZipCode} to ${r[CP_ATTR]}` );
-        });
-        
+        } );
+
         // Sort by ref once
         {
             data = data.sort( ( a, b ) => {
@@ -706,41 +704,39 @@ class SheinApp
 
         const totalIncome = countries.reduce( ( o, c ) => {
             o[c] = LX.round( data.reduce( ( acc, row ) => {
-                if( row[PAIS_ATTR] !== c ) return acc;
+                if ( row[PAIS_ATTR] !== c ) return acc;
                 return acc + parseFloat( row['precio de los productos básicos'] );
             }, 0 ) );
             return o;
         }, {} );
 
         // console.log(data);
-        
+
         const tmpArea = new LX.Area( { className: 'w-full h-full p-0 m-0', skipAppend: true } );
         this.albaranArea.attach( tmpArea );
 
         // Create utility buttons
         const subUtilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         subUtilsPanel.sameLine();
-        Utils.addUtilityButton( subUtilsPanel, 'ExportIVAButton', 'Euro', 'Exportar IVA',
-            () => this.exportIVA() );
-        Utils.addUtilityButton( subUtilsPanel, 'ExportAlbaranesButton', 'FileArchive', 'Exportar Albaranes',
-            () => this.exportAlbaranes() );
+        Utils.addUtilityButton( subUtilsPanel, 'ExportIVAButton', 'Euro', 'Exportar IVA', () => this.exportIVA() );
+        Utils.addUtilityButton( subUtilsPanel, 'ExportAlbaranesButton', 'FileArchive', 'Exportar Albaranes', () => this.exportAlbaranes() );
         const exportOptionsButton = Utils.addUtilityButton( subUtilsPanel, 'ExportOptionsButton', 'EllipsisVertical', 'Más opciones', () => {
             LX.addDropdownMenu( exportOptionsButton.root, [
                 {
                     name: 'Exportar LAL',
                     icon: 'List',
-                    submenu: countries.map( c => {
-                        return { name: c, callback: () => this.exportLAL( c ) }
+                    submenu: countries.map( ( c ) => {
+                        return { name: c, callback: () => this.exportLAL( c ) };
                     } )
                 },
                 null,
                 {
                     name: 'Exportar ALB',
                     icon: 'File',
-                    submenu: countries.map( c => {
-                        return { name: c, callback: () => this.exportALB( c ) }
+                    submenu: countries.map( ( c ) => {
+                        return { name: c, callback: () => this.exportALB( c ) };
                     } )
-                },
+                }
             ], { side: 'bottom', align: 'start' } );
         } );
         subUtilsPanel.endLine();
@@ -751,13 +747,13 @@ class SheinApp
         this.fiscalTabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
         subUtilsPanel.attach( this.fiscalTabs.root ); // Move up into the panel section
 
-        const weekN = Utils.getWeekNumber(Utils.convertDateDMYtoMDY(this.currentDate));
-        const currentYear = this.currentDate.split('/')[2];
+        const weekN = Utils.getWeekNumber( Utils.convertDateDMYtoMDY( this.currentDate ) );
+        const currentYear = this.currentDate.split( '/' )[2];
 
         const getPriceWithoutIVA = ( row ) => {
             let country = row[PAIS_ATTR];
             const iva = core.countryIVA[country];
-            if( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: -1, position: 'top-center' } );
+            if ( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: -1, position: 'top-center' } );
             const priceWithoutIVA = parseFloat( row['precio de los productos básicos'] ) / ( iva ?? 1.21 );
             return LX.round( priceWithoutIVA );
         };
@@ -786,7 +782,7 @@ class SheinApp
                 [ 'precio de los productos básicos', 'PVP', ( str, row ) => {
                     const formatted = NumberFormatter.format( str );
                     return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
-                } ],
+                } ]
             ];
 
             // Create table data from the list
@@ -878,7 +874,7 @@ class SheinApp
                     const formatted = NumberFormatter.format( str );
                     return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
                 } ], // 'AF'
-                [ 'Cantidad', 'CantidadR' ], // 'AG'
+                [ 'Cantidad', 'CantidadR' ] // 'AG'
             ];
 
             const skuMap = {};
@@ -888,8 +884,8 @@ class SheinApp
                 const sku = row[SKU_ATTR];
                 const skus = this.core.getIndividualSkusPerPack( sku );
                 // console.log(skus);
-                skus.forEach( skuObj => {
-                    const mappedSku = this.core.mapSku( skuObj.sku );// mapping here shouldn't be necessary
+                skus.forEach( ( skuObj ) => {
+                    const mappedSku = this.core.mapSku( skuObj.sku ); // mapping here shouldn't be necessary
                     const prefix = mappedSku.substring( 0, mappedSku.indexOf( '-' ) );
                     const totalQuantity = this.core.getIndividualQuantityPerPack( mappedSku, 1 );
                     const country = row[PAIS_ATTR];
@@ -900,7 +896,7 @@ class SheinApp
                     const productTotal = LX.round( priceWithoutIVA - totalProductTransport );
 
                     let skuIdx = `${mappedSku}_${country}`;
-                    if( !skuMap[skuIdx] )
+                    if ( !skuMap[skuIdx] )
                     {
                         const product = Data.sku[mappedSku];
                         skuMap[skuIdx] = {
@@ -909,7 +905,7 @@ class SheinApp
                             'Cantidad': totalQuantity,
                             'Total': productTotal,
                             'País': country
-                        }
+                        };
                     }
                     else
                     {
@@ -920,7 +916,7 @@ class SheinApp
 
                     // Update transport total per country
                     const tCompIdx = `${prefix}_${country}`;
-                    if( !totalTransportPerComp[tCompIdx] ) totalTransportPerComp[tCompIdx] = 0;
+                    if ( !totalTransportPerComp[tCompIdx] ) totalTransportPerComp[tCompIdx] = 0;
                     totalTransportPerComp[tCompIdx] += totalProductTransport;
                 } );
             } );
@@ -930,7 +926,7 @@ class SheinApp
 
             const totalIncomeNetPlusIVA = {};
 
-            countries.forEach( c => {
+            countries.forEach( ( c ) => {
                 modifiedData.push(
                     { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp[`JW_${c}`] ?? 0, 'País': c },
                     { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp[`HG_${c}`] ?? 0, 'País': c },
@@ -939,9 +935,9 @@ class SheinApp
                 );
 
                 totalIncomeNetPlusIVA[c] = LX.round( modifiedData.reduce( ( acc, row ) => {
-                    if( row[PAIS_ATTR] !== c ) return acc;
+                    if ( row[PAIS_ATTR] !== c ) return acc;
                     return acc + parseFloat( row['Total'] );
-                }, 0 ) * this.core.countryIVA[ c ] );
+                }, 0 ) * this.core.countryIVA[c] );
 
                 const lastTransportRow = modifiedData.at( -1 );
                 const incomeDiff = totalIncome[c] - totalIncomeNetPlusIVA[c];
@@ -949,7 +945,7 @@ class SheinApp
             } );
 
             // Remove rows with total = 0 (e.g. transports not used, etc)
-            modifiedData = modifiedData.filter( d => d['Total'] > 0 );
+            modifiedData = modifiedData.filter( ( d ) => d['Total'] > 0 );
 
             // Process with COL info
             const tableData = modifiedData.map( ( row ) => {
@@ -957,7 +953,7 @@ class SheinApp
                 for ( let c of this.LAL_COLS )
                 {
                     const ogColName = c[0];
-                    if( ogColName === '' ) continue;
+                    if ( ogColName === '' ) continue;
                     const fn = c[2] ?? ( ( str ) => str );
                     lRow.push( fn( row[ogColName] ?? '?', row ) );
                 }
@@ -967,7 +963,7 @@ class SheinApp
             const tableWidget = new LX.Table( null, {
                 head: this.LAL_COLS.map( ( c ) => {
                     return c[1] ?? c[0];
-                } ).filter( v => v !== '' ),
+                } ).filter( ( v ) => v !== '' ),
                 body: tableData
             }, {
                 selectable: false,
@@ -982,21 +978,19 @@ class SheinApp
 
             // Add data labels
             subUtilsPanel.sameLine();
-            subUtilsPanel.addText( 'NÚMERO ALBARÁN', this.albNumber, v => this.albNumber = parseFloat( v ),
-                { placeholder: '# Albarán', nameWidth: 'fit-content', className: '[&_input]:px-4!', fit: true, skipReset: true } );
-            subUtilsPanel.addDate( 'FECHA CREACIÓN', this.currentDate, v => {
+            subUtilsPanel.addText( 'NÚMERO ALBARÁN', this.albNumber, ( v ) => this.albNumber = parseFloat( v ), { placeholder: '# Albarán', nameWidth: 'fit-content', className: '[&_input]:px-4!',
+                fit: true, skipReset: true } );
+            subUtilsPanel.addDate( 'FECHA CREACIÓN', this.currentDate, ( v ) => {
                 this.currentDate = v;
                 LX.doAsync( () => this.showAlbaranRelatedInfo( data ) );
-            }, { nameWidth: 'fit-content' } )
+            }, { nameWidth: 'fit-content' } );
             const popoverButton = subUtilsPanel.addButton( null, 'Ver Ingresos', () => {
                 const incomeArea = new LX.Area( { skipAppend: true } );
-                const tabs = incomeArea.addTabs({ fit: true });
-                countries.forEach( c => {
+                const tabs = incomeArea.addTabs( { fit: true } );
+                countries.forEach( ( c ) => {
                     const p = new LX.Panel();
-                    p.addText( 'Total brutos', totalIncome[c] + ' €', null,
-                        { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
-                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA[c] + ' €', null,
-                        { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
+                    p.addText( 'Total brutos', totalIncome[c] + ' €', null, { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
+                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA[c] + ' €', null, { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
                     tabs.add( c, p.root );
                 } );
                 new LX.Popover( popoverButton.root, [ incomeArea ], { align: 'end' } );
@@ -1023,7 +1017,11 @@ class SheinApp
                 [ '' ], // 'H',
                 [ 'CD.Cliente', 'Cliente' ], // 'I',
                 [ 'Cliente' ], // 'J',
-                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],// 'K', 'L', 'M', 'N', 'O',
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ], // 'K', 'L', 'M', 'N', 'O',
                 [ 'IVA', null, () => 0 ], // 'P',
                 [ 'Recargo', null, () => 0 ], // 'Q',
                 [ '' ], // 'R',
@@ -1034,42 +1032,87 @@ class SheinApp
                     return LX.round( net / iva );
                 } ], // 'S',
                 // 'T' -> 'AS'
-                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
-                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
                 [ 'Base', null, ( str, row ) => {
                     const net = row['Total'];
                     const country = row[PAIS_ATTR];
                     const iva = this.core.countryIVA[country];
                     return LX.round( net / iva );
                 } ], // 'AT'
-                [ '' ], [ '' ], // 'AU', 'AV'
+                [ '' ],
+                [ '' ], // 'AU', 'AV'
                 [ 'IVA', null, ( str, row ) => {
                     const country = row[PAIS_ATTR];
                     return LX.round( ( this.core.countryIVA[country] - 1 ) * 100 );
                 } ], // 'AW'
-                [ '' ], [ '' ], // 'AX', 'AY'
+                [ '' ],
+                [ '' ], // 'AX', 'AY'
                 [ 'Cuota', null, ( str, row ) => {
                     const net = row['Total'];
                     const country = row[PAIS_ATTR];
                     const iva = this.core.countryIVA[country];
                     return LX.round( net * ( iva - 1 ) );
                 } ], // 'AZ'
-                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],// 'BA', 'BB', 'BC', 'BD', 'BE','BF', 'BG','BH', 'BI', 'BJ'
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ], // 'BA', 'BB', 'BC', 'BD', 'BE','BF', 'BG','BH', 'BI', 'BJ'
                 [ 'Total' ], // 'BK'
                 [ 'Pago', null, () => 'TR' ], // 'BL'
                 [ 'Portes', null, () => 0 ], // 'BM'
-                [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],// 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW'
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ], // 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW'
                 [ 'Cobrado', null, () => 0 ], // 'BX'
                 [ 'Traspaso', null, () => 0 ], // 'BY'
                 [ 'Impreso', null, () => 'N' ], // 'BZ'
-                [ 'Transporte', null, () => 9 ], // 'CA'
+                [ 'Transporte', null, () => 9 ] // 'CA'
                 // 'CB' -> 'DH'
                 // [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
                 // [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
             ];
 
-            let modifiedData = countries.map( c => {
-                return { 'Total': totalIncome[c], 'País': c, 'Cliente': `Ventas ${LX.toTitleCase( this.title )} ${c} Semana ${weekN}`, 'CD.Cliente': this.core.getClientCode( this.title, c, currentYear ) };
+            let modifiedData = countries.map( ( c ) => {
+                return { 'Total': totalIncome[c], 'País': c, 'Cliente': `Ventas ${LX.toTitleCase( this.title )} ${c} Semana ${weekN}`,
+                    'CD.Cliente': this.core.getClientCode( this.title, c, currentYear ) };
             } );
 
             // Process with COL info
@@ -1078,7 +1121,7 @@ class SheinApp
                 for ( let c of this.ALB_COLS )
                 {
                     const ogColName = c[0];
-                    if( ogColName === '' ) continue;
+                    if ( ogColName === '' ) continue;
                     const fn = c[2] ?? ( ( str ) => str );
                     lRow.push( fn( row[ogColName] ?? '?', row ) );
                 }
@@ -1088,7 +1131,7 @@ class SheinApp
             const tableWidget = new LX.Table( null, {
                 head: this.ALB_COLS.map( ( c ) => {
                     return c[1] ?? c[0];
-                } ).filter( v => v !== '' ),
+                } ).filter( ( v ) => v !== '' ),
                 body: tableData
             }, {
                 selectable: false,
@@ -1110,12 +1153,12 @@ class SheinApp
 
     exportIVA()
     {
-        const weekN = Utils.getWeekNumber(Utils.convertDateDMYtoMDY(this.currentDate));
+        const weekN = Utils.getWeekNumber( Utils.convertDateDMYtoMDY( this.currentDate ) );
         const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
-        const sheets = countries.map( c => {
+        const sheets = countries.map( ( c ) => {
             const filteredRows = LX.deepCopy( this.lastShownSeurIVAData )
-                .filter( row => ( row[0] === c ) )
-                .map( row => row.slice( 1 ) );
+                .filter( ( row ) => ( row[0] === c ) )
+                .map( ( row ) => row.slice( 1 ) );
             const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...filteredRows ];
             return this.core.createXLSXSheet( data );
         } );
@@ -1132,7 +1175,7 @@ class SheinApp
 
         const filename = `LAL.xlsx`;
         const filteredRows = LX.deepCopy( this.lastShownSeurLALData )
-            .filter( row => ( row[0] === country ) )
+            .filter( ( row ) => ( row[0] === country ) )
             .map( ( row, index ) => {
                 const m = row.slice( 1 );
                 m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
@@ -1142,14 +1185,14 @@ class SheinApp
         const finalRowsWithEmptyColumns = [];
         filteredRows.forEach( ( row, index ) => {
             let lastFilledIndex = 0;
-            const newRow = LALColumnData.map( d => {
-                if( d === '' ) return '';
-                else return row[ lastFilledIndex++ ];
+            const newRow = LALColumnData.map( ( d ) => {
+                if ( d === '' ) return '';
+                else return row[lastFilledIndex++];
             } );
             finalRowsWithEmptyColumns.push( newRow );
         } );
         const data = [ LALColumnData, ...finalRowsWithEmptyColumns ];
-        return { filename, data  };
+        return { filename, data };
     }
 
     getALBData( country, albNumberOffset )
@@ -1160,7 +1203,7 @@ class SheinApp
 
         const filename = `ALB.xlsx`;
         const filteredRows = LX.deepCopy( this.lastShownSeurALBData )
-            .filter( row => ( row[0] === country ) )
+            .filter( ( row ) => ( row[0] === country ) )
             .map( ( row, index ) => {
                 const m = row.slice( 1 );
                 m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
@@ -1169,19 +1212,19 @@ class SheinApp
         const finalRowsWithEmptyColumns = [];
         filteredRows.forEach( ( row, index ) => {
             let lastFilledIndex = 0;
-            const newRow = ALBColumnData.map( d => {
-                if( d === '' ) return '';
-                else return row[ lastFilledIndex++ ];
+            const newRow = ALBColumnData.map( ( d ) => {
+                if ( d === '' ) return '';
+                else return row[lastFilledIndex++];
             } );
             finalRowsWithEmptyColumns.push( newRow );
         } );
         const data = [ ALBColumnData, ...finalRowsWithEmptyColumns ];
-        return { filename, data  };
+        return { filename, data };
     }
 
     exportLAL( country )
     {
-        if( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
         {
             LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
             return;
@@ -1194,7 +1237,7 @@ class SheinApp
 
     exportALB( country )
     {
-        if( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
         {
             LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
             return;
@@ -1207,7 +1250,7 @@ class SheinApp
 
     async exportAlbaranes()
     {
-        if( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
         {
             LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
             return;

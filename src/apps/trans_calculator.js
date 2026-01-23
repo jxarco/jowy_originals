@@ -1,11 +1,11 @@
 import { LX } from 'lexgui';
-import { Data } from '../data.js';
 import { NumberFormatter } from '../constants.js';
+import { Data } from '../data.js';
 
 const VOLUME_BRACKETS_CBL = [ 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 500, 750, 1000, 3000 ];
 const VOLUME_BRACKETS_SEUR = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30 ];
-const VOLUME_BRACKETS_SALVAT = [ 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400,
-    2500, 2600, 2700, 2800, 2900, 3000 ];
+const VOLUME_BRACKETS_SALVAT = [ 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800,
+    2900, 3000 ];
 
 const TRANSPORT_NAMES = [ 'CBL', 'SEUR', 'SALVAT' ];
 
@@ -68,8 +68,7 @@ class TransportCalculatorApp
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-bottom p-2 flex flex-row gap-2' } );
         utilButtonsPanel.sameLine();
-        utilButtonsPanel.addButton( null, 'AddCalc', this.openNewCalcDialog.bind( this ), { className: 'flex flex-auto-keep', icon: 'Plus', title: 'Cálculo personalizado',
-            tooltip: true } );
+        utilButtonsPanel.addButton( null, 'AddCalc', this.openNewCalcDialog.bind( this ), { className: 'flex flex-auto-keep', icon: 'Plus', title: 'Cálculo personalizado', tooltip: true } );
         utilButtonsPanel.addSelect( 'Ref', Object.keys( Data.sku ), this.sku, ( v ) => {
             this.sku = v;
         }, { className: 'flex flex-auto-fill', filter: true, overflowContainer: null, skipReset: true, emptyMsg: 'No hay resultados.' } );
@@ -359,9 +358,7 @@ class TransportCalculatorApp
                 {
                     const quantityPerPackage = packaging.unitsPerPackage[j];
                     LX.makeContainer( [ '100%', 'auto' ], 'flex flex-row gap-8', `
-                        <div class="flex flex-row gap-2"><span class="flex text-secondary-foreground text-lg font-light items-center">Bulto</span><span class="font-semibold">${
-                        j + 1
-                    }</span></div>
+                        <div class="flex flex-row gap-2"><span class="flex text-secondary-foreground text-lg font-light items-center">Bulto</span><span class="font-semibold">${j + 1}</span></div>
                         <div class="flex flex-row gap-2"><span class="flex text-secondary-foreground text-lg font-light items-center">Cantidad</span><span class="font-semibold">${quantityPerPackage}</span></div>
                     `, packagesContainer );
                 }

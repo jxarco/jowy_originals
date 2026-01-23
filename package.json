@@ -5,6 +5,7 @@
         "tailwindcss": "^4.1.18"
     },
     "scripts": {
+        "format": "npx dprint fmt",
         "build:css": "npx @tailwindcss/cli -i ./css/style.css -o ./css/output.css",
         "build:cssw": "npx @tailwindcss/cli -i ./css/style.css -o ./css/output.css --watch"
     }

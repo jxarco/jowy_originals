@@ -1,11 +1,10 @@
 import { LX } from 'lexgui';
-import { MiraklClient } from '../mirakl-api.js';
-import { Data } from '../data.js';
 import { Constants, NumberFormatter } from '../constants.js';
+import { Data } from '../data.js';
+import { MiraklClient } from '../mirakl-api.js';
 import * as Utils from '../utils.js';
 
 const VENDOR_TEMPLATES = {
-
     'DECATHLON_ORDERS_DATA': [
         [ 'preview', 'PREVIEW', ( row, i, url ) => {
             return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${i['product_medias'][1]['media_url']}">`;
@@ -24,7 +23,7 @@ const VENDOR_TEMPLATES = {
             const q = core.getIndividualQuantityPerPack( ogSku, parseInt( i['quantity'] ) );
             const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
             const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
-            if( udsPerPackage === undefined ) return 'SKU no encontrado';
+            if ( udsPerPackage === undefined ) return 'SKU no encontrado';
             return Math.ceil( q / udsPerPackage );
         } ],
         [ 'Nombre de usuario completo', null, ( row, i ) => {
@@ -88,7 +87,7 @@ const VENDOR_TEMPLATES = {
         } ],
         [ 'Correo electrónico de usuario', null, ( str, row ) => '' ],
         // THIS ONE HAS TO BE DELETED
-        [ 'quantity' ],
+        [ 'quantity' ]
     ],
 
     // (str, row, tracking_data, app)
@@ -161,7 +160,7 @@ class MiraklApp
         } );
 
         utilButtonsPanel.addButton( null, 'UpdateOrdersButton', ( value, event ) => {
-            this.showOrders( vendor_lc )
+            this.showOrders( vendor_lc );
         }, { buttonClass: 'lg outline', icon: 'RefreshCw', title: 'Actualizar pedidos', tooltip: true } );
 
         utilButtonsPanel.endLine();
@@ -276,7 +275,7 @@ class MiraklApp
 
         let r = null;
 
-        if( !clean )
+        if ( !clean )
         {
             const dialog = Utils.makeLoadingDialog( 'Cargando pedidos, espere...' );
 
@@ -330,11 +329,11 @@ class MiraklApp
             r = { orders: [] };
         }
 
-            // [ 'date', 'FECHA', ( r ) => {
-            //     const d = new Date( r['created_date'] );
-            //     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-            // } ],
-            // [ 'quantity', 'UNIDADES' ],
+        // [ 'date', 'FECHA', ( r ) => {
+        //     const d = new Date( r['created_date'] );
+        //     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+        // } ],
+        // [ 'quantity', 'UNIDADES' ],
 
         const date = new Date();
         const todayStringDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
@@ -593,7 +592,7 @@ class MiraklApp
                 // discard orders sent with CBL
                 const sku = this.core.mapSku( item['offer_sku'] );
                 const transport = this.core.getTransportForItem( sku, item['quantity'] );
-                if( transport === 'CBL' ) continue;
+                if ( transport === 'CBL' ) continue;
 
                 const lRow = [];
 
@@ -679,7 +678,6 @@ class MiraklApp
                         }
                     }
                 }
-                
             } );
 
             if ( errorFields.length )
@@ -750,7 +748,7 @@ class MiraklApp
             return;
         }
 
-        const orderNumbers = new Map();    
+        const orderNumbers = new Map();
 
         let rows = [];
         currentOrdersData.forEach( ( row, index ) => {
@@ -760,7 +758,7 @@ class MiraklApp
                 // discard orders sent with CBL
                 const sku = this.core.mapSku( item['offer_sku'] );
                 const transport = this.core.getTransportForItem( sku, item['quantity'] );
-                if( transport === 'CBL' ) continue;
+                if ( transport === 'CBL' ) continue;
 
                 const lRow = [];
 
@@ -809,7 +807,7 @@ class MiraklApp
                         lRow.push( v );
                     }
                 }
-                
+
                 rows.push( lRow );
             }
         } );
@@ -847,8 +845,8 @@ class MiraklApp
         // Filter empty, remove tmp quantity from ROW data, and sort by sku
         rows = rows
             .filter( ( r ) => r !== undefined )
-            .map( r => {
-                if( !r[skuIdx].includes( '+' ) )
+            .map( ( r ) => {
+                if ( !r[skuIdx].includes( '+' ) )
                 {
                     const q = r.at( -1 );
                     r[skuIdx] += ` x ${q}`;
@@ -859,7 +857,7 @@ class MiraklApp
                 const sku_a = a[skuIdx];
                 const sku_b = b[skuIdx];
                 return sku_a.localeCompare( sku_b );
-        } );
+            } );
 
         this.core.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
     }
@@ -874,16 +872,16 @@ class MiraklApp
             const dialog = new LX.Dialog( '❌ Solucionar errores', ( p ) => {
                 LX.addClass( p.root, 'p-2 flex flex-col overflow-scroll' );
 
-                const pTop = new LX.Panel({className: 'flex flex-col gap-1 overflow-scroll'});
+                const pTop = new LX.Panel( { className: 'flex flex-col gap-1 overflow-scroll' } );
                 p.attach( pTop );
 
                 for ( const { name, uid } of this._trackingSyncErrors )
                 {
                     LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${uid})`, pTop );
-                    const possibleIndex = data.findIndex( d => d[7] === uid );
+                    const possibleIndex = data.findIndex( ( d ) => d[7] === uid );
                     // console.log(possibleIndex)
-                    const trackAttrName = "tracking-number";
-                    pTop.addText( trackAttrName, "", ( v ) => {
+                    const trackAttrName = 'tracking-number';
+                    pTop.addText( trackAttrName, '', ( v ) => {
                         const colIdx = this.lastSeurTrackingsColumnData.indexOf( trackAttrName );
                         data[possibleIndex][colIdx] = v;
                     } );
@@ -905,7 +903,7 @@ class MiraklApp
             }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
             return;
         }
-        
+
         this.core.exportXLSXData( data, filename );
     }
 
