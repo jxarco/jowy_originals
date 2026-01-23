@@ -1115,8 +1115,7 @@ class SheinApp
                 [ '' ], [ '' ], // 'AU', 'AV'
                 [ 'IVA', null, ( str, row ) => {
                     const country = row[PAIS_ATTR];
-                    const iva100 = LX.round( ( this.core.countryIVA[country] - 1 ) * 100 );
-                    return `${iva100}%`;
+                    return LX.round( ( this.core.countryIVA[country] - 1 ) * 100 );
                 } ], // 'AW'
                 [ '' ], [ '' ], // 'AX', 'AY'
                 [ 'Cuota', null, ( str, row ) => {
