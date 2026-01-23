@@ -1,12 +1,6 @@
 import { LX } from 'lexgui';
 import { Constants, NumberFormatter } from '../constants.js';
-
-function getDateNDaysAgo( n = 30 )
-{
-    const d = new Date();
-    d.setDate( d.getDate() - n );
-    return d.toISOString();
-}
+import * as Utils from '../utils.js';
 
 class OrdersApp
 {
@@ -105,9 +99,8 @@ class OrdersApp
 
         if ( !clean )
         {
-            const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
-    
-            const after = getDateNDaysAgo( this.ordersBeforeDays );
+            const dialog = Utils.makeLoadingDialog( 'Cargando pedidos, espere...' );
+            const after = Utils.getDateNDaysAgo( this.ordersBeforeDays );
             const before = null;
             r = await wcc.getAllOrdersByFilter( after, before, [ 'processing', 'on-hold' ] );
             console.log( r );

@@ -2,6 +2,7 @@ import { LX } from 'lexgui';
 import { MiraklClient } from '../mirakl-api.js';
 import { Data } from '../data.js';
 import { Constants, NumberFormatter } from '../constants.js';
+import * as Utils from '../utils.js';
 
 const VENDOR_TEMPLATES = {
 
@@ -277,7 +278,7 @@ class MiraklApp
 
         if( !clean )
         {
-            const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
+            const dialog = Utils.makeLoadingDialog( 'Cargando pedidos, espere...' );
 
             r = await this.mkClient.listOrders( {
                 sort: 'dateCreated',

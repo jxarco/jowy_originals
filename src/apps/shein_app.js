@@ -1,7 +1,7 @@
 import { LX } from 'lexgui';
 import { Data } from '../data.js';
 import { Constants, NumberFormatter } from '../constants.js';
-import { convertDateDMYtoMDY } from '../utils.js';
+import * as Utils from '../utils.js';
 
 const countries = [ 'ESPAÑA', 'PORTUGAL' ];
 
@@ -181,14 +181,14 @@ class SheinApp
         this.showOrdersList( fileData );
         this.showStockList( fileData );
 
-        this.core.toggleButtonDisabled( this.exportLabelsButton, false );
+        Utils.toggleButtonDisabled( this.exportLabelsButton, false );
     }
 
     showOrdersList( data )
     {
         data = data ?? this.lastSeurData;
 
-        this.core.clearArea( this.ordersArea );
+        Utils.clearArea( this.ordersArea );
 
         // Create table data from the list
         const tableData = data.map( ( row ) => {
@@ -239,7 +239,7 @@ class SheinApp
 
         let data = LX.deepCopy( ogData );
 
-        this.core.clearArea( this.stockListArea );
+        Utils.clearArea( this.stockListArea );
 
         let columnData = [
             [ SKU_ATTR ],
@@ -406,7 +406,7 @@ class SheinApp
     {
         const data = this.lastSeurData;
 
-        this.core.clearArea( this.trackingArea );
+        Utils.clearArea( this.trackingArea );
 
         this._trackingSyncErrors = [];
 
@@ -447,7 +447,7 @@ class SheinApp
 
         this.trackingArea.attach( tableWidget );
 
-        this.core.toggleButtonDisabled( this.exportTrackingsButton, false );
+        Utils.toggleButtonDisabled( this.exportTrackingsButton, false );
     }
 
     exportSEUR( ignoreErrors = false, sheinData )
@@ -526,7 +526,7 @@ class SheinApp
             }
         }
 
-        const filename = `ETIQUETAS_SEUR_${this.title}_${this.core.getTodayStringDate()}.xlsx`;
+        const filename = `ETIQUETAS_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
 
         let err = 0;
         let errMsg = '';
@@ -648,7 +648,7 @@ class SheinApp
 
     exportSEURTrackings( fixedData, ignoreErrors )
     {
-        const filename = `NUMERODEGUIA_SEUR_${this.title}_${this.core.getTodayStringDate()}.xlsx`;
+        const filename = `NUMERODEGUIA_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
         const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
 
         if ( !ignoreErrors && this._trackingSyncErrors.length )
@@ -693,7 +693,7 @@ class SheinApp
 
     showAlbaranRelatedInfo( data )
     {
-        this.core.clearArea( this.albaranArea );
+        Utils.clearArea( this.albaranArea );
 
         data = data ?? this.lastSeurData;
 
@@ -792,7 +792,7 @@ class SheinApp
         this.fiscalTabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
         utilButtonsPanel.attach( this.fiscalTabs.root ); // Move up into the panel section
 
-        const weekN = this.core.getWeekNumber(convertDateDMYtoMDY(this.currentDate));
+        const weekN = Utils.getWeekNumber(Utils.convertDateDMYtoMDY(this.currentDate));
         const currentYear = this.currentDate.split('/')[2];
 
         const getPriceWithoutIVA = ( row ) => {
@@ -1182,7 +1182,7 @@ class SheinApp
 
     exportIVA()
     {
-        const weekN = this.core.getWeekNumber(convertDateDMYtoMDY(this.currentDate));
+        const weekN = Utils.getWeekNumber(Utils.convertDateDMYtoMDY(this.currentDate));
         const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
         const sheets = [];
 
@@ -1325,8 +1325,8 @@ class SheinApp
         this.showTrackingList( [] );
         this.showAlbaranRelatedInfo( [], 0 );
 
-        this.core.toggleButtonDisabled( this.exportLabelsButton, true );
-        this.core.toggleButtonDisabled( this.exportTrackingsButton, true );
+        Utils.toggleButtonDisabled( this.exportLabelsButton, true );
+        Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
     }
 }
 

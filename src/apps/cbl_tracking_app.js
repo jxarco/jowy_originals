@@ -1,6 +1,6 @@
 import { LX } from 'lexgui';
 import { Constants, NumberFormatter } from '../constants.js';
-import { convertDateDMYtoMDY } from '../utils.js';
+import * as Utils from '../utils.js';
 
 const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.aspx`;
 const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
@@ -437,7 +437,7 @@ class CblTrackingApp
             dialogPanel.addButton( null, 'Continuar', async () => {
                 dialogClosable.destroy();
 
-                const dialog = core.makeLoadingDialog();
+                const dialog = Utils.makeLoadingDialog();
 
                 try
                 {
@@ -671,8 +671,8 @@ class CblTrackingApp
 
                             const oN = orderNumber; // ?? 4529;
                             const iN = invoiceNumber;
-                            const iD = `${convertDateDMYtoMDY( invoiceDate )} ${date.getHours()}:${date.getMinutes()}`;
-                            const dialog = core.makeLoadingDialog();
+                            const iD = `${Utils.convertDateDMYtoMDY( invoiceDate )} ${date.getHours()}:${date.getMinutes()}`;
+                            const dialog = Utils.makeLoadingDialog();
 
                             if ( customerNote )
                             {
@@ -927,7 +927,7 @@ class CblTrackingApp
                 makeInvoiceButtonWidget.root.querySelector( 'button' ).appendChild( spinner.root );
 
                 {
-                    const iD = `${convertDateDMYtoMDY( invoiceDate )} ${date.getHours()}:${date.getMinutes()}`;
+                    const iD = `${Utils.convertDateDMYtoMDY( invoiceDate )} ${date.getHours()}:${date.getMinutes()}`;
                     let r = await wcc.updateInvoice( idOrder, invoiceNumber, iD, compData.prefix, compData.suffix, compData.padding );
                     if ( !r.ok )
                     {
@@ -1097,7 +1097,7 @@ class CblTrackingApp
             return {};
         }
 
-        const dialog = core.makeLoadingDialog( 'Cargando pedidos, espere...' );
+        const dialog = Utils.makeLoadingDialog( 'Cargando pedidos, espere...' );
 
         const r = await wcc.getAllOrdersByIds( ids );
 

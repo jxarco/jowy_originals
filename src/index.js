@@ -9,6 +9,7 @@ import { TikTokApp } from './apps/tiktok_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import { WooCommerceClient } from './woocomerce.js';
 import { SKU_MAPPING, LAL_SKU_MAPPINGS, PLATFORM_CLIENT_CODES } from './constants.js'
+import * as Utils from './utils.js';
 
 window.LX = LX;
 
@@ -624,7 +625,7 @@ const core = {
         const fileId = '1arBumQH2vuhLv8lQZnBdTj-h64BmUdjt';
         const fileUrl = `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
 
-        this._request( {
+        Utils.request( {
             url: fileUrl,
             dataType: 'binary', // get ArrayBuffer
             success: function( response )
@@ -772,170 +773,6 @@ const core = {
         } );
 
         return dropZone;
-    },
-
-    makeLoadingDialog( title )
-    {
-        return new LX.Dialog( title ?? 'Acción en curso, espere...', ( p ) => {
-            const spinner = new LX.Spinner( { size: '2xl', icon: 'LoaderCircle', iconClass: 'p-2' } );
-            p.attach( spinner.root );
-        }, { modal: true, position: [ 'calc(50% - 150px)', '250px' ], size: [ '300px', null ], closable: false, draggable: false } );
-    },
-
-    getTodayStringDate()
-    {
-        const date = new Date();
-        const day = `${date.getDate()}`;
-        const month = `${date.getMonth() + 1}`;
-        const year = `${date.getFullYear()}`;
-        return `${'0'.repeat( 2 - day.length )}${day}_${'0'.repeat( 2 - month.length )}${month}_${year}`;
-    },
-
-    getWeekNumber( dateString )
-    {
-        const date = new Date( dateString );
-        const d = new Date(Date.UTC(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate()
-        ));
-
-        const day = d.getUTCDay() || 7; // lunes = 1, domingo = 7
-        d.setUTCDate(d.getUTCDate() + 4 - day);
-
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-    },
-
-    clearArea( area )
-    {
-        const dom = area.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
-    },
-
-    toggleButtonDisabled( button, force )
-    {
-        button.root.querySelector( 'button' ).toggleAttribute( 'disabled', force );
-    },
-
-    _request: function( request )
-    {
-        var dataType = request.dataType || 'text';
-        if ( dataType == 'json' )
-        { // parse it locally
-            dataType = 'text';
-        }
-        else if ( dataType == 'xml' )
-        { // parse it locally
-            dataType = 'text';
-        }
-        else if ( dataType == 'binary' )
-        {
-            // request.mimeType = "text/plain; charset=x-user-defined";
-            dataType = 'arraybuffer';
-            request.mimeType = 'application/octet-stream';
-        }
-
-        // regular case, use AJAX call
-        var xhr = new XMLHttpRequest();
-        xhr.open( request.data ? 'POST' : 'GET', request.url, true );
-        if ( dataType )
-        {
-            xhr.responseType = dataType;
-        }
-        if ( request.mimeType )
-        {
-            xhr.overrideMimeType( request.mimeType );
-        }
-        if ( request.nocache )
-        {
-            xhr.setRequestHeader( 'Cache-Control', 'no-cache' );
-        }
-        if ( request.headers )
-        {
-            for ( var i in request.headers )
-            {
-                xhr.setRequestHeader( i, request.headers[i] );
-            }
-        }
-
-        xhr.onload = function( load )
-        {
-            var response = this.response;
-            if ( this.status != 200 )
-            {
-                var err = 'Error ' + this.status;
-                if ( request.error )
-                {
-                    request.error( err );
-                }
-                return;
-            }
-
-            if ( request.dataType == 'json' )
-            { // chrome doesnt support json format
-                try
-                {
-                    response = JSON.parse( response );
-                }
-                catch ( err )
-                {
-                    if ( request.error )
-                    {
-                        request.error( err );
-                    }
-                    else
-                    {
-                        throw err;
-                    }
-                }
-            }
-            else if ( request.dataType == 'xml' )
-            {
-                try
-                {
-                    var xmlparser = new DOMParser();
-                    response = xmlparser.parseFromString( response, 'text/xml' );
-                }
-                catch ( err )
-                {
-                    if ( request.error )
-                    {
-                        request.error( err );
-                    }
-                    else
-                    {
-                        throw err;
-                    }
-                }
-            }
-            if ( request.success )
-            {
-                request.success.call( this, response, this );
-            }
-        };
-        xhr.onerror = function( err )
-        {
-            if ( request.error )
-            {
-                request.error( err );
-            }
-        };
-
-        var data = new FormData();
-        if ( request.data )
-        {
-            for ( var i in request.data )
-            {
-                data.append( i, request.data[i] );
-            }
-        }
-
-        xhr.send( data );
-        return xhr;
     }
 };
 
