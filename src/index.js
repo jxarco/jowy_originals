@@ -791,8 +791,9 @@ const core = {
         return `${'0'.repeat( 2 - day.length )}${day}_${'0'.repeat( 2 - month.length )}${month}_${year}`;
     },
 
-    getWeekNumber( date = new Date() )
+    getWeekNumber( dateString )
     {
+        const date = new Date( dateString );
         const d = new Date(Date.UTC(
             date.getFullYear(),
             date.getMonth(),

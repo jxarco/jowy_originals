@@ -1,6 +1,7 @@
 import { LX } from 'lexgui';
 import { Data } from '../data.js';
 import { Constants, NumberFormatter } from '../constants.js';
+import { convertDateDMYtoMDY } from '../utils.js';
 
 const countries = [ 'ESPAÑA', 'PORTUGAL' ];
 
@@ -791,7 +792,7 @@ class SheinApp
         this.fiscalTabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
         utilButtonsPanel.attach( this.fiscalTabs.root ); // Move up into the panel section
 
-        const weekN = this.core.getWeekNumber();
+        const weekN = this.core.getWeekNumber(convertDateDMYtoMDY(this.currentDate));
         const currentYear = this.currentDate.split('/')[2];
 
         const getPriceWithoutIVA = ( row ) => {
@@ -1181,7 +1182,7 @@ class SheinApp
 
     exportIVA()
     {
-        const weekN = this.core.getWeekNumber();
+        const weekN = this.core.getWeekNumber(convertDateDMYtoMDY(this.currentDate));
         const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
         const sheets = [];
 

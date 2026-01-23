@@ -1,19 +1,10 @@
 import { LX } from 'lexgui';
 import { Constants, NumberFormatter } from '../constants.js';
+import { convertDateDMYtoMDY } from '../utils.js';
 
 const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.aspx`;
 const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
 const glsTrackingUrl = `https://gls-group.com/ES/es/seguimiento-envio/`;
-
-const convertDateDMYtoMDY = ( str ) => {
-    const [ day, month, year ] = str.split( '/' );
-    return `${month}/${day}/${year}`;
-};
-
-const convertDateMDYtoDMY = ( str ) => {
-    const [ month, day, year ] = str.split( '/' );
-    return `${day}/${month}/${year}`;
-};
 
 class CblTrackingApp
 {
