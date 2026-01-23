@@ -317,7 +317,7 @@ class TransportCalculatorApp
                     <span class="text-muted-foreground">Resumen</span> <span class="font-semibold text-foreground">${transportName}: ${finalFormatted}</span>
                     ${
                 transportName == 'SEUR'
-                    ? `<span class="text-xl ${totalPriceDiff > 0 ? 'text-destructive' : 'text-success'}">(${totalPriceDiff > 0 ? '+' : ''}${
+                    ? `<span class="text-xl ${totalPriceDiff > 0 ? 'text-destructive' : 'text-lime-600 dark:text-lime-500'}">(${totalPriceDiff > 0 ? '+' : ''}${
                         NumberFormatter.format( totalPriceDiff )
                     })</span>
                     `
