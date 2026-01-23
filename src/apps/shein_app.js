@@ -935,7 +935,7 @@ class SheinApp
                     const country = row[PAIS_ATTR];
                     const skuPriceFactor = skuObj.price;
                     const priceWithoutIVA = getPriceWithoutIVA( row ) * skuPriceFactor;
-                    const transportPrice = ( country === 'ESPAÑA' ) ? 0.25 : 0.26;
+                    const transportPrice = this.core.countryTransportCostPct[country];
                     const totalProductTransport = LX.round( priceWithoutIVA * transportPrice );
                     const productTotal = LX.round( priceWithoutIVA - totalProductTransport );
 
