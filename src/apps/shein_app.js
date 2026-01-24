@@ -10,6 +10,8 @@ const ORDER_ATTR = 'Número del pedido';
 const CLIENT_NAME_ATTR = 'Nombre de usuario completo';
 const PAIS_ATTR = 'País';
 const CP_ATTR = 'Código Postal';
+const PVP_ATTR = 'precio de los productos básicos';
+const ORDER_DATE_ATTR = 'Fecha y hora de creación de pedido';
 
 const ORDERS_DATA = [
     [ ORDER_ATTR ],
@@ -707,7 +709,7 @@ class SheinApp extends BaseApp
         const totalIncome = countries.reduce( ( o, c ) => {
             o[c] = LX.round( data.reduce( ( acc, row ) => {
                 if ( row[PAIS_ATTR] !== c ) return acc;
-                return acc + parseFloat( row['precio de los productos básicos'] );
+                return acc + parseFloat( row[PVP_ATTR] );
             }, 0 ) );
             return o;
         }, {} );
@@ -756,7 +758,7 @@ class SheinApp extends BaseApp
             let country = row[PAIS_ATTR];
             const iva = core.countryIVA[country];
             if ( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: -1, position: 'top-center' } );
-            const priceWithoutIVA = parseFloat( row['precio de los productos básicos'] ) / ( iva ?? 1.21 );
+            const priceWithoutIVA = parseFloat( row[PVP_ATTR] ) / ( iva ?? 1.21 );
             return LX.round( priceWithoutIVA );
         };
 
@@ -766,9 +768,9 @@ class SheinApp extends BaseApp
             this.fiscalTabs.add( 'IVA', IVAContainer, { selected: ( selectedTab === 'IVA' || !this.fiscalTabs ) } );
 
             const IVA_COLS = [
-                [ PAIS_ATTR ],
+                [ PAIS_ATTR, 'PAÍS' ],
                 [ ORDER_ATTR, 'NÚMERO PEDIDO' ],
-                [ 'Fecha y hora de creación de pedido', 'FECHA PEDIDO' ],
+                [ ORDER_DATE_ATTR, 'FECHA PEDIDO' ],
                 [ SKU_ATTR, 'REF' ],
                 [ 'CANTIDAD', null, ( str, row ) => {
                     const sku = row[SKU_ATTR];
@@ -777,11 +779,11 @@ class SheinApp extends BaseApp
                 [ 'PRECIO SIN IVA', null, ( str, row ) => getPriceWithoutIVA( row ) ],
                 [ 'IVA', null, ( str, row ) => {
                     const priceWithoutIVA = getPriceWithoutIVA( row );
-                    const totalIva = parseFloat( row['precio de los productos básicos'] ) - priceWithoutIVA;
+                    const totalIva = parseFloat( row[PVP_ATTR] ) - priceWithoutIVA;
                     const formatted = NumberFormatter.format( totalIva );
                     return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
                 } ],
-                [ 'precio de los productos básicos', 'PVP', ( str, row ) => {
+                [ PVP_ATTR, 'PVP', ( str, row ) => {
                     const formatted = NumberFormatter.format( str );
                     return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
                 } ]
@@ -835,7 +837,7 @@ class SheinApp extends BaseApp
             };
 
             this.LAL_COLS = [
-                [ PAIS_ATTR ],
+                [ 'País' ],
                 [ 'Serie', null, () => '1' ], // 'A',
                 [ 'Número', null, () => -1 ], // 'B',   -> fixed on export
                 [ 'Posición', null, () => -1 ], // 'C', -> fixed on export
@@ -937,7 +939,7 @@ class SheinApp extends BaseApp
                 );
 
                 totalIncomeNetPlusIVA[c] = LX.round( modifiedData.reduce( ( acc, row ) => {
-                    if ( row[PAIS_ATTR] !== c ) return acc;
+                    if ( row['País'] !== c ) return acc;
                     return acc + parseFloat( row['Total'] );
                 }, 0 ) * this.core.countryIVA[c] );
 
@@ -987,12 +989,12 @@ class SheinApp extends BaseApp
                 LX.doAsync( () => this.showAlbaranRelatedInfo( data ) );
             }, { nameWidth: 'fit-content' } );
             const popoverButton = subUtilsPanel.addButton( null, 'Ver Ingresos', () => {
-                const incomeArea = new LX.Area( { skipAppend: true } );
+                const incomeArea = new LX.Area( { width: `${Math.max( 6 * countries.length, 16 )}rem`, skipAppend: true } );
                 const tabs = incomeArea.addTabs( { fit: true } );
                 countries.forEach( ( c ) => {
                     const p = new LX.Panel();
-                    p.addText( 'Total brutos', totalIncome[c] + ' €', null, { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
-                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA[c] + ' €', null, { width: '16rem', nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
+                    p.addText( 'Total brutos', totalIncome[c] + ' €', null, { nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
+                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA[c] + ' €', null, { nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
                     tabs.add( c, p.root );
                 } );
                 new LX.Popover( popoverButton.root, [ incomeArea ], { align: 'end' } );
@@ -1008,7 +1010,7 @@ class SheinApp extends BaseApp
             this.fiscalTabs.add( 'ALB', ALBContainer, { selected: ( selectedTab === 'ALB' ) } );
 
             this.ALB_COLS = [
-                [ PAIS_ATTR ],
+                [ 'País' ],
                 [ 'Serie', null, () => '1' ], // 'A',
                 [ 'Número', null, () => -1 ], // 'B',
                 [ '' ], // 'C',
@@ -1029,7 +1031,7 @@ class SheinApp extends BaseApp
                 [ '' ], // 'R',
                 [ 'Neto', null, ( str, row ) => {
                     const net = row['Total'];
-                    const country = row[PAIS_ATTR];
+                    const country = row['País'];
                     const iva = this.core.countryIVA[country];
                     return LX.round( net / iva );
                 } ], // 'S',
@@ -1062,21 +1064,21 @@ class SheinApp extends BaseApp
                 [ '' ],
                 [ 'Base', null, ( str, row ) => {
                     const net = row['Total'];
-                    const country = row[PAIS_ATTR];
+                    const country = row['País'];
                     const iva = this.core.countryIVA[country];
                     return LX.round( net / iva );
                 } ], // 'AT'
                 [ '' ],
                 [ '' ], // 'AU', 'AV'
                 [ 'IVA', null, ( str, row ) => {
-                    const country = row[PAIS_ATTR];
+                    const country = row['País'];
                     return LX.round( ( this.core.countryIVA[country] - 1 ) * 100 );
                 } ], // 'AW'
                 [ '' ],
                 [ '' ], // 'AX', 'AY'
                 [ 'Cuota', null, ( str, row ) => {
                     const net = row['Total'];
-                    const country = row[PAIS_ATTR];
+                    const country = row['País'];
                     const iva = this.core.countryIVA[country];
                     return LX.round( net * ( iva - 1 ) );
                 } ], // 'AZ'
