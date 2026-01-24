@@ -6,6 +6,7 @@ import { MiraklApp } from './apps/mirakl_apps.js';
 import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
 import { TikTokApp } from './apps/tiktok_app.js';
+import { MiraviaApp } from './apps/miravia_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import { LAL_SKU_MAPPINGS, PLATFORM_CLIENT_CODES, SKU_MAPPING } from './constants.js';
 import { WooCommerceClient } from './woocomerce.js';
@@ -116,6 +117,7 @@ const core = {
         this.ordersApp = new OrdersApp( this, 'orders' );
         this.sheinApp = new SheinApp( this, 'shein' );
         this.tikTokApp = new TikTokApp( this, 'tiktok' );
+        this.miraviaApp = new MiraviaApp( this, 'miravia' );
         this.decathlonApp = new MiraklApp( this, 'Decathlon' );
         // this.carrefourApp = new MiraklApp( this, 'Carrefour' );
         this.transportCalculatorApp = new TransportCalculatorApp( this, 't-calc' );
@@ -388,6 +390,10 @@ const core = {
         else if ( this.tool == 'tiktok' )
         {
             this.tikTokApp.openData( fileData );
+        }
+        else if ( this.tool == 'miravia' )
+        {
+            this.miraviaApp.openData( fileData );
         }
 
         if ( err !== null )
@@ -810,6 +816,7 @@ core.data['bathby'].template = ( id, url, transport ) => {
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' },
                 { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
                 { name: 'TikTok', callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
+                { name: 'Miravia', callback: ( v, e ) => core.openApp( core.miraviaApp ), icon: 'ShoppingBag' },
                 { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' }
             ]
         },

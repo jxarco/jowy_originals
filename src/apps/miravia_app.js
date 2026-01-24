@@ -4,12 +4,12 @@ import { Constants, NumberFormatter } from '../constants.js';
 import { Data } from '../data.js';
 import * as Utils from '../utils.js';
 
-const countries = [ 'ESPAÑA', 'PORTUGAL' ];
+const countries = [ 'ESPAÑA', 'PORTUGAL', 'FRANCIA', 'ITALIA' ];
 const SKU_ATTR = 'SKU del vendedor';
-const ORDER_ATTR = 'Número del pedido';
-const CLIENT_NAME_ATTR = 'Nombre de usuario completo';
-const PAIS_ATTR = 'País';
-const CP_ATTR = 'Código Postal';
+const ORDER_ATTR = 'Número de pedido';
+const CLIENT_NAME_ATTR = 'Nombre del comprador';
+const PAIS_ATTR = 'País de envío';
+const CP_ATTR = 'Código postal';
 
 const ORDERS_DATA = [
     [ ORDER_ATTR ],
@@ -21,66 +21,24 @@ const ORDERS_DATA = [
     [ CLIENT_NAME_ATTR ],
     [ CP_ATTR ],
     [ PAIS_ATTR ],
-    [ 'Provincia', null ],
-    [ 'Ciudad', null ],
-    [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
-    [ 'Número de Teléfono' ],
-    [ 'Correo electrónico de usuario' ]
+    [ 'Dirección de envío 3', 'Ciudad' ],
+    [ 'Dirección de envío+Dirección de envío 2', 'Dirección' ]
 ];
 
-const LABEL_DATA = [
-    [ ORDER_ATTR ],
-    [ 'Bultos', null, ( row, i ) => 1 ],
-    [ SKU_ATTR ],
-    [ CP_ATTR ],
-    [ PAIS_ATTR ],
-    [ 'Provincia', null ],
-    [ 'Ciudad', null ],
-    [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
-    [ CLIENT_NAME_ATTR ],
-    [ 'Número de Teléfono' ],
-    [ 'Correo electrónico de usuario' ]
-];
-
-const TRACKING_DATA = [
-    [ ORDER_ATTR, 'Order Number' ],
-    [ 'ID del artículo', 'Item ID' ],
-    [ 'Tracking Number', null, ( str, row, tdata, app ) => {
-        const name = row[CLIENT_NAME_ATTR].toUpperCase();
-        const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
-        if ( !tentry )
-        {
-            app._trackingSyncErrors.push( { name, uid: `${row[ORDER_ATTR]}_${row['ID del artículo']}` } );
-            const status = core.trackStatusColors['Incidencia'];
-            let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
-            return `${
-                LX.badge( iconStr, 'text-xs font-bold border-none ', {
-                    style: { height: '1.4rem', borderRadius: '0.65rem', backgroundColor: status.bg ?? '', color: status.fg ?? '' }
-                } )
-            }`;
-        }
-        return tentry['LOCALIZADOR'];
-    } ],
-    [ 'Logistics Provider', null, () => 'SEUR' ],
-    [ 'Delete', null, () => '' ]
-];
-
-class SheinApp extends BaseApp
+class MiraviaApp extends BaseApp
 {
     constructor( core, tool )
     {
         super( core, tool );
 
-        this.title = 'SHEIN';
+        this.title = 'Miravia';
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
-        this.icon = 'Shein';
-        
+        this.icon = 'ShoppingBag';
+
         // Create utility buttons
         const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         utilsPanel.sameLine();
         Utils.addUtilityButton( utilsPanel, 'ClearButton', 'Trash2', 'Limpiar datos anteriores', () => this.core.clearData() );
-        this.exportLabelsButton = Utils.addUtilityButton( utilsPanel, 'ExportLabelsButton', 'Download', 'Exportar Etiquetas', () => this.exportSEUR( false, this.lastSeurData ), true );
-        this.exportTrackingsButton = Utils.addUtilityButton( utilsPanel, 'ExportTrackingsButton', 'FileDown', 'Exportar Seguimiento', () => this.exportSEURTrackings(), true );
         utilsPanel.endLine();
         this.area.attach( utilsPanel.root );
 
@@ -98,36 +56,25 @@ class SheinApp extends BaseApp
         const stockListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         stockListContainer.appendChild( stockListArea.root );
 
-        // Tracking info
-        const trackingContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-        tabs.add( 'Seguimiento', trackingContainer, { xselected: true, onSelect: ( event, name ) => {
-            trackingArea.root.innerHTML = '';
-            trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
-        } } );
-        const trackingArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
-        trackingContainer.appendChild( trackingArea.root );
-
         // Albaran/IVA/Etc List
-        const albaranContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-        tabs.add( 'IVA/Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
-            albaranArea.root.innerHTML = '';
-            albaranArea.attach( this.core.createDropZone( this.area, this.showAlbaranRelatedInfo.bind( this ), 'listados de envíos' ) );
-        } } );
-        const albaranArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
-        albaranContainer.appendChild( albaranArea.root );
+        // const albaranContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        // tabs.add( 'IVA/Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
+        //     albaranArea.root.innerHTML = '';
+        //     albaranArea.attach( this.core.createDropZone( this.area, this.showAlbaranRelatedInfo.bind( this ), 'listados de envíos' ) );
+        // } } );
+        // const albaranArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        // albaranContainer.appendChild( albaranArea.root );
 
         // Move up into the panel section
         utilsPanel.attach( tabs.root );
 
         this.ordersArea = ordersArea;
         this.stockListArea = stockListArea;
-        this.albaranArea = albaranArea;
-        this.trackingArea = trackingArea;
-        this._trackingSyncErrors = [];
-        this.albNumber = -1;
+        // this.albaranArea = albaranArea;
+        // this.albNumber = -1;
 
-        const date = new Date();
-        this.currentDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+        // const date = new Date();
+        // this.currentDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 
         this.clear();
     }
@@ -138,6 +85,8 @@ class SheinApp extends BaseApp
         {
             return;
         }
+
+        console.log("miravia", fileData)
 
         // Map SKUs and Country once on load data
         fileData.forEach( ( r ) => {
@@ -164,8 +113,6 @@ class SheinApp extends BaseApp
 
         this.showOrdersList( fileData );
         this.showStockList( fileData );
-
-        Utils.toggleButtonDisabled( this.exportLabelsButton, false );
     }
 
     showOrdersList( data )
@@ -207,7 +154,7 @@ class SheinApp extends BaseApp
             customFilters: [
                 { name: PAIS_ATTR, options: countries }
             ],
-            hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', CP_ATTR, 'Número de Teléfono', 'Correo electrónico de usuario' ]
+            hiddenColumns: [ 'ID del artículo', 'Dirección', CP_ATTR ]
         } );
 
         this.ordersArea.attach( tableWidget );
@@ -229,13 +176,18 @@ class SheinApp extends BaseApp
             [ SKU_ATTR ],
             [ 'Unidades', null ],
             [ 'Transporte', null, () => 'SEUR' ],
-            [ 'Plataforma', null, () => 'SHEIN' ],
+            [ 'Plataforma', null, ( str, row ) => {
+                const oN = row[ORDER_ATTR];
+                if( oN.length === 16 ) return 'ALIEXPRESS';
+                if( oN.length === 13 ) return 'MIRAVIA';
+                return 'NO DETECTADO';
+            } ], // MIRAVIA OR ALIEXPRESS
             [ PAIS_ATTR ],
             [ 'Observaciones', null ],
             [ ORDER_ATTR, null ]
         ];
 
-        const uid = columnData[6][0]; // This is to get in this case 'Número del pedido'
+        const uid = columnData[6][0]; // This is to get in this case ORDER_ATTR
         const orderNumbers = new Map();
 
         // Create table data from the list
@@ -328,24 +280,24 @@ class SheinApp extends BaseApp
 
         // for the skus that contain '+', change the sku to sku x quantity in each of them
         // only for SHEIN, since we don't have the quantity until now
-        for ( let row of tableData )
-        {
-            const sku = row[skuIdx];
+        // for ( let row of tableData )
+        // {
+        //     const sku = row[skuIdx];
 
-            if ( !sku.includes( '+' ) )
-            {
-                continue;
-            }
+        //     if ( !sku.includes( '+' ) )
+        //     {
+        //         continue;
+        //     }
 
-            const skusList = sku.split( '+' ).map( ( s ) => s.trim() );
-            const uniqueSkus = Array.from( new Set( skusList ) );
-            const quantities = uniqueSkus.map( ( s ) => skusList.filter( ( x ) => x === s ).length );
-            const newSkuParts = uniqueSkus.map( ( s, i ) => {
-                const q = quantities[i];
-                return `${s}${q > 1 ? ` x ${q}` : ''}`;
-            } );
-            row[skuIdx] = newSkuParts.join( ' + ' );
-        }
+        //     const skusList = sku.split( '+' ).map( ( s ) => s.trim() );
+        //     const uniqueSkus = Array.from( new Set( skusList ) );
+        //     const quantities = uniqueSkus.map( ( s ) => skusList.filter( ( x ) => x === s ).length );
+        //     const newSkuParts = uniqueSkus.map( ( s, i ) => {
+        //         const q = quantities[i];
+        //         return `${s}${q > 1 ? ` x ${q}` : ''}`;
+        //     } );
+        //     row[skuIdx] = newSkuParts.join( ' + ' );
+        // }
 
         const tableWidget = new LX.Table( null, {
             head: headData,
@@ -384,295 +336,6 @@ class SheinApp extends BaseApp
         this.lastShownSeurData = tableWidget.data.body;
 
         this.stockListArea.attach( tableWidget );
-    }
-
-    showTrackingList( trackingData )
-    {
-        const data = this.lastSeurData;
-
-        Utils.clearArea( this.trackingArea );
-
-        this._trackingSyncErrors = [];
-
-        // Create table data from the list
-        const tableData = data.map( ( row ) => {
-            const lRow = [];
-            for ( let c of TRACKING_DATA )
-            {
-                const ogColName = c[0];
-                if ( ogColName.includes( '+' ) )
-                {
-                    const tks = ogColName.split( '+' );
-                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                }
-                else
-                {
-                    const fn = c[2] ?? ( ( str ) => str );
-                    const val = fn( row[ogColName] ?? '?', row, trackingData, this );
-                    lRow.push( val );
-                }
-            }
-            return lRow;
-        } );
-
-        const tableWidget = new LX.Table( null, {
-            head: TRACKING_DATA.map( ( c ) => c[1] ?? c[0] ),
-            body: tableData
-        }, {
-            selectable: true,
-            toggleColumns: true,
-            centered: true,
-            filter: 'Tracking Number',
-            hiddenColumns: [ 'Delete' ]
-        } );
-
-        this.lastSeurTrackingsColumnData = tableWidget.data.head;
-        this.lastShownSeurTrackingsData = tableWidget.data.body;
-
-        this.trackingArea.attach( tableWidget );
-
-        Utils.toggleButtonDisabled( this.exportTrackingsButton, false );
-    }
-
-    exportSEUR( ignoreErrors = false, rawData )
-    {
-        let columnData = LABEL_DATA;
-
-        const currentPlatformData = rawData ?? this.lastSeurData;
-        const uid = columnData[0][0]; // 'Número del pedido'
-
-        // Process the xlsx first to detect empty fields
-        if ( !ignoreErrors )
-        {
-            const errorFields = [];
-            currentPlatformData.forEach( ( row, index ) => {
-                for ( let c of columnData )
-                {
-                    const ogColName = c[0];
-                    if ( ogColName.includes( '+' ) )
-                    {
-                        const tks = ogColName.split( '+' );
-
-                        if ( !row[tks[0]] )
-                        {
-                            errorFields.push( [ index, tks[0] ] );
-                        }
-                    }
-                    else
-                    {
-                        const v = c[2] ? c[2]( row[ogColName], row ) : row[ogColName];
-                        if ( v === undefined )
-                        {
-                            errorFields.push( [ index, ogColName ] );
-                        }
-                    }
-                }
-            } );
-
-            if ( errorFields.length )
-            {
-                const dialog = new LX.Dialog( '❌ Solucionar errores', ( p ) => {
-                    p.root.classList.add( 'p-2', 'flex', 'flex-col' );
-
-                    const pTop = new LX.Panel();
-                    p.attach( pTop );
-
-                    let columns = columnData.map( ( c ) => {
-                        return c[0].split( '+' )[0];
-                    } );
-
-                    const fixedData = LX.deepCopy( currentPlatformData );
-
-                    for ( const [ errIndex, errName ] of errorFields )
-                    {
-                        pTop.addLabel( `No existe ${errName} (${fixedData[errIndex][uid]})` );
-                        const possibleIndex = columns.indexOf( errName );
-                        pTop.addSelect( errName, columns, columns[possibleIndex], ( v ) => {
-                            fixedData[errIndex][errName] = fixedData[errIndex][v];
-                        } );
-                    }
-
-                    const pBottom = new LX.Panel( { height: 'auto' } );
-                    p.attach( pBottom );
-
-                    pBottom.sameLine( 2 );
-                    pBottom.addButton( null, 'Ignorar', () => {
-                        dialog.close();
-                        this.exportSEUR( true );
-                    }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
-                    pBottom.addButton( null, 'Exportar', () => {
-                        dialog.close();
-                        this.exportSEUR( false, fixedData );
-                    }, { width: '50%', buttonClass: 'primary' } );
-                }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
-
-                return;
-            }
-        }
-
-        const filename = `ETIQUETAS_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
-
-        let err = 0;
-        let errMsg = '';
-        let data = columnData.map( ( c ) => c[1] ?? c[0] );
-
-        let errorFn = () => {
-            LX.toast( 'Error de exportación', `❌ No se pudo exportar el archivo: ${filename}. ${errMsg}`, {
-                timeout: -1,
-                position: 'top-center'
-            } );
-        };
-
-        if ( !currentPlatformData?.length )
-        {
-            errMsg = `No existen datos.`;
-            errorFn();
-            return;
-        }
-
-        const orderNumbers = new Map();
-
-        let rows = currentPlatformData.map( ( row, index ) => {
-            const lRow = [];
-            for ( let c of columnData )
-            {
-                const ogColName = c[0];
-
-                if ( ogColName === uid )
-                {
-                    const orderNumber = row[ogColName];
-
-                    if ( orderNumbers.has( orderNumber ) )
-                    {
-                        const val = orderNumbers.get( orderNumber );
-                        orderNumbers.set( orderNumber, [ ...val, index ] );
-                    }
-                    else
-                    {
-                        orderNumbers.set( orderNumber, [ index ] );
-                    }
-                }
-
-                if ( ogColName.includes( '+' ) )
-                {
-                    const tks = ogColName.split( '+' );
-
-                    if ( !ignoreErrors && !row[tks[0]] )
-                    {
-                        err = 1;
-                        errMsg = `No existen direcciones válidas (${row[uid]}).`;
-                        return;
-                    }
-
-                    lRow.push( `${row[tks[0]] ?? ''}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                }
-                else
-                {
-                    const v = c[2] ? c[2]( row[ogColName], row ) : row[ogColName];
-
-                    if ( !ignoreErrors && v === undefined )
-                    {
-                        err = 1;
-                        errMsg = `No existen datos de ${ogColName} (${row[uid]}).`;
-                        return;
-                    }
-
-                    lRow.push( v );
-                }
-            }
-            return lRow;
-        } ).filter( ( v ) => v !== undefined );
-
-        if ( err === 1 )
-        {
-            errorFn();
-            return;
-        }
-
-        const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
-        const skuIdx = data.indexOf( SKU_ATTR );
-
-        for ( const repeats of multipleItemsOrderNames )
-        {
-            const finalIndex = repeats[0];
-            const finalRow = rows[finalIndex];
-            const rest = repeats.slice( 1 );
-            const trail = rest.reduce( ( p, c ) => p + ` + ${rows[c][skuIdx]}`, '' );
-            rest.forEach( ( r ) => {
-                rows[r] = undefined;
-            } );
-            finalRow[skuIdx] += trail;
-        }
-
-        rows = rows.filter( ( r ) => r !== undefined );
-
-        // for the skus that contain '+', change the sku to sku x quantity in each of them
-        // only for SHEIN, since we don't have the quantity until now
-        for ( let row of rows )
-        {
-            const sku = row[2];
-
-            if ( !sku.includes( '+' ) )
-            {
-                continue;
-            }
-
-            const skusList = sku.split( '+' ).map( ( s ) => s.trim() );
-            const uniqueSkus = Array.from( new Set( skusList ) );
-            const quantities = uniqueSkus.map( ( s ) => skusList.filter( ( x ) => x === s ).length );
-            const newSkuParts = uniqueSkus.map( ( s, i ) => {
-                const q = quantities[i];
-                return `${s}${q > 1 ? ` x ${q}` : ''}`;
-            } );
-            row[skuIdx] = newSkuParts.join( ' + ' );
-        }
-
-        this.core.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
-    }
-
-    exportSEURTrackings( fixedData, ignoreErrors )
-    {
-        const filename = `NUMERODEGUIA_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
-        const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
-
-        if ( !ignoreErrors && this._trackingSyncErrors.length )
-        {
-            const dialog = new LX.Dialog( '❌ Solucionar errores', ( p ) => {
-                LX.addClass( p.root, 'p-2 flex flex-col overflow-scroll' );
-
-                const pTop = new LX.Panel( { className: 'flex flex-col gap-1 overflow-scroll' } );
-                p.attach( pTop );
-
-                for ( const { name, uid } of this._trackingSyncErrors )
-                {
-                    LX.makeElement( 'div', '[&_span]:font-bold [&_span]:text-foreground', `No existe tracking para <span>${name}</span> (${uid})`, pTop );
-                    const possibleIndex = data.findIndex( ( d ) => `${d[0]}_${d[1]}` === uid );
-                    // console.log(possibleIndex)
-                    const trackAttrName = 'Tracking Number';
-                    pTop.addText( trackAttrName, '', ( v ) => {
-                        const colIdx = this.lastSeurTrackingsColumnData.indexOf( trackAttrName );
-                        data[possibleIndex][colIdx] = v;
-                    } );
-                    pTop.addSeparator();
-                }
-
-                const pBottom = new LX.Panel( { height: 'auto' } );
-                p.attach( pBottom );
-
-                pBottom.sameLine( 2 );
-                pBottom.addButton( null, 'Ignorar', () => {
-                    dialog.close();
-                    this.exportSEUR( true );
-                }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
-                pBottom.addButton( null, 'Exportar', () => {
-                    dialog.close();
-                    this.exportSEURTrackings( data, true );
-                }, { width: '50%', buttonClass: 'primary' } );
-            }, { position: [ 'calc(50% - 300px)', '250px' ], size: [ '600px', 'min(600px, 80%)' ] } );
-            return;
-        }
-
-        this.core.exportXLSXData( data, filename );
     }
 
     showAlbaranRelatedInfo( data )
@@ -1278,12 +941,9 @@ class SheinApp extends BaseApp
         delete this.lastSeurData;
         this.showOrdersList( [] );
         this.showStockList( [] );
-        this.showTrackingList( [] );
-        this.showAlbaranRelatedInfo( [], 0 );
-
-        Utils.toggleButtonDisabled( this.exportLabelsButton, true );
-        Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
+        // this.showTrackingList( [] );
+        // this.showAlbaranRelatedInfo( [], 0 );
     }
 }
 
-export { SheinApp };
+export { MiraviaApp };

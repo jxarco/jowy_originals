@@ -232,7 +232,7 @@ class TikTokApp extends BaseApp
         this.lastShownSeurData = tableWidget.data.body;
         this.lastSeurData = data;
 
-        console.log( 'tiktok', this.lastSeurData );
+        // console.log( 'tiktok', this.lastSeurData );
     }
 
     showStockList( ogData )
