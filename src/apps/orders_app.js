@@ -1,16 +1,19 @@
 import { LX } from 'lexgui';
+import { BaseApp } from './base_app.js';
 import { Constants, NumberFormatter } from '../constants.js';
 import * as Utils from '../utils.js';
 
-class OrdersApp
+class OrdersApp extends BaseApp
 {
     ordersBeforeDays = 7;
 
-    constructor( core )
+    constructor( core, tool )
     {
-        this.core = core;
-        this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        core.area.attach( this.area );
+        super( core, tool );
+
+        this.title = 'Web: <i>Pedidos</i>';
+        this.subtitle = '';
+        this.icon = 'WooCommerce';
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
@@ -237,17 +240,6 @@ class OrdersApp
         } );
 
         dom.appendChild( tableWidget.root );
-    }
-
-    open( params )
-    {
-        this.core.tool = 'orders';
-        this.core.setHeaderTitle( `Web: <i>Pedidos</i>`, '', 'WooCommerce' );
-        this.area.root.classList.toggle( 'hidden', false );
-    }
-
-    close()
-    {
     }
 
     clear()

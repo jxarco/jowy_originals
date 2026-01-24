@@ -1,14 +1,17 @@
 import { LX } from 'lexgui';
+import { BaseApp } from './base_app.js';
 
 const isFriday = new Date().getDay() === 5;
 
-class ChillApp
+class ChillApp extends BaseApp
 {
-    constructor( core )
+    constructor( core, tool )
     {
-        this.core = core;
-        this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        core.area.attach( this.area );
+        super( core, tool );
+
+        this.title = `Time to ${isFriday ? "be HAPPY, IT'S FRIDAAAY" : 'Chill'} :)`;
+        this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
+        this.icon = 'Panda';
 
         const panel = new LX.Panel( { height: 'h-full', className: 'relative bg-none border-none p-4 flex flex-col gap-2' } );
         this.area.attach( panel.root );
@@ -145,9 +148,7 @@ class ChillApp
 
     open( params )
     {
-        this.core.tool = 'chill';
-        this.core.setHeaderTitle( `Time to ${isFriday ? "be HAPPY, IT'S FRIDAAAY" : 'Chill'} :)`, '', 'Panda' );
-        this.area.root.classList.toggle( 'hidden', false );
+        super.open( params );
 
         if ( this.img )
         {
@@ -156,6 +157,8 @@ class ChillApp
 
             this.audio.play();
         }
+
+        return this.tool;
     }
 
     close()
@@ -165,10 +168,6 @@ class ChillApp
             this.audio.pause();
             this.audio.currentTime = 0;
         }
-    }
-
-    clear()
-    {
     }
 }
 

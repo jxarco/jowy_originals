@@ -1,4 +1,5 @@
 import { LX } from 'lexgui';
+import { BaseApp } from './base_app.js';
 import { NumberFormatter } from '../constants.js';
 import { Data } from '../data.js';
 
@@ -12,7 +13,7 @@ const TRANSPORT_NAMES = [ 'CBL', 'SEUR', 'SALVAT' ];
 let lastTotalPrice = [];
 // let lastTotalPackages = 0;
 
-class TransportCalculatorApp
+class TransportCalculatorApp extends BaseApp
 {
     // _sku = "Vacío";
     _sku = 'HG-AD12';
@@ -59,11 +60,13 @@ class TransportCalculatorApp
         this.updateTransports();
     }
 
-    constructor( core )
+    constructor( core, tool )
     {
-        this.core = core;
-        this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        core.area.attach( this.area );
+        super( core, tool );
+
+        this.title = 'Calculadora: <i>Transporte</i>';
+        this.subtitle = '';
+        this.icon = 'Calculator';
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: 'bg-none bg-card border-bottom p-2 flex flex-row gap-2' } );
@@ -602,21 +605,6 @@ class TransportCalculatorApp
             dialogPanel.attach( dialogArea.root );
             const [ left, right ] = dialogArea.split( { type: 'horizontal', sizes: [ '50%', '50%' ], resize: false } );
         }, { position: [ '10%', '250px' ], size: [ '80%', null ], closable: true, draggable: false } );
-    }
-
-    open( params )
-    {
-        this.core.tool = 't-calc';
-        this.core.setHeaderTitle( `Calculadora: <i>Transporte</i>`, '', 'Calculator' );
-        this.area.root.classList.toggle( 'hidden', false );
-    }
-
-    close()
-    {
-    }
-
-    clear()
-    {
     }
 }
 

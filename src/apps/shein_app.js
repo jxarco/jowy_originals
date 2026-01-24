@@ -1,4 +1,5 @@
 import { LX } from 'lexgui';
+import { BaseApp } from './base_app.js';
 import { Constants, NumberFormatter } from '../constants.js';
 import { Data } from '../data.js';
 import * as Utils from '../utils.js';
@@ -62,17 +63,16 @@ const TRACKING_DATA = [
     [ 'Delete', null, () => '' ]
 ];
 
-class SheinApp
+class SheinApp extends BaseApp
 {
-    constructor( core )
+    constructor( core, tool )
     {
+        super( core, tool );
+
         this.title = 'SHEIN';
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
         this.icon = 'Shein';
-        this.core = core;
-        this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        this.core.area.attach( this.area );
-
+        
         // Create utility buttons
         const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
         utilsPanel.sameLine();
@@ -1264,13 +1264,6 @@ class SheinApp
 
         const zip = await this.core.zipWorkbooks( folders );
         LX.downloadFile( 'ALBARANES.zip', zip );
-    }
-
-    open( params )
-    {
-        this.core.tool = this.title.toLowerCase();
-        this.core.setHeaderTitle( `${this.title}.`, this.subtitle, this.icon );
-        this.area.root.classList.toggle( 'hidden', false );
     }
 
     close()

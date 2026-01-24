@@ -8,8 +8,8 @@ import { SheinApp } from './apps/shein_app.js';
 import { TikTokApp } from './apps/tiktok_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import { LAL_SKU_MAPPINGS, PLATFORM_CLIENT_CODES, SKU_MAPPING } from './constants.js';
-import * as Utils from './utils.js';
 import { WooCommerceClient } from './woocomerce.js';
+import * as Utils from './utils.js';
 
 window.LX = LX;
 
@@ -31,6 +31,7 @@ class Company
 }
 
 const core = {
+    apps: {},
     transport: 'CBL', // Default transport
     transportOptions: [ 'CBL', 'SEUR' ], // , "GLS"];
     sheetName: '',
@@ -111,15 +112,15 @@ const core = {
         this.createHeaderHtml();
 
         // Content: create all apps
-        this.cblTrackingApp = new CblTrackingApp( this );
-        this.sheinApp = new SheinApp( this );
-        this.tikTokApp = new TikTokApp( this );
-        this.ordersApp = new OrdersApp( this );
-        this.transportCalculatorApp = new TransportCalculatorApp( this );
-        this.chillApp = new ChillApp( this );
+        this.cblTrackingApp = new CblTrackingApp( this, 'tracking-messages' );
+        this.ordersApp = new OrdersApp( this, 'orders' );
+        this.sheinApp = new SheinApp( this, 'shein' );
+        this.tikTokApp = new TikTokApp( this, 'tiktok' );
         this.decathlonApp = new MiraklApp( this, 'Decathlon' );
         // this.carrefourApp = new MiraklApp( this, 'Carrefour' );
-        this.manualApp = new ManualApp( this );
+        this.transportCalculatorApp = new TransportCalculatorApp( this, 't-calc' );
+        this.manualApp = new ManualApp( this, 'manual' );
+        this.chillApp = new ChillApp( this, 'chill' );
 
         // Footer
         this.createFooterHtml();
@@ -136,42 +137,7 @@ const core = {
         {
             // Start last tool
             const lastTool = localStorage.getItem( 'lastTool' ) ?? 'tracking-messages';
-            if ( lastTool === 'tracking-messages' )
-            {
-                this.openApp( this.cblTrackingApp );
-            }
-            else if ( lastTool.includes( 'shein' ) )
-            {
-                this.openApp( this.sheinApp );
-            }
-            else if ( lastTool.includes( 'orders' ) )
-            {
-                this.openApp( this.ordersApp );
-            }
-            else if ( lastTool.includes( 't-calc' ) )
-            {
-                this.openApp( this.transportCalculatorApp );
-            }
-            else if ( lastTool.includes( 'chill' ) )
-            {
-                this.openApp( this.chillApp );
-            }
-            else if ( lastTool.includes( 'manual' ) )
-            {
-                this.openApp( this.manualApp );
-            }
-            else if ( lastTool.includes( 'decathlon' ) )
-            {
-                this.openApp( this.decathlonApp );
-            }
-            else if ( lastTool.includes( 'tiktok' ) )
-            {
-                this.openApp( this.tikTokApp );
-            }
-            // else if ( lastTool.includes( 'carrefour' ) )
-            // {
-            //     this.openApp( this.carrefourApp );
-            // }
+            this.openApp( this.apps[lastTool] );
         }
 
         // LX.requestBinary( "listadoenvios.xlsx", (data) => {
@@ -363,17 +329,12 @@ const core = {
             this.currentApp.close();
         }
 
-        this.cblTrackingApp.area.root.classList.toggle( 'hidden', true );
-        this.sheinApp.area.root.classList.toggle( 'hidden', true );
-        this.ordersApp.area.root.classList.toggle( 'hidden', true );
-        this.transportCalculatorApp.area.root.classList.toggle( 'hidden', true );
-        this.decathlonApp.area.root.classList.toggle( 'hidden', true );
-        this.tikTokApp.area.root.classList.toggle( 'hidden', true );
-        this.chillApp.area.root.classList.toggle( 'hidden', true );
-        this.manualApp.area.root.classList.toggle( 'hidden', true );
-        // this.carrefourApp.area.root.classList.toggle( 'hidden', true );
+        for ( const key in this.apps )
+        {
+            this.apps[key].hide();
+        }
 
-        app.open( params );
+        this.tool = app.open( params );
 
         localStorage.setItem( 'lastTool', this.tool );
 

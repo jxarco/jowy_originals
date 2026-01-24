@@ -1,4 +1,5 @@
 import { LX } from 'lexgui';
+import { BaseApp } from './base_app.js';
 import { Constants, NumberFormatter } from '../constants.js';
 import { Data } from '../data.js';
 import { MiraklClient } from '../mirakl-api.js';
@@ -122,15 +123,17 @@ const VENDOR_TEMPLATES = {
     ]
 };
 
-class MiraklApp
+class MiraklApp extends BaseApp
 {
     constructor( core, vendorName )
     {
+        super( core, vendorName.toLowerCase() );
+
+        this.title = `${vendorName} <i>(Mirakl)</i>`;
+        this.subtitle = 'Gestión de pedidos a través de la API de Mirakl.';
+        this.icon = vendorName;
         this.mkClient = new MiraklClient();
         this.vendor = vendorName;
-        this.core = core;
-        this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        core.area.attach( this.area );
 
         const vendor_lc = vendorName.toLowerCase();
 
@@ -909,15 +912,11 @@ class MiraklApp
 
     open( params )
     {
-        this.core.tool = this.vendor.toLowerCase();
-        this.core.setHeaderTitle( `${this.vendor} <i>(Mirakl)</i>`, 'Gestión de pedidos a través de la API de Mirakl.', this.vendor );
-        this.area.root.classList.toggle( 'hidden', false );
+        super.open( params );
 
         this.clear();
-    }
 
-    close()
-    {
+        return this.tool;
     }
 
     clear()

@@ -1,4 +1,5 @@
 import { LX } from 'lexgui';
+import { BaseApp } from './base_app.js';
 import { Constants, NumberFormatter } from '../constants.js';
 import { Data } from '../data.js';
 
@@ -75,15 +76,15 @@ const TIKTOK_TRACKING_COLUMN_DATA = [
     [ 'ID de recibo', null, () => '' ]
 ];
 
-class TikTokApp
+class TikTokApp extends BaseApp
 {
-    constructor( core )
+    constructor( core, tool )
     {
+        super( core, tool );
+
+        this.title = 'TikTok';
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
         this.icon = 'TikTok';
-        this.core = core;
-        this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        core.area.attach( this.area );
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
@@ -209,7 +210,7 @@ class TikTokApp
             return lRow;
         } );
 
-        this.core.setHeaderTitle( `TikTok: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
+        this.core.setHeaderTitle( `${this.title}: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
 
         const tableWidget = new LX.Table( null, {
             head: TIKTOK_ORDERS_DATA.map( ( c ) => {
@@ -708,17 +709,6 @@ class TikTokApp
         }
 
         this.core.exportXLSXData( data, filename );
-    }
-
-    open( params )
-    {
-        this.core.tool = 'tiktok';
-        this.core.setHeaderTitle( `TikTok`, this.subtitle, this.icon );
-        this.area.root.classList.toggle( 'hidden', false );
-    }
-
-    close()
-    {
     }
 
     clear()

@@ -1,15 +1,18 @@
 import { LX } from 'lexgui';
+import { BaseApp } from './base_app.js';
 import { DocMaker } from 'lexgui/extensions/DocMaker.js';
 
 const collapsibleClass = 'bg-accent/30 hover:bg-accent/50! rounded-xl border-color cursor-pointer [&_svg]:w-5! [&_svg]:h-5!';
 
-class ManualApp
+class ManualApp extends BaseApp
 {
-    constructor( core )
+    constructor( core, tool )
     {
-        this.core = core;
-        this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        core.area.attach( this.area );
+        super( core, tool );
+
+        this.title = 'Manual de Uso de Operaciones';
+        this.subtitle = 'Guía detalladas de las acciones a realizar con la aplicación.';
+        this.icon = 'Info@solid';
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
 
@@ -233,21 +236,6 @@ class ManualApp
         docMaker.header( LX.makeIcon( 'Construction', { svgClass: 'mr-4 2xl inline-flex!' } ).innerHTML + 'Calculadora de transporte.', 'h1' );
 
         return area.root;
-    }
-
-    open( params )
-    {
-        this.core.tool = 'manual';
-        this.core.setHeaderTitle( `Manual de Uso de Operaciones`, 'Guía detalladas de las acciones a realizar con la aplicación.', 'Info@solid' );
-        this.area.root.classList.toggle( 'hidden', false );
-    }
-
-    close()
-    {
-    }
-
-    clear()
-    {
     }
 }
 

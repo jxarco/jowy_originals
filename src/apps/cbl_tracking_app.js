@@ -1,4 +1,5 @@
 import { LX } from 'lexgui';
+import { BaseApp } from './base_app.js';
 import { Constants, NumberFormatter } from '../constants.js';
 import * as Utils from '../utils.js';
 
@@ -6,13 +7,15 @@ const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.
 const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
 const glsTrackingUrl = `https://gls-group.com/ES/es/seguimiento-envio/`;
 
-class CblTrackingApp
+class CblTrackingApp extends BaseApp
 {
-    constructor( core )
+    constructor( core, tool )
     {
-        this.core = core;
-        this.area = new LX.Area( { skipAppend: true, className: 'hidden' } );
-        core.area.attach( this.area );
+        super( core, tool );
+
+        this.title = 'Gestión de pedidos <i>WEB</i>';
+        this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
+        this.icon = 'TextSearch';
 
         // Create utility buttons
         const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
@@ -1117,13 +1120,6 @@ class CblTrackingApp
         this.showList( 'bathby', false );
         this.showList( 'hxg', false );
         this.showList( 'jowy', false );
-    }
-
-    open( params )
-    {
-        this.core.tool = 'tracking-messages';
-        this.core.setHeaderTitle( 'Gestión de pedidos <i>WEB</i>', 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.', 'TextSearch' );
-        this.area.root.classList.toggle( 'hidden', false );
     }
 
     close()
