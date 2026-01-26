@@ -1,26 +1,29 @@
 import { LX } from 'lexgui';
 import { BaseApp } from './base_app.js';
-import { Constants, NumberFormatter } from '../constants.js';
+import { Constants } from '../constants.js';
 import { Data } from '../data.js';
 import { MiraklClient } from '../mirakl-api.js';
 import * as Utils from '../utils.js';
+
+const SKU_ATTR = 'offer_sku';
+const ORDER_ATTR = 'order_id';
 
 const VENDOR_TEMPLATES = {
     'DECATHLON_ORDERS_DATA': [
         [ 'preview', 'PREVIEW', ( row, i, url ) => {
             return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${i['product_medias'][1]['media_url']}">`;
         } ],
-        [ 'order_id', 'Número del pedido' ],
+        [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
         [ 'date', 'FECHA', ( r ) => {
             const d = new Date( r['created_date'] );
             return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
         } ],
-        [ 'ID del artículo', null, ( row, i ) => i['product_sku'] ],
-        [ 'offer_sku', 'SKU del vendedor', ( row, i ) => core.mapSku( i['offer_sku'] ) ],
+        [ BaseApp.ART_ID_ATTR, null, ( row, i ) => i['product_sku'] ],
+        [ SKU_ATTR, BaseApp.SKU_ATTR ],
         [ 'product_title', 'Nombre del producto' ],
         [ 'quantity', 'Cantidad' ],
         [ 'Bultos', null, ( row, i ) => {
-            const ogSku = core.mapSku( i['offer_sku'] );
+            const ogSku = i[SKU_ATTR];
             const q = core.getIndividualQuantityPerPack( ogSku, parseInt( i['quantity'] ) );
             const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
             const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
@@ -33,15 +36,14 @@ const VENDOR_TEMPLATES = {
             const str2 = customer?.lastname;
             return str1 + ( str2 ? ` ${str2}` : '' );
         } ],
-        [ 'País', null, ( row, i ) => {
-            const ctr = row.customer?.shipping_address?.country;
-            return core.countryFormat[ctr] ?? ctr;
+        [ BaseApp.PAIS_ATTR, null, ( row, i ) => {
+            return row.customer?.shipping_address?.country;
         } ],
         [ 'Provincia', null, ( row, i ) => '' ],
         [ 'Ciudad', null, ( row, i ) => {
             return row.customer?.shipping_address?.city;
         } ],
-        [ 'Código Postal', null, ( row, i ) => {
+        [ BaseApp.CP_ATTR, null, ( row, i ) => {
             return row.customer?.shipping_address?.zip_code;
         } ],
         [ 'Dirección', null, ( row, i ) => {
@@ -57,15 +59,14 @@ const VENDOR_TEMPLATES = {
     ],
 
     'DECATHLON_LABEL_DATA': [
-        [ 'order_id', 'Número del pedido' ],
+        [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
         [ 'Bultos', null, ( str, row, i ) => 1 ],
-        [ 'offer_sku', 'SKU del vendedor', ( str, row, i ) => core.mapSku( i['offer_sku'] ) ],
-        [ 'Código Postal', null, ( str, row ) => {
+        [ SKU_ATTR, BaseApp.SKU_ATTR ],
+        [ BaseApp.CP_ATTR, null, ( str, row ) => {
             return row.customer?.shipping_address?.zip_code;
         } ],
-        [ 'País', null, ( str, row ) => {
-            const ctr = row.customer?.shipping_address?.country;
-            return core.countryFormat[ctr] ?? ctr;
+        [ BaseApp.PAIS_ATTR, null, ( str, row ) => {
+            return row.customer?.shipping_address?.country;
         } ],
         [ 'Provincia', null, ( str, row ) => '' ],
         [ 'Ciudad', null, ( str, row ) => {
@@ -92,7 +93,7 @@ const VENDOR_TEMPLATES = {
 
     // (str, row, tracking_data, app)
     'DECATHLON_TRACKING_DATA': [
-        [ 'order_id', 'order-id' ],
+        [ ORDER_ATTR, 'order-id' ],
         [ 'carrier_code', 'carrier-code', () => 'SEUR (Spain)' ],
         [ 'carrier_standard_code', 'carrier-standard-code', () => '' ],
         [ 'carrier_name', 'carrier-name', () => 'SEUR' ],
@@ -116,7 +117,7 @@ const VENDOR_TEMPLATES = {
             }
             return tentry['LOCALIZADOR'];
         } ],
-        [ 'offer_sku', 'offer-sku', ( str ) => core.mapSku( str ) ],
+        [ SKU_ATTR, 'offer-sku' ],
         [ 'order_line_id', 'order-line-id' ],
         [ 'quantity' ]
     ]
@@ -137,59 +138,30 @@ class MiraklApp extends BaseApp
         const vendor_lc = vendorName.toLowerCase();
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
-        utilButtonsPanel.sameLine();
+        const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
+        utilsPanel.sameLine();
+        Utils.addUtilityButton( utilsPanel, 'ClearButton', 'Trash2', 'Limpiar datos anteriores', () => this.core.clearData() );
+        this.exportLabelsButton = Utils.addUtilityButton( utilsPanel, 'ExportLabelsButton', 'Download', 'Exportar Etiquetas', () => this.exportSEUR( false, this.lastOrdersData ), true );
+        this.exportTrackingsButton = Utils.addUtilityButton( utilsPanel, 'ExportTrackingsButton', 'FileDown', 'Exportar Seguimiento', () => this.exportSEURTrackings(), true );
+        Utils.addUtilityButton( utilsPanel, 'UpdateOrdersButton', 'RefreshCw', 'Actualizar pedidos', () => this.showOrders( vendor_lc ) );
 
-        utilButtonsPanel.addButton( null, 'ClearButton', () => core.clearData(), {
-            buttonClass: 'lg outline',
-            icon: 'Trash2',
-            title: 'Limpiar datos anteriores',
-            tooltip: true
-        } );
+        utilsPanel.endLine();
 
-        utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
-            buttonClass: 'lg outline',
-            icon: 'Download',
-            title: 'Exportar etiquetas',
-            tooltip: true
-        } );
-
-        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', () => this.exportSEURTrackings(), {
-            buttonClass: 'lg outline',
-            icon: 'FileDown',
-            title: 'Exportar Seguimiento',
-            tooltip: true
-        } );
-
-        utilButtonsPanel.addButton( null, 'UpdateOrdersButton', ( value, event ) => {
-            this.showOrders( vendor_lc );
-        }, { buttonClass: 'lg outline', icon: 'RefreshCw', title: 'Actualizar pedidos', tooltip: true } );
-
-        utilButtonsPanel.endLine();
-
-        this.area.attach( utilButtonsPanel.root );
+        this.area.attach( utilsPanel.root );
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
 
-        // Marketplace orders
-        {
-            const ordersContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-            tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( vendor_lc ) } );
+        // Orders
+        const ordersContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showOrders( vendor_lc ) } );
+        const ordersArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        ordersContainer.appendChild( ordersArea.root );
 
-            const ordersArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
-            ordersContainer.appendChild( ordersArea.root );
-            core.data[vendor_lc].domO = ordersContainer;
-        }
-
-        // Groups List
-        {
-            const groupsListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-            tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
-
-            const groupsListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
-            groupsListContainer.appendChild( groupsListArea.root );
-            this.groupsListArea = groupsListArea;
-        }
+        // Stock List
+        const stockListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'Listado Stock', stockListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
+        const stockListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        stockListContainer.appendChild( stockListArea.root );
 
         // Tracking info
         const trackingContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
@@ -197,15 +169,28 @@ class MiraklApp extends BaseApp
             trackingArea.root.innerHTML = '';
             trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
         } } );
-
         const trackingArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         trackingContainer.appendChild( trackingArea.root );
 
-        // Move up into the panel section
-        utilButtonsPanel.attach( tabs.root );
+        // Albaran/IVA/Etc List
+        // const albaranContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        // tabs.add( 'IVA/Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
+        //     albaranArea.root.innerHTML = '';
+        //     albaranArea.attach( this.core.createDropZone( this.area, this.showAlbaranRelatedInfo.bind( this ), 'listados de envíos' ) );
+        // } } );
+        // const albaranArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        // albaranContainer.appendChild( albaranArea.root );
 
+        // Move up into the panel section
+        utilsPanel.attach( tabs.root );
+
+        this.ordersArea = ordersArea;
+        this.stockListArea = stockListArea;
         this.trackingArea = trackingArea;
-        this._trackingSyncErrors = [];
+        // this.albaranArea = albaranArea;
+
+        this.countries = [ 'ESPAÑA' ];//, 'PORTUGAL', 'FRANCIA' ];
+        this.countryTransportCostPct['ESPAÑA'] = 0.303;
 
         this.clear();
     }
@@ -264,8 +249,8 @@ class MiraklApp extends BaseApp
         const core = this.core;
         const compData = core.data[compName];
         const { name, url } = compData;
-        const dom = compData.domO;
-        dom.innerHTML = '';
+ 
+        Utils.clearArea( this.ordersArea );
 
         // if ( clean )
         // {
@@ -298,10 +283,21 @@ class MiraklApp extends BaseApp
 
             // Create table data from the list
             r.orders.forEach( ( row ) => {
+
+                const ogCountry = row.customer?.shipping_address?.country;
+                row.customer.shipping_address.country = this.core.mapCountry( ogCountry );
+                const ogZipCode = row.customer?.shipping_address?.zip_code;
+                row.customer.shipping_address.zip_code = this.core.mapZipCode( ogZipCode );
+
                 const items = row['order_lines'];
 
                 for ( let item of items )
                 {
+                    // Map SKUs and Country once on load data
+                    const ogSku = item[SKU_ATTR];
+                    item[SKU_ATTR] = this.core.mapSku( ogSku );
+                    if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${row[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
+
                     const lRow = [];
 
                     for ( let c of columnData )
@@ -331,6 +327,8 @@ class MiraklApp extends BaseApp
             } );
 
             dialog.destroy();
+
+            Utils.toggleButtonDisabled( this.exportLabelsButton, false );
         }
         else
         {
@@ -368,45 +366,37 @@ class MiraklApp extends BaseApp
             hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', 'Código Postal', 'Número de Teléfono', 'Correo electrónico de usuario' ]
         } );
 
-        dom.appendChild( tableWidget.root );
+        this.ordersArea.attach( tableWidget );
 
-        this.lastSeurData = r.orders;
-        this.lastSeurColumnData = tableWidget.data.head;
-        this.lastShownSeurData = tableWidget.data.body;
+        this.lastOrdersData = r.orders;
     }
 
     showStockList( ogData )
     {
-        ogData = ogData ?? this.lastSeurData;
+        ogData = ogData ?? this.lastOrdersData;
 
         let data = LX.deepCopy( ogData );
 
-        const dom = this.groupsListArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
+        Utils.clearArea( this.stockListArea );
 
         let columnData = [
-            [ 'SKU del vendedor', null, ( row, i ) => {
-                return this.core.mapSku( i['offer_sku'] );
+            [ BaseApp.SKU_ATTR, null, ( row, i ) => {
+                return i[SKU_ATTR];
             } ],
             [ 'Cantidad', null, ( row, i ) => {
                 return i['quantity'];
             } ],
             [ 'Transporte', null, ( r, i ) => {
-                const sku = this.core.mapSku( i['offer_sku'] );
-                return this.core.getTransportForItem( sku, i['quantity'] );
+                return this.core.getTransportForItem( i[SKU_ATTR], i['quantity'] );
             } ],
             [ 'Plataforma', null, () => this.vendor.toUpperCase() ],
             [ 'País', null, ( row, i ) => {
-                const ctr = row.customer?.shipping_address?.country;
-                return core.countryFormat[ctr] ?? ctr;
+                return row.customer?.shipping_address?.country;
             } ],
             [ 'Observaciones', null, ( row, i ) => {
                 return i['quantity'] > 1 ? 'Mismo pedido' : '';
             } ],
-            [ 'order_id', 'Número del pedido' ]
+            [ ORDER_ATTR, BaseApp.ORDER_ATTR ]
         ];
 
         const uid = columnData[6][0];
@@ -544,7 +534,7 @@ class MiraklApp extends BaseApp
                     icon: 'Copy',
                     name: 'Copiar',
                     callback: ( colData ) => {
-                        if ( !this.lastShownSeurData )
+                        if ( !colData?.length )
                         {
                             return;
                         }
@@ -565,21 +555,14 @@ class MiraklApp extends BaseApp
             ]
         } );
 
-        this.lastSeurColumnData = tableWidget.data.head;
-        this.lastShownSeurData = tableWidget.data.body;
-
-        dom.appendChild( tableWidget.root );
+        this.stockListArea.attach( tableWidget );
     }
 
     showTrackingList( trackingData )
     {
-        const data = this.lastSeurData;
+        const data = this.lastOrdersData;
 
-        const dom = this.trackingArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
+        Utils.clearArea( this.trackingArea );
 
         this._trackingSyncErrors = [];
 
@@ -598,7 +581,7 @@ class MiraklApp extends BaseApp
 
             const item = items[0];
             // discard single item orders sent with CBL
-            const transport = this.core.getTransportForItem( item['offer_sku'], item['quantity'] );
+            const transport = this.core.getTransportForItem( item[SKU_ATTR], item['quantity'] );
             if ( transport === 'CBL' ) return;
 
             const lRow = [];
@@ -632,20 +615,23 @@ class MiraklApp extends BaseApp
             sortable: false,
             toggleColumns: true,
             centered: true,
-            filter: 'Tracking Number'
+            filter: 'Tracking Number',
+            hiddenColumns: [ 'carrier-standard-code' ]
         } );
 
-        dom.appendChild( tableWidget.root );
+        this.trackingArea.attach( tableWidget );
 
         this.lastSeurTrackingsColumnData = tableWidget.data.head;
         this.lastShownSeurTrackingsData = tableWidget.data.body;
+
+        Utils.toggleButtonDisabled( this.exportTrackingsButton, false );
     }
 
     exportSEUR( ignoreErrors = false, ordersData )
     {
         let columnData = VENDOR_TEMPLATES[this.vendor.toUpperCase() + '_LABEL_DATA'];
 
-        const currentOrdersData = ordersData ?? this.lastSeurData;
+        const currentOrdersData = ordersData ?? this.lastOrdersData;
 
         if ( !currentOrdersData || !currentOrdersData?.length )
         {
@@ -936,6 +922,12 @@ class MiraklApp extends BaseApp
     clear()
     {
         this.showOrders( this.vendor.toLowerCase(), true );
+        this.showStockList( [] );
+        this.showTrackingList( [] );
+        // this.showAlbaranRelatedInfo( [], 0 );
+
+        Utils.toggleButtonDisabled( this.exportLabelsButton, true );
+        Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
     }
 }
 

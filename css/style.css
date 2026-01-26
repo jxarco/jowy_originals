@@ -74,7 +74,7 @@
 
 .lextable th,
 .lextable td {
-    max-width: 350px;
+    max-width: 400px;
     text-overflow: ellipsis;
 }
 

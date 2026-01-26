@@ -140,8 +140,8 @@ class TikTokApp extends BaseApp
 
         this.ordersArea = ordersArea;
         this.stockListArea = stockListArea;
-        this.albaranArea = albaranArea;
         this.trackingArea = trackingArea;
+        this.albaranArea = albaranArea;
 
         this.countries = [ 'ESPAÑA' ];//, 'PORTUGAL', 'FRANCIA' ];
         this.countryTransportCostPct['ESPAÑA'] = 0.303;
@@ -350,7 +350,7 @@ class TikTokApp extends BaseApp
                     icon: 'Copy',
                     name: 'Copiar',
                     callback: ( colData ) => {
-                        if ( !this.lastShownSeurData )
+                        if ( !colData?.length )
                         {
                             return;
                         }

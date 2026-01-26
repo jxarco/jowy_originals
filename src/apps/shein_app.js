@@ -124,8 +124,8 @@ class SheinApp extends BaseApp
 
         this.ordersArea = ordersArea;
         this.stockListArea = stockListArea;
-        this.albaranArea = albaranArea;
         this.trackingArea = trackingArea;
+        this.albaranArea = albaranArea;
 
         this.countries = [ 'ESPAÑA', 'PORTUGAL' ];
         this.countryTransportCostPct['ESPAÑA'] = 0.303;

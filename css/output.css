@@ -209,6 +209,9 @@
   .relative {
     position: relative;
   }
+  .static {
+    position: static;
+  }
   .top-0 {
     top: calc(var(--spacing) * 0);
   }
@@ -677,7 +680,7 @@
   filter: brightness(1.5);
 }
 .lextable th, .lextable td {
-  max-width: 350px;
+  max-width: 400px;
   text-overflow: ellipsis;
 }
 .lextable table {

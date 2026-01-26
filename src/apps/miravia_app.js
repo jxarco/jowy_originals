@@ -298,9 +298,6 @@ class MiraviaApp extends BaseApp
             ]
         } );
 
-        this.lastSeurColumnData = tableWidget.data.head;
-        this.lastShownSeurData = tableWidget.data.body;
-
         this.stockListArea.attach( tableWidget );
     }
 
