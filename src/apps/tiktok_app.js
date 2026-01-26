@@ -51,7 +51,8 @@ const LABEL_DATA = [
     [ 'Street Name', 'Dirección' ],
     [ CLIENT_NAME_ATTR, 'Nombre de usuario completo' ],
     [ 'Phone #', 'Número de Teléfono' ],
-    [ 'Email', 'Correo electrónico de usuario' ]
+    [ 'Email', 'Correo electrónico de usuario' ],
+    [ 'Quantity' ] // THIS ONE HAS TO BE DELETED
 ];
 
 // (str, row, tracking_data, app)
@@ -588,10 +589,10 @@ class TikTokApp extends BaseApp
         }
 
         const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
+        const skuIdx = data.indexOf( BaseApp.SKU_ATTR );
 
         for ( const repeats of multipleItemsOrderNames )
         {
-            const skuIdx = data.indexOf( 'SKU del vendedor' );
             const finalIndex = repeats[0];
             const finalRow = rows[finalIndex];
             const finalQuantity = finalRow['Quantity'];
@@ -606,7 +607,24 @@ class TikTokApp extends BaseApp
             finalRow[skuIdx] += trail;
         }
 
-        rows = rows.filter( ( r ) => r !== undefined );
+        // Remove tmp quantity from col data
+        data = data.slice( 0, -1 );
+
+        rows = rows
+            .filter( ( r ) => r !== undefined )
+            .map( ( r ) => {
+                const q = r.at( -1 );
+                if ( q > 1 )
+                {
+                    r[skuIdx] += ` x ${q}`;
+                }
+                return r.slice( 0, -1 );
+            } )
+            .sort( ( a, b ) => {
+                const sku_a = a[skuIdx];
+                const sku_b = b[skuIdx];
+                return sku_a.localeCompare( sku_b );
+            } );
 
         this.core.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
     }

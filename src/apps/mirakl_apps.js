@@ -87,8 +87,7 @@ const VENDOR_TEMPLATES = {
             return row.customer?.shipping_address?.phone;
         } ],
         [ 'Correo electrónico de usuario', null, ( str, row ) => '' ],
-        // THIS ONE HAS TO BE DELETED
-        [ 'quantity' ]
+        [ 'quantity' ] // THIS ONE HAS TO BE DELETED
     ],
 
     // (str, row, tracking_data, app)
@@ -337,12 +336,6 @@ class MiraklApp extends BaseApp
         {
             r = { orders: [] };
         }
-
-        // [ 'date', 'FECHA', ( r ) => {
-        //     const d = new Date( r['created_date'] );
-        //     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-        // } ],
-        // [ 'quantity', 'UNIDADES' ],
 
         const date = new Date();
         const todayStringDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
