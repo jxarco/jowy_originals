@@ -2,28 +2,37 @@ import { LX } from 'lexgui';
 import { BaseApp } from './base_app.js';
 import { Constants, NumberFormatter } from '../constants.js';
 import { Data } from '../data.js';
+import * as Utils from '../utils.js';
 
-const TIKTOK_ORDERS_DATA = [
-    [ 'Order ID', 'Número del pedido' ],
-    [ 'SKU ID', 'ID del artículo' ],
-    [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.mapSku( str ) ],
-    [ 'Product Name', 'Nombre del producto', ( str, row ) => {
+const SKU_ATTR = 'Seller SKU';
+const ORDER_ATTR = 'Order ID';
+const ART_ID_ATTR = 'SKU ID';
+const ART_NAME_ATTR = 'Product Name';
+const CLIENT_NAME_ATTR = 'Recipient';
+const PAIS_ATTR = 'Country';
+const CP_ATTR = 'Zipcode';
+const PVP_ATTR = 'SKU Unit Original Price';
+const ORDER_DATE_ATTR = 'Created Time';
+
+const ORDERS_DATA = [
+    [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
+    [ ART_ID_ATTR, BaseApp.ART_ID_ATTR ],
+    [ SKU_ATTR, BaseApp.SKU_ATTR ],
+    [ ART_NAME_ATTR, BaseApp.ART_NAME_ATTR, ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
     } ],
     [ 'Quantity', 'Cantidad' ],
     [ 'Bultos', null, ( str, row ) => {
-        const ogSku = core.mapSku( row['Seller SKU'] );
+        const ogSku = row[SKU_ATTR];
         const q = core.getIndividualQuantityPerPack( ogSku, parseInt( row['Quantity'] ) );
         const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
         const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
         if ( udsPerPackage === undefined ) return 'SKU no encontrado';
         return Math.ceil( q / udsPerPackage );
     } ],
-    [ 'Recipient', 'Nombre de usuario completo' ],
-    [ 'Zipcode', 'Código Postal', ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-    [ 'Country', 'País', ( str, row ) => {
-        return core.countryFormat[str] ?? str;
-    } ],
+    [ CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR ],
+    [ CP_ATTR, BaseApp.CP_ATTR ],
+    [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
     [ 'Province', 'Provincia' ],
     [ 'City', 'Ciudad' ],
     [ 'Street Name', 'Dirección' ],
@@ -31,25 +40,23 @@ const TIKTOK_ORDERS_DATA = [
     [ 'Email', 'Correo electrónico de usuario' ]
 ];
 
-const TIKTOK_LABEL_DATA = [
-    [ 'Order ID', 'Número del pedido' ],
+const LABEL_DATA = [
+    [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
     [ 'Bultos', null, ( str, row ) => 1 ],
-    [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => core.mapSku( str ) ],
-    [ 'Zipcode', 'Código Postal', ( str ) => str.replaceAll( /[ -]/g, '' ) ],
-    [ 'Country', 'País', ( str, row ) => {
-        return core.countryFormat[str] ?? str;
-    } ],
+    [ SKU_ATTR, BaseApp.SKU_ATTR ],
+    [ CP_ATTR, BaseApp.CP_ATTR ],
+    [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
     [ 'Province', 'Provincia' ],
     [ 'City', 'Ciudad' ],
     [ 'Street Name', 'Dirección' ],
-    [ 'Recipient', 'Nombre de usuario completo' ],
+    [ CLIENT_NAME_ATTR, 'Nombre de usuario completo' ],
     [ 'Phone #', 'Número de Teléfono' ],
     [ 'Email', 'Correo electrónico de usuario' ]
 ];
 
 // (str, row, tracking_data, app)
-const TIKTOK_TRACKING_COLUMN_DATA = [
-    [ 'Order ID', 'ID de pedido' ],
+const TRACKING_DATA = [
+    [ ORDER_ATTR, 'ID de pedido' ],
     [ 'Nombre del almacén', null, () => '' ],
     [ 'Destino', null, () => '' ],
     [ 'ID de SKU', null, () => '' ],
@@ -58,11 +65,11 @@ const TIKTOK_TRACKING_COLUMN_DATA = [
     [ 'Cantidad', null, () => '' ],
     [ 'Nombre del transportista', null, () => 'Seur' ],
     [ 'ID de seguimiento', null, ( str, row, tdata, app ) => {
-        const name = row['Recipient'].toUpperCase();
+        const name = row[CLIENT_NAME_ATTR].toUpperCase();
         const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
         if ( !tentry )
         {
-            app._trackingSyncErrors.push( { name, uid: `${row['Order ID']}` } );
+            app._trackingSyncErrors.push( { name, uid: `${row[ORDER_ATTR]}` } );
             const status = core.trackStatusColors['Incidencia'];
             let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
             return `${
@@ -87,44 +94,27 @@ class TikTokApp extends BaseApp
         this.icon = 'TikTok';
 
         // Create utility buttons
-        const utilButtonsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
-        utilButtonsPanel.sameLine();
-        utilButtonsPanel.addButton( null, 'ClearButton', core.clearData.bind( core ), {
-            buttonClass: 'lg outline',
-            icon: 'Trash2',
-            title: 'Limpiar datos anteriores',
-            tooltip: true
-        } );
-        utilButtonsPanel.addButton( null, 'ExportButton', this.exportSEUR.bind( this, false, this.lastSeurData ), {
-            buttonClass: 'lg outline',
-            icon: 'Download',
-            title: 'Exportar Etiquetas',
-            tooltip: true
-        } );
-        utilButtonsPanel.addButton( null, 'ImportTrackingsButton', () => this.exportSEURTrackings(), {
-            buttonClass: 'lg outline',
-            icon: 'FileDown',
-            title: 'Exportar Seguimiento',
-            tooltip: true
-        } );
-        utilButtonsPanel.endLine();
-        this.area.attach( utilButtonsPanel.root );
+        const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
+        utilsPanel.sameLine();
+        Utils.addUtilityButton( utilsPanel, 'ClearButton', 'Trash2', 'Limpiar datos anteriores', () => this.core.clearData() );
+        this.exportLabelsButton = Utils.addUtilityButton( utilsPanel, 'ExportLabelsButton', 'Download', 'Exportar Etiquetas', () => this.exportSEUR( false, this.lastOrdersData ), true );
+        this.exportTrackingsButton = Utils.addUtilityButton( utilsPanel, 'ExportTrackingsButton', 'FileDown', 'Exportar Seguimiento', () => this.exportSEURTrackings(), true );
+        utilsPanel.endLine();
+        this.area.attach( utilsPanel.root );
 
         const tabs = this.area.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-2 pt-0' } );
 
-        // SEUR
-        const seurContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-        tabs.add( 'Pedidos', seurContainer, { selected: true, onSelect: ( event, name ) => this.showTiktokList() } );
+        // Orders
+        const ordersContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'Pedidos', ordersContainer, { selected: true, onSelect: ( event, name ) => this.showOrdersList() } );
+        const ordersArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        ordersContainer.appendChild( ordersArea.root );
 
-        const seurArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
-        seurContainer.appendChild( seurArea.root );
-
-        // Groups List
-        const groupsListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
-        tabs.add( 'Listado Stock', groupsListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
-
-        const groupsListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
-        groupsListContainer.appendChild( groupsListArea.root );
+        // Stock List
+        const stockListContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'Listado Stock', stockListContainer, { xselected: true, onSelect: ( event, name ) => this.showStockList() } );
+        const stockListArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        stockListContainer.appendChild( stockListArea.root );
 
         // Tracking info
         const trackingContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
@@ -132,24 +122,37 @@ class TikTokApp extends BaseApp
             trackingArea.root.innerHTML = '';
             trackingArea.attach( this.core.createDropZone( this.area, this.showTrackingList.bind( this ), 'un listado de trackings' ) );
         } } );
-
         const trackingArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         trackingContainer.appendChild( trackingArea.root );
 
-        // Move up into the panel section
-        utilButtonsPanel.attach( tabs.root );
+        // Albaran/IVA/Etc List
+        const albaranContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
+        tabs.add( 'IVA/Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
+            albaranArea.root.innerHTML = '';
+            albaranArea.attach( this.core.createDropZone( this.area, this.showAlbaranRelatedInfo.bind( this ), 'listados de envíos' ) );
+        } } );
+        const albaranArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
+        albaranContainer.appendChild( albaranArea.root );
 
-        this.seurDataArea = seurArea;
-        this.groupsListArea = groupsListArea;
+        // Move up into the panel section
+        utilsPanel.attach( tabs.root );
+
+        this.ordersArea = ordersArea;
+        this.stockListArea = stockListArea;
+        this.albaranArea = albaranArea;
         this.trackingArea = trackingArea;
-        this._trackingSyncErrors = [];
+
+        this.countries = [ 'ESPAÑA', 'PORTUGAL', 'FRANCIA' ];
 
         this.clear();
     }
 
     openData( fileData )
     {
-        fileData = fileData ?? this.lastSeurData;
+        if ( !fileData )
+        {
+            return;
+        }
 
         // TikTok contains header descriptions in the first row
         fileData = fileData.slice( 1 );
@@ -159,118 +162,65 @@ class TikTokApp extends BaseApp
             return;
         }
 
-        this.showTiktokList( fileData );
-        this.showStockList( fileData );
-    }
+        // Map SKUs and Country once on load data
+        fileData.forEach( ( r ) => {
+            const ogSku = r[SKU_ATTR];
+            r[SKU_ATTR] = this.core.mapSku( ogSku );
+            if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
+            const ogCountry = r[PAIS_ATTR];
+            r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
+            // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
+            const ogZipCode = r[CP_ATTR];
+            r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
+            // if( ogZipCode !== r[CP_ATTR] ) console.warn( `Zip Code mapped from ${ogZipCode} to ${r[CP_ATTR]}` );
+            r['Phone #'] = r['Phone #'].replace( /[()]/g, '' );
+        } );
 
-    showTiktokList( data, clean = false )
-    {
-        data = data ?? this.lastSeurData;
-
-        this.vendor = 'TikTok';
-
-        const dom = this.seurDataArea.root;
-        while ( dom.children.length > 0 )
+        // Sort by ref once
         {
-            dom.removeChild( dom.children[0] );
-        }
-
-        if ( clean )
-        {
-            return;
-        }
-
-        // Sort by ref
-        {
-            data = data.sort( ( a, b ) => {
-                const sku_a = this.core.mapSku( a['Seller SKU'] ) ?? '?';
-                const sku_b = this.core.mapSku( b['Seller SKU'] ) ?? '?';
+            fileData = fileData.sort( ( a, b ) => {
+                const sku_a = a[SKU_ATTR] ?? '?';
+                const sku_b = b[SKU_ATTR] ?? '?';
                 return sku_a.localeCompare( sku_b );
             } );
         }
 
-        // Create table data from the list
-        const tableData = data.map( ( row ) => {
-            const lRow = [];
-            for ( let c of TIKTOK_ORDERS_DATA )
-            {
-                const ogColName = c[0];
-                if ( ogColName.includes( '+' ) )
-                {
-                    const tks = ogColName.split( '+' );
-                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                }
-                else
-                {
-                    const fn = c[2] ?? ( ( str ) => str );
-                    const val = fn( row[ogColName] ?? '?', row );
-                    lRow.push( val );
-                }
-            }
-            return lRow;
-        } );
+        console.log(fileData)
 
-        this.core.setHeaderTitle( `${this.title}: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
+        this.showOrdersList( fileData );
+        this.showStockList( fileData );
 
-        const tableWidget = new LX.Table( null, {
-            head: TIKTOK_ORDERS_DATA.map( ( c ) => {
-                return c[1] ?? c[0];
-            } ),
-            body: tableData
-        }, {
-            selectable: true,
-            sortable: false,
-            toggleColumns: true,
-            filter: 'SKU del vendedor',
-            centered: [ 'Cantidad' ],
-            hiddenColumns: [ 'ID del artículo', 'Provincia', 'Dirección', 'Código Postal', 'Número de Teléfono', 'Correo electrónico de usuario' ]
-        } );
+        Utils.toggleButtonDisabled( this.exportLabelsButton, false );
+    }
 
-        dom.appendChild( tableWidget.root );
+    showOrdersList( data )
+    {
+        data = data ?? this.lastOrdersData;
+        
+        Utils.clearArea( this.ordersArea );
 
-        this.lastSeurColumnData = tableWidget.data.head;
-        this.lastShownSeurData = tableWidget.data.body;
-        this.lastSeurData = data;
-
-        // console.log( 'tiktok', this.lastSeurData );
+        const tableWidget = this.getOrdersListTable( data, ORDERS_DATA );
+        this.ordersArea.attach( tableWidget );
     }
 
     showStockList( ogData )
     {
-        ogData = ogData ?? this.lastSeurData;
+        ogData = ogData ?? this.lastOrdersData;
 
         let data = LX.deepCopy( ogData );
 
-        const dom = this.groupsListArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
-
-        // Sort by ref
-        {
-            data = data.sort( ( a, b ) => {
-                const sku_a = this.core.mapSku( a['SKU del vendedor'] ) ?? '?';
-                const sku_b = this.core.mapSku( b['SKU del vendedor'] ) ?? '?';
-                return sku_a.localeCompare( sku_b );
-            } );
-        }
+        Utils.clearArea( this.stockListArea );
 
         let columnData = [
-            [ 'Seller SKU', 'SKU del vendedor', ( str, row ) => {
-                return core.mapSku( str );
-            } ],
+            [ SKU_ATTR, BaseApp.SKU_ATTR ],
             [ 'Unidades', null, ( str, row ) => parseInt( row['Quantity'] ) ],
             [ 'Transporte', null, ( str, row ) => {
-                const sku = this.core.mapSku( row['Seller SKU'] );
-                return core.getTransportForItem( row['Seller SKU'], parseInt( row['Quantity'] ) );
+                return core.getTransportForItem( row[SKU_ATTR], parseInt( row['Quantity'] ) );
             } ],
             [ 'Plataforma', null, () => 'TIKTOK' ],
-            [ 'Country', 'País', ( str, row ) => {
-                return core.countryFormat[str] ?? str;
-            } ],
+            [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
             [ 'Observaciones', null ],
-            [ 'Order ID', 'Número del pedido' ]
+            [ ORDER_ATTR, BaseApp.ORDER_ATTR ]
         ];
 
         const uid = columnData[6][0];
@@ -304,7 +254,12 @@ class TikTokApp extends BaseApp
             return lRow;
         } );
 
+        // Remove unnecessary 'NUMERO PEDIDO', used only to combine
+        columnData = columnData.slice( 0, -1 );
+        const headData = columnData.map( ( c ) => c[1] ?? c[0] );
+
         const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
+        const skuIdx = headData.indexOf( BaseApp.SKU_ATTR );
 
         for ( const repeats of multipleItemsOrderNames )
         {
@@ -319,22 +274,19 @@ class TikTokApp extends BaseApp
             rest.forEach( ( r ) => {
                 tableData[r] = undefined;
             } );
-            finalRow[0] += trail; // Add REF trail
-            finalRow[0] = `<span title="${finalRow[0]}">${finalRow[0]}</span>`;
+            finalRow[skuIdx] += trail; // Add REF trail
+            finalRow[skuIdx] = `<span title="${finalRow[skuIdx]}">${finalRow[skuIdx]}</span>`;
             finalRow[1] = 1; // Set always 1 UNIT for multiple item orders
             finalRow[5] = 'Mismo pedido'; // Add NOTES
         }
-
-        tableData = tableData.filter( ( r ) => r !== undefined );
-
-        // Remove unnecessary
-        columnData.splice( 6, 1 );
 
         const listSKU = [];
         const skus = {};
 
         for ( let row of tableData )
         {
+            if ( row === undefined ) continue;
+
             // if sku starts with "JW-T60", never combine with others, so we must
             // add a unique identifier in the sku
             let sku = `${row[0]}_${row[4]}`; // SKU _ País
@@ -371,7 +323,7 @@ class TikTokApp extends BaseApp
         // do it by individual units, not in item combined orders
         for ( let row of listSKU )
         {
-            const sku = row[0];
+            const sku = row[skuIdx];
 
             if ( sku.includes( '+' ) )
             {
@@ -388,7 +340,6 @@ class TikTokApp extends BaseApp
             body: listSKU
         }, {
             selectable: false,
-            sortable: false,
             sortColumns: false,
             toggleColumns: false,
             centered: true,
@@ -411,35 +362,28 @@ class TikTokApp extends BaseApp
                     }
                 }
             ],
-            filter: 'SKU del vendedor',
+            filter: SKU_ATTR,
             customFilters: [
                 { name: 'Transporte', options: [ 'CBL', 'SEUR' ] },
-                { name: 'País', options: [ 'ESPAÑA', 'FRANCIA', 'PORTUGAL' ] }
+                { name: BaseApp.PAIS_ATTR, options: this.countries }
             ]
         } );
 
-        this.lastSeurColumnData = tableWidget.data.head;
-        this.lastShownSeurData = tableWidget.data.body;
-
-        dom.appendChild( tableWidget.root );
+        this.stockListArea.attach( tableWidget );
     }
 
     showTrackingList( trackingData )
     {
-        const data = this.lastSeurData;
+        const data = this.lastOrdersData;
 
-        const dom = this.trackingArea.root;
-        while ( dom.children.length > 0 )
-        {
-            dom.removeChild( dom.children[0] );
-        }
+        Utils.clearArea( this.trackingArea );
 
         this._trackingSyncErrors = [];
 
         // Create table data from the list
         const tableData = data.map( ( row ) => {
             const lRow = [];
-            for ( let c of TIKTOK_TRACKING_COLUMN_DATA )
+            for ( let c of TRACKING_DATA )
             {
                 const ogColName = c[0];
                 if ( ogColName.includes( '+' ) )
@@ -458,29 +402,29 @@ class TikTokApp extends BaseApp
         } );
 
         const tableWidget = new LX.Table( null, {
-            head: TIKTOK_TRACKING_COLUMN_DATA.map( ( c ) => {
-                return c[1] ?? c[0];
-            } ),
+            head: TRACKING_DATA.map( ( c ) => c[1] ?? c[0] ),
             body: tableData
         }, {
             selectable: true,
-            sortable: false,
             toggleColumns: true,
             centered: true,
-            filter: 'Tracking Number'
+            filter: 'Tracking Number',
+            hiddenColumns: [ 'Nombre del almacén', 'Destino', 'Cantidad', 'Variantes', 'ID de SKU', 'Nombre de producto', 'ID de recibo' ]
         } );
-
-        dom.appendChild( tableWidget.root );
 
         this.lastSeurTrackingsColumnData = tableWidget.data.head;
         this.lastShownSeurTrackingsData = tableWidget.data.body;
+
+        this.trackingArea.attach( tableWidget );
+        
+        Utils.toggleButtonDisabled( this.exportTrackingsButton, false );
     }
 
     exportSEUR( ignoreErrors = false, tiktokData )
     {
-        let columnData = TIKTOK_LABEL_DATA;
+        let columnData = LABEL_DATA;
 
-        const currentTiktokData = tiktokData ?? this.lastSeurData;
+        const currentTiktokData = tiktokData ?? this.lastOrdersData;
         const uid = columnData[0][0];
 
         // Process the xlsx first to detect empty fields
@@ -583,7 +527,7 @@ class TikTokApp extends BaseApp
 
         let rows = currentTiktokData.map( ( row, index ) => {
             // discard orders sent with CBL
-            const sku = this.core.mapSku( row['Seller SKU'] );
+            const sku = row[SKU_ATTR];
             const transport = this.core.getTransportForItem( sku, row['Quantity'] );
             if ( transport === 'CBL' ) return;
 
@@ -712,10 +656,615 @@ class TikTokApp extends BaseApp
         this.core.exportXLSXData( data, filename );
     }
 
+    showAlbaranRelatedInfo( data )
+    {
+        Utils.clearArea( this.albaranArea );
+
+        // TikTok contains header descriptions in the first row
+        data = data.slice( 1 );
+
+        data = data ?? this.lastOrdersData;
+
+        console.log(data)
+
+        // Map SKUs and Country once on load data
+        data.forEach( ( r ) => {
+            const ogSku = r[SKU_ATTR];
+            r[SKU_ATTR] = this.core.mapSku( ogSku );
+            if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
+            const ogCountry = r[PAIS_ATTR];
+            r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
+            // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
+            const ogZipCode = r[CP_ATTR];
+            r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
+            // if( ogZipCode !== r[CP_ATTR] ) console.warn( `Zip Code mapped from ${ogZipCode} to ${r[CP_ATTR]}` );
+            const ogPvp = r[PVP_ATTR];
+            r[PVP_ATTR] = ogPvp.replace( 'EUR', '' ).replace( ',', '.' ).trim();
+        } );
+
+        // Sort by ref once
+        {
+            data = data.sort( ( a, b ) => {
+                const sku_a = a[SKU_ATTR] ?? '?';
+                const sku_b = b[SKU_ATTR] ?? '?';
+                return sku_a.localeCompare( sku_b );
+            } );
+        }
+
+        const totalIncome = this.countries.reduce( ( o, c ) => {
+            o[c] = LX.round( data.reduce( ( acc, row ) => {
+                if ( row[PAIS_ATTR] !== c ) return acc;
+                return acc + parseFloat( row[PVP_ATTR] );
+            }, 0 ) );
+            return o;
+        }, {} );
+
+        // console.log(data);
+
+        const tmpArea = new LX.Area( { className: 'w-full h-full p-0 m-0', skipAppend: true } );
+        this.albaranArea.attach( tmpArea );
+
+        // Create utility buttons
+        const subUtilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
+        subUtilsPanel.sameLine();
+        Utils.addUtilityButton( subUtilsPanel, 'ExportIVAButton', 'Euro', 'Exportar IVA', () => this.exportIVA() );
+        Utils.addUtilityButton( subUtilsPanel, 'ExportAlbaranesButton', 'FileArchive', 'Exportar Albaranes', () => this.exportAlbaranes() );
+        const exportOptionsButton = Utils.addUtilityButton( subUtilsPanel, 'ExportOptionsButton', 'EllipsisVertical', 'Más opciones', () => {
+            LX.addDropdownMenu( exportOptionsButton.root, [
+                {
+                    name: 'Exportar LAL',
+                    icon: 'List',
+                    submenu: this.countries.map( ( c ) => {
+                        return { name: c, callback: () => this.exportLAL( c ) };
+                    } )
+                },
+                null,
+                {
+                    name: 'Exportar ALB',
+                    icon: 'File',
+                    submenu: this.countries.map( ( c ) => {
+                        return { name: c, callback: () => this.exportALB( c ) };
+                    } )
+                }
+            ], { side: 'bottom', align: 'start' } );
+        } );
+        subUtilsPanel.endLine();
+        tmpArea.attach( subUtilsPanel.root );
+
+        const selectedTab = this.fiscalTabs?.selected;
+
+        this.fiscalTabs = tmpArea.addTabs( { parentClass: 'p-4', sizes: [ 'auto', 'auto' ], contentClass: 'p-0' } );
+        subUtilsPanel.attach( this.fiscalTabs.root ); // Move up into the panel section
+
+        const weekN = Utils.getWeekNumber( Utils.convertDateDMYtoMDY( this.currentDate ) );
+        const currentYear = this.currentDate.split( '/' )[2];
+
+        const getPriceWithoutIVA = ( row ) => {
+            let country = row[PAIS_ATTR];
+            const iva = core.countryIVA[country];
+            if ( !iva ) LX.toast( 'Aviso!', `⚠️ Falta IVA para el país ${country}: Using 21%.`, { timeout: -1, position: 'top-center' } );
+            const priceWithoutIVA = parseFloat( row[PVP_ATTR] ) / ( iva ?? 1.21 );
+            return LX.round( priceWithoutIVA );
+        };
+
+        // IVA
+        {
+            const IVAContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
+            this.fiscalTabs.add( 'IVA', IVAContainer, { selected: ( selectedTab === 'IVA' || !this.fiscalTabs ) } );
+
+            const IVA_COLS = [
+                [ PAIS_ATTR, 'PAÍS' ],
+                [ ORDER_ATTR, 'NÚMERO PEDIDO' ],
+                [ ORDER_DATE_ATTR, 'FECHA PEDIDO' ],
+                [ SKU_ATTR, 'REF' ],
+                [ 'CANTIDAD', null, ( str, row ) => {
+                    const sku = row[SKU_ATTR];
+                    return core.getIndividualQuantityPerPack( sku, 1 );
+                } ],
+                [ 'PRECIO SIN IVA', null, ( str, row ) => getPriceWithoutIVA( row ) ],
+                [ 'IVA', null, ( str, row ) => {
+                    const priceWithoutIVA = getPriceWithoutIVA( row );
+                    const totalIva = parseFloat( row[PVP_ATTR] ) - priceWithoutIVA;
+                    const formatted = NumberFormatter.format( totalIva );
+                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ],
+                [ PVP_ATTR, 'PVP', ( str, row ) => {
+                    const formatted = NumberFormatter.format( str );
+                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ]
+            ];
+
+            // Create table data from the list
+            const tableData = data.map( ( row ) => {
+                const lRow = [];
+                for ( let c of IVA_COLS )
+                {
+                    const ogColName = c[0];
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row ) );
+                }
+                return lRow;
+            } );
+
+            const tableWidget = new LX.Table( null, {
+                head: IVA_COLS.map( ( c ) => {
+                    return c[1] ?? c[0];
+                } ),
+                body: tableData
+            }, {
+                selectable: false,
+                sortable: false,
+                toggleColumns: true,
+                centered: [ 'CANTIDAD', 'PRECIO SIN IVA', 'IVA', 'PVP' ],
+                filter: 'NÚMERO PEDIDO',
+                customFilters: [
+                    { name: PAIS_ATTR, options: this.countries }
+                ]
+            } );
+
+            IVAContainer.appendChild( tableWidget.root );
+
+            this.lastSeurIVAColumnData = tableWidget.data.head;
+            this.lastShownSeurIVAData = tableWidget.data.body;
+        }
+
+        // LAL
+        {
+            const LALContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
+            this.fiscalTabs.add( 'LAL', LALContainer, { selected: ( selectedTab === 'LAL' ) } );
+
+            const getProductPrice = ( row ) => {
+                const totalFormatted = NumberFormatter.format( row['Total'] );
+                const total = parseFloat( totalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                const productPrice = total / row['Cantidad'];
+                const productPriceFormatted = NumberFormatter.format( productPrice );
+                return parseFloat( productPriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+            };
+
+            this.LAL_COLS = [
+                [ 'País' ],
+                [ 'Serie', null, () => '1' ], // 'A',
+                [ 'Número', null, () => -1 ], // 'B',   -> fixed on export
+                [ 'Posición', null, () => -1 ], // 'C', -> fixed on export
+                [ 'Artículo' ], // 'D',
+                [ 'Descripción' ], // 'E',
+                [ 'Cantidad' ], // 'F',
+                [ '' ], // 'G',
+                [ '' ], // 'H',
+                [ '' ], // 'I',
+                [ 'Precio', null, ( str, row ) => getProductPrice( row ) ], // 'J',
+                [ 'Base', null, ( str, row ) => {
+                    const productPrice = getProductPrice( row );
+                    const basePrice = productPrice * row['Cantidad'];
+                    const basePriceFormatted = NumberFormatter.format( basePrice );
+                    return parseFloat( basePriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ], // 'K',
+                [ 'T', null, () => 0 ], // 'L',
+                [ '' ], // 'M',
+                [ '' ], // 'N',
+                [ '' ], // 'O',
+                [ '' ], // 'P',
+                [ '' ], // 'Q',
+                [ '' ], // 'R',
+                [ '' ], // 'S',
+                [ '' ], // 'T',
+                [ '' ], // 'U',
+                [ '' ], // 'V',
+                [ '' ], // 'W',
+                [ '' ], // 'X',
+                [ '' ], // 'Y',
+                [ 'I', null, () => 0 ], // 'Z',
+                [ '' ], // 'AA'
+                [ '' ], // 'AB'
+                [ '' ], // 'AC'
+                [ '' ], // 'AD'
+                [ '' ], // 'AE'
+                [ 'Total', null, ( str ) => {
+                    const formatted = NumberFormatter.format( str );
+                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                } ], // 'AF'
+                [ 'Cantidad', 'CantidadR' ] // 'AG'
+            ];
+
+            const skuMap = {};
+            const totalTransportPerComp = {};
+
+            data.forEach( ( row ) => {
+                const sku = row[SKU_ATTR];
+                const skus = this.core.getIndividualSkusPerPack( sku );
+                // console.log(skus);
+                skus.forEach( ( skuObj ) => {
+                    const mappedSku = this.core.mapSku( skuObj.sku ); // mapping here shouldn't be necessary
+                    const prefix = mappedSku.substring( 0, mappedSku.indexOf( '-' ) );
+                    const totalQuantity = this.core.getIndividualQuantityPerPack( mappedSku, 1 );
+                    const country = row[PAIS_ATTR];
+                    const skuPriceFactor = skuObj.price;
+                    const priceWithoutIVA = getPriceWithoutIVA( row ) * skuPriceFactor;
+                    const transportPrice = this.core.countryTransportCostPct[country];
+                    const totalProductTransport = LX.round( priceWithoutIVA * transportPrice );
+                    const productTotal = LX.round( priceWithoutIVA - totalProductTransport );
+
+                    let skuIdx = `${mappedSku}_${country}`;
+                    if ( !skuMap[skuIdx] )
+                    {
+                        const product = Data.sku[mappedSku];
+                        skuMap[skuIdx] = {
+                            'Artículo': mappedSku,
+                            'Descripción': product?.['DESCRIPCIÓN'] ?? '',
+                            'Cantidad': totalQuantity,
+                            'Total': productTotal,
+                            'País': country
+                        };
+                    }
+                    else
+                    {
+                        const product = skuMap[skuIdx];
+                        product['Cantidad'] += totalQuantity;
+                        product['Total'] += productTotal;
+                    }
+
+                    // Update transport total per country
+                    const tCompIdx = `${prefix}_${country}`;
+                    if ( !totalTransportPerComp[tCompIdx] ) totalTransportPerComp[tCompIdx] = 0;
+                    totalTransportPerComp[tCompIdx] += totalProductTransport;
+                } );
+            } );
+
+            // Create table data from the list
+            let modifiedData = Object.values( skuMap );
+
+            const totalIncomeNetPlusIVA = {};
+
+            this.countries.forEach( ( c ) => {
+                modifiedData.push(
+                    { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp[`JW_${c}`] ?? 0, 'País': c },
+                    { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp[`HG_${c}`] ?? 0, 'País': c },
+                    { 'Artículo': 'P03', 'Descripción': 'Transporte Fucklook', 'Cantidad': 1, 'Total': totalTransportPerComp[`FL_${c}`] ?? 0, 'País': c },
+                    { 'Artículo': 'P04', 'Descripción': 'Transporte Bathby', 'Cantidad': 1, 'Total': totalTransportPerComp[`BY_${c}`] ?? 0, 'País': c }
+                );
+
+                totalIncomeNetPlusIVA[c] = LX.round( modifiedData.reduce( ( acc, row ) => {
+                    if ( row['País'] !== c ) return acc;
+                    return acc + parseFloat( row['Total'] );
+                }, 0 ) * this.core.countryIVA[c] );
+
+                const lastTransportRow = modifiedData.at( -1 );
+                const incomeDiff = totalIncome[c] - totalIncomeNetPlusIVA[c];
+                lastTransportRow['Total'] = LX.round( lastTransportRow['Total'] + incomeDiff );
+            } );
+
+            // Remove rows with total = 0 (e.g. transports not used, etc)
+            modifiedData = modifiedData.filter( ( d ) => d['Total'] > 0 );
+
+            // Process with COL info
+            const tableData = modifiedData.map( ( row ) => {
+                const lRow = [];
+                for ( let c of this.LAL_COLS )
+                {
+                    const ogColName = c[0];
+                    if ( ogColName === '' ) continue;
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row ) );
+                }
+                return lRow;
+            } );
+
+            const tableWidget = new LX.Table( null, {
+                head: this.LAL_COLS.map( ( c ) => {
+                    return c[1] ?? c[0];
+                } ).filter( ( v ) => v !== '' ),
+                body: tableData
+            }, {
+                selectable: false,
+                sortable: false,
+                toggleColumns: true,
+                centered: [ 'Serie', 'Posición', 'Número', 'Cantidad', 'Precio', 'Base', 'T', 'I', 'Total', 'CantidadR' ],
+                filter: 'Artículo',
+                hiddenColumns: [ 'Serie', 'Posición', 'Número' ]
+            } );
+
+            LALContainer.appendChild( tableWidget.root );
+
+            // Add data labels
+            subUtilsPanel.sameLine();
+            subUtilsPanel.addText( 'NÚMERO ALBARÁN', this.albNumber, ( v ) => this.albNumber = parseFloat( v ), { placeholder: '# Albarán', nameWidth: 'fit-content', className: '[&_input]:px-4!',
+                fit: true, skipReset: true } );
+            subUtilsPanel.addDate( 'FECHA CREACIÓN', this.currentDate, ( v ) => {
+                this.currentDate = v;
+                LX.doAsync( () => this.showAlbaranRelatedInfo( data ) );
+            }, { nameWidth: 'fit-content' } );
+            const popoverButton = subUtilsPanel.addButton( null, 'Ver Ingresos', () => {
+                const incomeArea = new LX.Area( { width: `${Math.max( 6 * this.countries.length, 16 )}rem`, skipAppend: true } );
+                const tabs = incomeArea.addTabs( { fit: true } );
+                this.countries.forEach( ( c ) => {
+                    const p = new LX.Panel();
+                    p.addText( 'Total brutos', totalIncome[c] + ' €', null, { nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
+                    p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA[c] + ' €', null, { nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
+                    tabs.add( c, p.root );
+                } );
+                new LX.Popover( popoverButton.root, [ incomeArea ], { align: 'end' } );
+            }, { icon: 'Eye', iconPosition: 'start' } );
+            subUtilsPanel.endLine( 'ml-auto' );
+
+            this.lastShownSeurLALData = tableWidget.data.body;
+        }
+
+        // ALB
+        {
+            const ALBContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME.replace( 'rounded-lg', '' ) );
+            this.fiscalTabs.add( 'ALB', ALBContainer, { selected: ( selectedTab === 'ALB' ) } );
+
+            this.ALB_COLS = [
+                [ 'País' ],
+                [ 'Serie', null, () => '1' ], // 'A',
+                [ 'Número', null, () => -1 ], // 'B',
+                [ '' ], // 'C',
+                [ 'Fecha', null, () => this.currentDate ], // 'D',
+                [ 'Estado', null, () => 0 ], // 'E',
+                [ 'Alm', null, () => 'LLA' ], // 'F',
+                [ 'Agente', null, () => 7 ], // 'G',
+                [ '' ], // 'H',
+                [ 'CD.Cliente', 'Cliente' ], // 'I',
+                [ 'Cliente' ], // 'J',
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ], // 'K', 'L', 'M', 'N', 'O',
+                [ 'IVA', null, () => 0 ], // 'P',
+                [ 'Recargo', null, () => 0 ], // 'Q',
+                [ '' ], // 'R',
+                [ 'Neto', null, ( str, row ) => {
+                    const net = row['Total'];
+                    const country = row['País'];
+                    const iva = this.core.countryIVA[country];
+                    return LX.round( net / iva );
+                } ], // 'S',
+                // 'T' -> 'AS'
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ 'Base', null, ( str, row ) => {
+                    const net = row['Total'];
+                    const country = row['País'];
+                    const iva = this.core.countryIVA[country];
+                    return LX.round( net / iva );
+                } ], // 'AT'
+                [ '' ],
+                [ '' ], // 'AU', 'AV'
+                [ 'IVA', null, ( str, row ) => {
+                    const country = row['País'];
+                    return LX.round( ( this.core.countryIVA[country] - 1 ) * 100 );
+                } ], // 'AW'
+                [ '' ],
+                [ '' ], // 'AX', 'AY'
+                [ 'Cuota', null, ( str, row ) => {
+                    const net = row['Total'];
+                    const country = row['País'];
+                    const iva = this.core.countryIVA[country];
+                    return LX.round( net * ( iva - 1 ) );
+                } ], // 'AZ'
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ], // 'BA', 'BB', 'BC', 'BD', 'BE','BF', 'BG','BH', 'BI', 'BJ'
+                [ 'Total' ], // 'BK'
+                [ 'Pago', null, () => 'TR' ], // 'BL'
+                [ 'Portes', null, () => 0 ], // 'BM'
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ],
+                [ '' ], // 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW'
+                [ 'Cobrado', null, () => 0 ], // 'BX'
+                [ 'Traspaso', null, () => 0 ], // 'BY'
+                [ 'Impreso', null, () => 'N' ], // 'BZ'
+                [ 'Transporte', null, () => 9 ] // 'CA'
+                // 'CB' -> 'DH'
+                // [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
+                // [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
+            ];
+
+            let modifiedData = this.countries.map( ( c ) => {
+                return { 'Total': totalIncome[c], 'País': c, 'Cliente': `Ventas ${LX.toTitleCase( this.title )} ${c} Semana ${weekN}`,
+                    'CD.Cliente': this.core.getClientCode( this.title, c, currentYear ) };
+            } );
+
+            // Process with COL info
+            const tableData = modifiedData.map( ( row ) => {
+                const lRow = [];
+                for ( let c of this.ALB_COLS )
+                {
+                    const ogColName = c[0];
+                    if ( ogColName === '' ) continue;
+                    const fn = c[2] ?? ( ( str ) => str );
+                    lRow.push( fn( row[ogColName] ?? '?', row ) );
+                }
+                return lRow;
+            } );
+
+            const tableWidget = new LX.Table( null, {
+                head: this.ALB_COLS.map( ( c ) => {
+                    return c[1] ?? c[0];
+                } ).filter( ( v ) => v !== '' ),
+                body: tableData
+            }, {
+                selectable: false,
+                sortable: false,
+                toggleColumns: true,
+                centered: [ 'Serie', 'Posición', 'Número', 'Cantidad', 'Precio', 'Base', 'T', 'I', 'Total', 'CantidadR' ],
+                filter: 'Artículo',
+                hiddenColumns: [ 'Serie', 'Número' ]
+            } );
+
+            ALBContainer.appendChild( tableWidget.root );
+
+            this.lastShownSeurALBData = tableWidget.data.body;
+        }
+
+        // i don't know what is this.. removing it by now
+        tmpArea.root.children[1].remove();
+    }
+
+    exportIVA()
+    {
+        const weekN = Utils.getWeekNumber( Utils.convertDateDMYtoMDY( this.currentDate ) );
+        const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
+        const sheets = this.countries.map( ( c ) => {
+            const filteredRows = LX.deepCopy( this.lastShownSeurIVAData )
+                .filter( ( row ) => ( row[0] === c ) )
+                .map( ( row ) => row.slice( 1 ) );
+            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...filteredRows ];
+            return this.core.createXLSXSheet( data );
+        } );
+
+        const workbook = this.core.createXLSXWorkbook( sheets, this.countries );
+        this.core.exportXLSXWorkbook( workbook, filename );
+    }
+
+    getLALData( country, albNumberOffset )
+    {
+        const LALColumnData = this.LAL_COLS.map( ( c ) => {
+            return c[1] ?? c[0];
+        } ).slice( 1 );
+
+        const filename = `LAL.xlsx`;
+        const filteredRows = LX.deepCopy( this.lastShownSeurLALData )
+            .filter( ( row ) => ( row[0] === country ) )
+            .map( ( row, index ) => {
+                const m = row.slice( 1 );
+                m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
+                m[2] = index + 1; // Update _POSICIÓN_ based on new filtered data
+                return m;
+            } );
+        const finalRowsWithEmptyColumns = [];
+        filteredRows.forEach( ( row, index ) => {
+            let lastFilledIndex = 0;
+            const newRow = LALColumnData.map( ( d ) => {
+                if ( d === '' ) return '';
+                else return row[lastFilledIndex++];
+            } );
+            finalRowsWithEmptyColumns.push( newRow );
+        } );
+        const data = [ LALColumnData, ...finalRowsWithEmptyColumns ];
+        return { filename, data };
+    }
+
+    getALBData( country, albNumberOffset )
+    {
+        const ALBColumnData = this.ALB_COLS.map( ( c ) => {
+            return c[1] ?? c[0];
+        } ).slice( 1 );
+
+        const filename = `ALB.xlsx`;
+        const filteredRows = LX.deepCopy( this.lastShownSeurALBData )
+            .filter( ( row ) => ( row[0] === country ) )
+            .map( ( row, index ) => {
+                const m = row.slice( 1 );
+                m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
+                return m;
+            } );
+        const finalRowsWithEmptyColumns = [];
+        filteredRows.forEach( ( row, index ) => {
+            let lastFilledIndex = 0;
+            const newRow = ALBColumnData.map( ( d ) => {
+                if ( d === '' ) return '';
+                else return row[lastFilledIndex++];
+            } );
+            finalRowsWithEmptyColumns.push( newRow );
+        } );
+        const data = [ ALBColumnData, ...finalRowsWithEmptyColumns ];
+        return { filename, data };
+    }
+
+    exportLAL( country )
+    {
+        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        {
+            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
+        const offset = this.countries.indexOf( country );
+        const { filename, data } = this.getLALData( country, offset );
+        this.core.exportXLSXData( data, filename );
+    }
+
+    exportALB( country )
+    {
+        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        {
+            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
+        const offset = this.countries.indexOf( country );
+        const { filename, data } = this.getALBData( country, offset );
+        this.core.exportXLSXData( data, filename );
+    }
+
+    async exportAlbaranes()
+    {
+        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
+        {
+            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
+        const folders = {};
+
+        this.countries.forEach( ( c, i ) => {
+            folders[c] = [ this.getLALData( c, i ), this.getALBData( c, i ) ];
+        } );
+
+        const zip = await this.core.zipWorkbooks( folders );
+        LX.downloadFile( 'ALBARANES.zip', zip );
+    }
+
     clear()
     {
-        delete this.lastSeurData;
-        this.showTiktokList( [] );
+        delete this.lastOrdersData;
+        this.showOrdersList( [] );
+        this.showStockList( [] );
+        this.showTrackingList( [] );
+        this.showAlbaranRelatedInfo( [], 0 );
+
+        Utils.toggleButtonDisabled( this.exportLabelsButton, true );
+        Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
     }
 }
 

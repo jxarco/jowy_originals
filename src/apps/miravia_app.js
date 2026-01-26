@@ -4,9 +4,10 @@ import { Constants, NumberFormatter } from '../constants.js';
 import { Data } from '../data.js';
 import * as Utils from '../utils.js';
 
-const countries = [ 'ESPAÑA', 'PORTUGAL', 'FRANCIA', 'ITALIA' ];
-const SKU_ATTR = 'SKU del vendedor';
+const SKU_ATTR = BaseApp.SKU_ATTR;
 const ORDER_ATTR = 'Número de pedido';
+const ART_ID_ATTR = BaseApp.ART_ID_ATTR;
+const ART_NAME_ATTR = BaseApp.ART_NAME_ATTR;
 const CLIENT_NAME_ATTR = 'Nombre del comprador';
 const PAIS_ATTR = 'País de envío';
 const CP_ATTR = 'Código postal';
@@ -14,10 +15,10 @@ const PVP_ATTR = 'Precio con descuento';
 const ORDER_DATE_ATTR = 'Fecha de creación';
 
 const ORDERS_DATA = [
-    [ ORDER_ATTR ],
-    [ 'ID del artículo' ],
+    [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
+    [ ART_ID_ATTR ],
     [ SKU_ATTR ],
-    [ 'Nombre del producto', null, ( str, row ) => {
+    [ ART_NAME_ATTR, null, ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
     } ],
     [ CLIENT_NAME_ATTR ],
@@ -73,10 +74,8 @@ class MiraviaApp extends BaseApp
         this.ordersArea = ordersArea;
         this.stockListArea = stockListArea;
         this.albaranArea = albaranArea;
-        this.albNumber = -1;
 
-        const date = new Date();
-        this.currentDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+        this.countries = [ 'ESPAÑA', 'PORTUGAL', 'FRANCIA', 'ITALIA' ];
 
         this.clear();
     }
@@ -119,56 +118,17 @@ class MiraviaApp extends BaseApp
 
     showOrdersList( data )
     {
-        data = data ?? this.lastSeurData;
+        data = data ?? this.lastOrdersData;
 
         Utils.clearArea( this.ordersArea );
-
-        // Create table data from the list
-        const tableData = data.map( ( row ) => {
-            const lRow = [];
-            for ( let c of ORDERS_DATA )
-            {
-                const ogColName = c[0];
-                if ( ogColName.includes( '+' ) )
-                {
-                    const tks = ogColName.split( '+' );
-                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                }
-                else
-                {
-                    const fn = c[2] ?? ( ( str ) => str );
-                    lRow.push( fn( row[ogColName] ?? '?', row ) );
-                }
-            }
-            return lRow;
-        } );
-
-        this.core.setHeaderTitle( `${this.title}: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
-
-        const tableWidget = new LX.Table( null, {
-            head: ORDERS_DATA.map( ( c ) => c[1] ?? c[0] ),
-            body: tableData
-        }, {
-            selectable: true,
-            toggleColumns: true,
-            centered: [ ORDER_ATTR, 'ID del artículo', SKU_ATTR ],
-            filter: SKU_ATTR,
-            customFilters: [
-                { name: PAIS_ATTR, options: countries }
-            ],
-            hiddenColumns: [ 'ID del artículo', 'Dirección', CP_ATTR ]
-        } );
-
+        
+        const tableWidget = this.getOrdersListTable( data, ORDERS_DATA );
         this.ordersArea.attach( tableWidget );
-
-        this.lastSeurColumnData = tableWidget.data.head;
-        this.lastShownSeurData = tableWidget.data.body;
-        this.lastSeurData = data;
     }
 
     showStockList( ogData )
     {
-        ogData = ogData ?? this.lastSeurData;
+        ogData = ogData ?? this.lastOrdersData;
 
         let data = LX.deepCopy( ogData );
 
@@ -184,9 +144,9 @@ class MiraviaApp extends BaseApp
                 if( oN.length === 13 ) return 'MIRAVIA';
                 return 'NO DETECTADO';
             } ], // MIRAVIA OR ALIEXPRESS
-            [ PAIS_ATTR, 'País' ],
-            [ 'Observaciones', null ],
-            [ ORDER_ATTR, null ]
+            [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
+            [ 'Observaciones' ],
+            [ ORDER_ATTR, BaseApp.ORDER_ATTR ]
         ];
 
         const uid = columnData[6][0]; // This is to get in this case ORDER_ATTR
@@ -262,7 +222,7 @@ class MiraviaApp extends BaseApp
             }
             else
             {
-                const idx = skus[sku][skuIdx];
+                const idx = skus[sku][0];
                 tableData[idx][1] += 1;
             }
         }
@@ -314,7 +274,7 @@ class MiraviaApp extends BaseApp
                     icon: 'Copy',
                     name: 'Copiar',
                     callback: ( colData ) => {
-                        if ( !this.lastShownSeurData )
+                        if ( !colData?.length )
                         {
                             return;
                         }
@@ -330,7 +290,7 @@ class MiraviaApp extends BaseApp
             ],
             filter: SKU_ATTR,
             customFilters: [
-                { name: PAIS_ATTR, options: countries }
+                { name: PAIS_ATTR, options: this.countries }
             ]
         } );
 
@@ -344,7 +304,7 @@ class MiraviaApp extends BaseApp
     {
         Utils.clearArea( this.albaranArea );
 
-        data = data ?? this.lastSeurData;
+        data = data ?? this.lastOrdersData;
 
         // Map SKUs and Country once on load data
         data.forEach( ( r ) => {
@@ -369,7 +329,7 @@ class MiraviaApp extends BaseApp
             } );
         }
 
-        const totalIncome = countries.reduce( ( o, c ) => {
+        const totalIncome = this.countries.reduce( ( o, c ) => {
             o[c] = LX.round( data.reduce( ( acc, row ) => {
                 if ( row[PAIS_ATTR] !== c ) return acc;
                 return acc + parseFloat( row[PVP_ATTR] );
@@ -392,7 +352,7 @@ class MiraviaApp extends BaseApp
                 {
                     name: 'Exportar LAL',
                     icon: 'List',
-                    submenu: countries.map( ( c ) => {
+                    submenu: this.countries.map( ( c ) => {
                         return { name: c, callback: () => this.exportLAL( c ) };
                     } )
                 },
@@ -400,7 +360,7 @@ class MiraviaApp extends BaseApp
                 {
                     name: 'Exportar ALB',
                     icon: 'File',
-                    submenu: countries.map( ( c ) => {
+                    submenu: this.countries.map( ( c ) => {
                         return { name: c, callback: () => this.exportALB( c ) };
                     } )
                 }
@@ -478,7 +438,7 @@ class MiraviaApp extends BaseApp
                 centered: [ 'CANTIDAD', 'PRECIO SIN IVA', 'IVA', 'PVP' ],
                 filter: 'NÚMERO PEDIDO',
                 customFilters: [
-                    { name: PAIS_ATTR, options: Object.keys( this.core.countryIVA ) }
+                    { name: PAIS_ATTR, options: this.countries }
                 ]
             } );
 
@@ -595,7 +555,7 @@ class MiraviaApp extends BaseApp
 
             const totalIncomeNetPlusIVA = {};
 
-            countries.forEach( ( c ) => {
+            this.countries.forEach( ( c ) => {
                 modifiedData.push(
                     { 'Artículo': 'P01', 'Descripción': 'Transporte Jowy', 'Cantidad': 1, 'Total': totalTransportPerComp[`JW_${c}`] ?? 0, 'País': c },
                     { 'Artículo': 'P02', 'Descripción': 'Transporte HxG', 'Cantidad': 1, 'Total': totalTransportPerComp[`HG_${c}`] ?? 0, 'País': c },
@@ -654,9 +614,9 @@ class MiraviaApp extends BaseApp
                 LX.doAsync( () => this.showAlbaranRelatedInfo( data ) );
             }, { nameWidth: 'fit-content' } );
             const popoverButton = subUtilsPanel.addButton( null, 'Ver Ingresos', () => {
-                const incomeArea = new LX.Area( { width: `${Math.max( 6 * countries.length, 16 )}rem`, skipAppend: true } );
+                const incomeArea = new LX.Area( { width: `${Math.max( 6 * this.countries.length, 16 )}rem`, skipAppend: true } );
                 const tabs = incomeArea.addTabs( { fit: true } );
-                countries.forEach( ( c ) => {
+                this.countries.forEach( ( c ) => {
                     const p = new LX.Panel();
                     p.addText( 'Total brutos', totalIncome[c] + ' €', null, { nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
                     p.addText( 'Total neto + IVA', totalIncomeNetPlusIVA[c] + ' €', null, { nameWidth: '50%', disabled: true, className: '[&_input]:px-4!', fit: true } );
@@ -779,7 +739,7 @@ class MiraviaApp extends BaseApp
                 // [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ], [ '' ],
             ];
 
-            let modifiedData = countries.map( ( c ) => {
+            let modifiedData = this.countries.map( ( c ) => {
                 return { 'Total': totalIncome[c], 'País': c, 'Cliente': `Ventas ${LX.toTitleCase( this.title )} ${c} Semana ${weekN}`,
                     'CD.Cliente': this.core.getClientCode( this.title, c, currentYear ) };
             } );
@@ -824,7 +784,7 @@ class MiraviaApp extends BaseApp
     {
         const weekN = Utils.getWeekNumber( Utils.convertDateDMYtoMDY( this.currentDate ) );
         const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
-        const sheets = countries.map( ( c ) => {
+        const sheets = this.countries.map( ( c ) => {
             const filteredRows = LX.deepCopy( this.lastShownSeurIVAData )
                 .filter( ( row ) => ( row[0] === c ) )
                 .map( ( row ) => row.slice( 1 ) );
@@ -832,7 +792,7 @@ class MiraviaApp extends BaseApp
             return this.core.createXLSXSheet( data );
         } );
 
-        const workbook = this.core.createXLSXWorkbook( sheets, countries );
+        const workbook = this.core.createXLSXWorkbook( sheets, this.countries );
         this.core.exportXLSXWorkbook( workbook, filename );
     }
 
@@ -899,7 +859,7 @@ class MiraviaApp extends BaseApp
             return;
         }
 
-        const offset = countries.indexOf( country );
+        const offset = this.countries.indexOf( country );
         const { filename, data } = this.getLALData( country, offset );
         this.core.exportXLSXData( data, filename );
     }
@@ -912,7 +872,7 @@ class MiraviaApp extends BaseApp
             return;
         }
 
-        const offset = countries.indexOf( country );
+        const offset = this.countries.indexOf( country );
         const { filename, data } = this.getALBData( country, offset );
         this.core.exportXLSXData( data, filename );
     }
@@ -927,7 +887,7 @@ class MiraviaApp extends BaseApp
 
         const folders = {};
 
-        countries.forEach( ( c, i ) => {
+        this.countries.forEach( ( c, i ) => {
             folders[c] = [ this.getLALData( c, i ), this.getALBData( c, i ) ];
         } );
 
@@ -942,7 +902,7 @@ class MiraviaApp extends BaseApp
 
     clear()
     {
-        delete this.lastSeurData;
+        delete this.lastOrdersData;
         this.showOrdersList( [] );
         this.showStockList( [] );
         // this.showTrackingList( [] );
