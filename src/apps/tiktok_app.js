@@ -143,7 +143,7 @@ class TikTokApp extends BaseApp
         this.albaranArea = albaranArea;
         this.trackingArea = trackingArea;
 
-        this.countries = [ 'ESPAÑA', 'PORTUGAL', 'FRANCIA' ];
+        this.countries = [ 'ESPAÑA' ];//, 'PORTUGAL', 'FRANCIA' ];
 
         this.clear();
     }
