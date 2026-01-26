@@ -632,7 +632,7 @@ class TikTokApp extends BaseApp
 
     exportSEURTrackings( fixedData, ignoreErrors )
     {
-        const filename = 'NUMERODEGUIA_TIKTOK.xlsx';
+        const filename = `NUMERODEGUIA_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
         const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
 
         if ( !ignoreErrors && this._trackingSyncErrors.length )
@@ -675,16 +675,19 @@ class TikTokApp extends BaseApp
         this.core.exportXLSXData( data, filename );
     }
 
-    showAlbaranRelatedInfo( data )
+    showAlbaranRelatedInfo( data, external = true )
     {
         Utils.clearArea( this.albaranArea );
 
         // TikTok contains header descriptions in the first row
-        data = data.slice( 1 );
+        if( external )
+        {
+            data = data.slice( 1 );
+        }
 
         data = data ?? this.lastOrdersData;
 
-        console.log(data)
+        // console.log(data)
 
         // Map SKUs and Country once on load data
         data.forEach( ( r ) => {
@@ -984,7 +987,7 @@ class TikTokApp extends BaseApp
                 fit: true, skipReset: true } );
             subUtilsPanel.addDate( 'FECHA CREACIÓN', this.currentDate, ( v ) => {
                 this.currentDate = v;
-                LX.doAsync( () => this.showAlbaranRelatedInfo( data ) );
+                LX.doAsync( () => this.showAlbaranRelatedInfo( data, false ) );
             }, { nameWidth: 'fit-content' } );
             const popoverButton = subUtilsPanel.addButton( null, 'Ver Ingresos', () => {
                 const incomeArea = new LX.Area( { width: `${Math.max( 6 * this.countries.length, 16 )}rem`, skipAppend: true } );
@@ -1151,121 +1154,6 @@ class TikTokApp extends BaseApp
 
         // i don't know what is this.. removing it by now
         tmpArea.root.children[1].remove();
-    }
-
-    exportIVA()
-    {
-        const weekN = Utils.getWeekNumber( Utils.convertDateDMYtoMDY( this.currentDate ) );
-        const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
-        const sheets = this.countries.map( ( c ) => {
-            const filteredRows = LX.deepCopy( this.lastShownSeurIVAData )
-                .filter( ( row ) => ( row[0] === c ) )
-                .map( ( row ) => row.slice( 1 ) );
-            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...filteredRows ];
-            return this.core.createXLSXSheet( data );
-        } );
-
-        const workbook = this.core.createXLSXWorkbook( sheets, this.countries );
-        this.core.exportXLSXWorkbook( workbook, filename );
-    }
-
-    getLALData( country, albNumberOffset )
-    {
-        const LALColumnData = this.LAL_COLS.map( ( c ) => {
-            return c[1] ?? c[0];
-        } ).slice( 1 );
-
-        const filename = `LAL.xlsx`;
-        const filteredRows = LX.deepCopy( this.lastShownSeurLALData )
-            .filter( ( row ) => ( row[0] === country ) )
-            .map( ( row, index ) => {
-                const m = row.slice( 1 );
-                m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
-                m[2] = index + 1; // Update _POSICIÓN_ based on new filtered data
-                return m;
-            } );
-        const finalRowsWithEmptyColumns = [];
-        filteredRows.forEach( ( row, index ) => {
-            let lastFilledIndex = 0;
-            const newRow = LALColumnData.map( ( d ) => {
-                if ( d === '' ) return '';
-                else return row[lastFilledIndex++];
-            } );
-            finalRowsWithEmptyColumns.push( newRow );
-        } );
-        const data = [ LALColumnData, ...finalRowsWithEmptyColumns ];
-        return { filename, data };
-    }
-
-    getALBData( country, albNumberOffset )
-    {
-        const ALBColumnData = this.ALB_COLS.map( ( c ) => {
-            return c[1] ?? c[0];
-        } ).slice( 1 );
-
-        const filename = `ALB.xlsx`;
-        const filteredRows = LX.deepCopy( this.lastShownSeurALBData )
-            .filter( ( row ) => ( row[0] === country ) )
-            .map( ( row, index ) => {
-                const m = row.slice( 1 );
-                m[1] = this.albNumber + ( albNumberOffset ?? 0 ); // Add NUMBER offset based on new ALBARAN
-                return m;
-            } );
-        const finalRowsWithEmptyColumns = [];
-        filteredRows.forEach( ( row, index ) => {
-            let lastFilledIndex = 0;
-            const newRow = ALBColumnData.map( ( d ) => {
-                if ( d === '' ) return '';
-                else return row[lastFilledIndex++];
-            } );
-            finalRowsWithEmptyColumns.push( newRow );
-        } );
-        const data = [ ALBColumnData, ...finalRowsWithEmptyColumns ];
-        return { filename, data };
-    }
-
-    exportLAL( country )
-    {
-        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
-        {
-            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
-            return;
-        }
-
-        const offset = this.countries.indexOf( country );
-        const { filename, data } = this.getLALData( country, offset );
-        this.core.exportXLSXData( data, filename );
-    }
-
-    exportALB( country )
-    {
-        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
-        {
-            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
-            return;
-        }
-
-        const offset = this.countries.indexOf( country );
-        const { filename, data } = this.getALBData( country, offset );
-        this.core.exportXLSXData( data, filename );
-    }
-
-    async exportAlbaranes()
-    {
-        if ( Number.isNaN( this.albNumber ) || this.albNumber < 0 )
-        {
-            LX.toast( 'Error', '❌ Número de albarán inválido.', { timeout: -1, position: 'top-center' } );
-            return;
-        }
-
-        const folders = {};
-
-        this.countries.forEach( ( c, i ) => {
-            folders[c] = [ this.getLALData( c, i ), this.getALBData( c, i ) ];
-        } );
-
-        const zip = await this.core.zipWorkbooks( folders );
-        LX.downloadFile( 'ALBARANES.zip', zip );
     }
 
     clear()
