@@ -61,6 +61,7 @@ export const SKU_MAPPING = {
     'BY-FBT01BSINCOJ': 'BY-FBT01B',
     'BY-BCS01': 'BY-BCS02',
     'BY-PT02': 'BY-WC02B',
+    'HG-STSA': 'HG-STSY',
     // Change prefix
     'HG-AT20G1': 'JW-AT20G1',
     'HG-AT20G2': 'JW-AT20G2',

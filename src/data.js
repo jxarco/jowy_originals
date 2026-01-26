@@ -232,7 +232,7 @@ LX.requestBinary( 'data/products.xlsx', ( binary ) => {
         p['GROSOR'] = parseFloat( p['GROSOR'] ?? 0 ) / 100;
         p['LARGO'] = parseFloat( p['LARGO'] ?? 0 ) / 100;
         p['PESO'] = parseFloat( p['PESO'] ?? 0 );
-        p['UDS./BULTO'] = parseFloat( p['UDS./BULTO'] ?? 0 );
+        p['UDS./BULTO'] = parseFloat( p['UDS./BULTO'] ?? 1 );
         p['EXCLUIR'] = !!parseFloat( p['EXCLUIR'] ?? 0 );
 
         // Remove prefix and store
