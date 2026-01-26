@@ -146,7 +146,6 @@ class SheinApp extends BaseApp
             const ogSku = r[SKU_ATTR];
             r[SKU_ATTR] = this.core.mapSku( ogSku );
             if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
-            // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
             // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
@@ -688,7 +687,6 @@ class SheinApp extends BaseApp
             const ogSku = r[SKU_ATTR];
             r[SKU_ATTR] = this.core.mapSku( ogSku );
             if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
-            // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
             // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );

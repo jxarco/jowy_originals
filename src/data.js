@@ -2,7 +2,8 @@ let xlsx_loaded = 0;
 
 const Data = {
     'ready': false,
-    'sku': {}, // LOADED USING THE XLSX
+    'sku': {}, // LOADED USING THE XLSX,
+    'sku_map': {}, // LOADED USING THE XLSX,
     'zoneRules': {
         'España': [
             { 'prefix': '04', city: 'ALMERÍA', zone: [ [ 6 ], [ 3 ] ] },
@@ -216,33 +217,62 @@ LX.requestBinary( 'data/seur.xlsx', ( binary ) => {
 
 LX.requestBinary( 'data/products.xlsx', ( binary ) => {
     const workbook = XLSX.read( binary, { type: 'binary' } );
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
-
-    for ( const p of data )
+    
+    // MEDIDAS
     {
-        if ( !p['GROSOR'] )
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
+
+        for ( const p of data )
         {
-            continue;
+            if ( !p['GROSOR'] )
+            {
+                continue;
+            }
+
+            // Default values
+            p['ANCHO'] = parseFloat( p['ANCHO'] ?? 0 ) / 100;
+            p['GROSOR'] = parseFloat( p['GROSOR'] ?? 0 ) / 100;
+            p['LARGO'] = parseFloat( p['LARGO'] ?? 0 ) / 100;
+            p['PESO'] = parseFloat( p['PESO'] ?? 0 );
+            p['UDS./BULTO'] = parseFloat( p['UDS./BULTO'] ?? 1 );
+            p['EXCLUIR'] = !!parseFloat( p['EXCLUIR'] ?? 0 );
+
+            // Remove prefix and store
+            // const ogSku = p['CÓDIGO'];
+            // p['CÓDIGO'] = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
+
+            Data.sku[p['CÓDIGO']] = p;
         }
 
-        // Default values
-        p['ANCHO'] = parseFloat( p['ANCHO'] ?? 0 ) / 100;
-        p['GROSOR'] = parseFloat( p['GROSOR'] ?? 0 ) / 100;
-        p['LARGO'] = parseFloat( p['LARGO'] ?? 0 ) / 100;
-        p['PESO'] = parseFloat( p['PESO'] ?? 0 );
-        p['UDS./BULTO'] = parseFloat( p['UDS./BULTO'] ?? 1 );
-        p['EXCLUIR'] = !!parseFloat( p['EXCLUIR'] ?? 0 );
-
-        // Remove prefix and store
-        // const ogSku = p['CÓDIGO'];
-        // p['CÓDIGO'] = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
-
-        Data.sku[p['CÓDIGO']] = p;
+        // console.log(Data.sku)
     }
 
-    // console.log(Data.sku)
+    // MAP/CANTIDAD
+    {
+        const sheetName = workbook.SheetNames[1];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json( sheet, { raw: true } );
+
+        for ( const p of data )
+        {
+            const oldSku = p['old_sku'];
+            const newSku = p['new_sku'];
+
+            if ( !oldSku || !newSku )
+            {
+                continue;
+            }
+
+            Data.sku_map[oldSku.toString().trim()] = {
+                skus: newSku.trim().split( ',' ).map( s => s.trim() ),
+                quantity: parseInt( p['quantity'] ?? 1 )
+            };
+        }
+
+        // console.log(Data.sku_map)
+    }
 
     onLoad();
 } );

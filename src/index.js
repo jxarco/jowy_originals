@@ -11,12 +11,12 @@ import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import {
     LAL_SKU_MAPPINGS,
     PLATFORM_CLIENT_CODES,
-    SKU_MAPPING,
     CBL_RULES,
     ALWAYS_CBL
 } from './constants.js';
 import { WooCommerceClient } from './woocomerce.js';
 import * as Utils from './utils.js';
+import { Data } from './data.js';
 
 window.LX = LX;
 
@@ -503,7 +503,11 @@ const core = {
 
     mapSku( sku )
     {
-        return SKU_MAPPING[sku] ?? sku;
+        const mapData = Data.sku_map[ sku ];
+        const skus = mapData?.skus;
+        if( !mapData || skus.length > 1 ) return sku; // don't change by now if combined skus
+        // console.warn( `SKU mapped from ${sku} to ${skus[ 0 ]}` );
+        return skus[ 0 ];
     },
 
     mapCountry( country )
