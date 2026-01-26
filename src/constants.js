@@ -6,6 +6,23 @@ export const Constants = {
 
 export const NumberFormatter = new Intl.NumberFormat( 'es-ES', { style: 'currency', currency: 'EUR' } );
 
+export const CBL_RULES = [
+    { prefix: 'JW-DF20', max: 3 },
+    { prefix: 'JW-DT20', max: 3 },
+    { prefix: 'JW-DF25', max: 2 },
+    { prefix: 'JW-DT25', max: 2 },
+    { prefix: 'JW-DS25', max: 2 },
+    { prefix: 'JW-DF3',  max: 1 },
+    { prefix: 'JW-DF4',  max: 1 },
+    { prefix: 'JW-DT4',  max: 1 }
+];
+
+export const ALWAYS_CBL = [
+    'HG-AD24', 'HG-AD32', 'HG-AD40',
+    'HG-BPB02',
+    'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300'
+];
+
 export const SKU_MAPPING = {
     // Wrong and missing prefix
     'BER01G': 'BY-BER090G',

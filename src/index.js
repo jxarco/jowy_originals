@@ -8,7 +8,13 @@ import { SheinApp } from './apps/shein_app.js';
 import { TikTokApp } from './apps/tiktok_app.js';
 import { MiraviaApp } from './apps/miravia_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
-import { LAL_SKU_MAPPINGS, PLATFORM_CLIENT_CODES, SKU_MAPPING } from './constants.js';
+import {
+    LAL_SKU_MAPPINGS,
+    PLATFORM_CLIENT_CODES,
+    SKU_MAPPING,
+    CBL_RULES,
+    ALWAYS_CBL
+} from './constants.js';
 import { WooCommerceClient } from './woocomerce.js';
 import * as Utils from './utils.js';
 
@@ -481,15 +487,17 @@ const core = {
 
     getTransportForItem( sku, quantity )
     {
-        if ( ( sku.startsWith( 'JW-DF20' ) && quantity > 3 )
-            || ( sku.startsWith( 'JW-DT20' ) && quantity > 3 )
-            || ( sku.startsWith( 'JW-DF25' ) && quantity > 2 )
-            || ( sku.startsWith( 'JW-DT25' ) && quantity > 2 )
-            || ( sku.startsWith( 'JW-DS25' ) && quantity > 2 )
-            || ( sku.startsWith( 'JW-DF3' ) && quantity > 1 )
-            || ( sku.startsWith( 'JW-DF4' ) && quantity > 1 )
-            || ( sku.startsWith( 'JW-DT4' ) && quantity > 1 )
-            || [ 'HG-AD24', 'HG-AD32', 'HG-AD40', 'HG-BPB02', 'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300' ].includes( sku ) ) return 'CBL';
+        sku = this.mapSku( sku ); // force it
+
+        if ( ALWAYS_CBL.includes( sku ) )
+            return 'CBL';
+
+        for ( const rule of CBL_RULES )
+        {
+            if ( sku.startsWith( rule.prefix ) && quantity > rule.max )
+                return 'CBL';
+        }
+
         return 'SEUR';
     },
 

@@ -228,25 +228,31 @@ class MiraklApp extends BaseApp
                 spinner = new LX.Spinner();
                 loginButton.root.querySelector( 'button' ).prepend( spinner.root );
 
-                const r = await this.mkClient.authenticate( store, at );
-                if ( r.ok )
-                {
-                    dialog.close();
-
-                    LX.toast( 'Hecho!', `✅ Has iniciado sesión en ${store}`, { timeout: 5000, position: 'top-center' } );
-
-                    // Store in localStorage
-                    localStorage.setItem( vendor_lc + '_mirakl_access_token', at );
-
-                    if ( callback )
+                try {
+                    const r = await this.mkClient.authenticate( store, at );
+                    if ( r.ok )
                     {
-                        callback();
+                        dialog.close();
+
+                        LX.toast( 'Hecho!', `✅ Has iniciado sesión en ${store}`, { timeout: 5000, position: 'top-center' } );
+
+                        // Store in localStorage
+                        localStorage.setItem( vendor_lc + '_mirakl_access_token', at );
+
+                        if ( callback )
+                        {
+                            callback();
+                        }
+                    }
+                    else
+                    {
+                        spinner.destroy();
+                        LX.emitSignal( '@login_errors', '❌ Credenciales no válidas' );
                     }
                 }
-                else
-                {
+                catch( err ) {
                     spinner.destroy();
-                    LX.emitSignal( '@login_errors', '❌ Credenciales no válidas' );
+                    LX.emitSignal( '@login_errors', `❌ ${err}` );
                 }
             }, { buttonClass: 'primary flex flex-row justify-center gap-2', skipReset: true } );
             p.addSeparator();
@@ -417,8 +423,7 @@ class MiraklApp extends BaseApp
         let tableData = [];
         data.forEach( ( row, index ) => {
             const items = row['order_lines'];
-            for ( let item of items )
-            {
+            items.forEach( ( item, itemIndex ) => {
                 const lRow = [];
 
                 for ( let c of columnData )
@@ -431,11 +436,11 @@ class MiraklApp extends BaseApp
                         if ( orderNumbers.has( orderNumber ) )
                         {
                             const val = orderNumbers.get( orderNumber );
-                            orderNumbers.set( orderNumber, [ ...val, index ] );
+                            orderNumbers.set( orderNumber, [ ...val, index + itemIndex ] );
                         }
                         else
                         {
-                            orderNumbers.set( orderNumber, [ index ] );
+                            orderNumbers.set( orderNumber, [ index + itemIndex ] );
                         }
                     }
 
@@ -444,7 +449,7 @@ class MiraklApp extends BaseApp
                 }
 
                 tableData.push( lRow );
-            }
+            } );
         } );
 
         const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
@@ -465,6 +470,7 @@ class MiraklApp extends BaseApp
             finalRow[0] += trail; // Add REF trail
             finalRow[0] = `<span title="${finalRow[0]}">${finalRow[0]}</span>`;
             finalRow[1] = 1; // Set always 1 UNIT for multiple item orders
+            finalRow[2] = 'CBL'; // Set always CBL for multiple item orders
             finalRow[5] = 'Mismo pedido'; // Add NOTES
         }
 
@@ -590,33 +596,37 @@ class MiraklApp extends BaseApp
         const tableData = [];
         data.forEach( ( row ) => {
             const items = row['order_lines'];
-            for ( let item of items )
+
+            // Discard multiple item orders -> CBL
+            if( items.length > 1 )
             {
-                // discard orders sent with CBL
-                const sku = this.core.mapSku( item['offer_sku'] );
-                const transport = this.core.getTransportForItem( sku, item['quantity'] );
-                if ( transport === 'CBL' ) continue;
-
-                const lRow = [];
-
-                for ( let c of TRACKING_COL_DATA )
-                {
-                    const ogColName = c[0];
-                    if ( ogColName.includes( '+' ) )
-                    {
-                        const tks = ogColName.split( '+' );
-                        lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
-                    }
-                    else
-                    {
-                        const fn = c[2] ?? ( ( str ) => str );
-                        const val = fn( item[ogColName] ?? ( row[ogColName] ?? '?' ), row, item, trackingData, this );
-                        lRow.push( val );
-                    }
-                }
-
-                tableData.push( lRow );
+                return;
             }
+
+            const item = items[0];
+            // discard single item orders sent with CBL
+            const transport = this.core.getTransportForItem( item['offer_sku'], item['quantity'] );
+            if ( transport === 'CBL' ) return;
+
+            const lRow = [];
+
+            for ( let c of TRACKING_COL_DATA )
+            {
+                const ogColName = c[0];
+                if ( ogColName.includes( '+' ) )
+                {
+                    const tks = ogColName.split( '+' );
+                    lRow.push( `${row[tks[0]]}${row[tks[1]] ? ` ${row[tks[1]]}` : ''}` );
+                }
+                else
+                {
+                    const fn = c[2] ?? ( ( str ) => str );
+                    const val = fn( item[ogColName] ?? ( row[ogColName] ?? '?' ), row, item, trackingData, this );
+                    lRow.push( val );
+                }
+            }
+
+            tableData.push( lRow );
         } );
 
         const tableWidget = new LX.Table( null, {
@@ -756,13 +766,7 @@ class MiraklApp extends BaseApp
         let rows = [];
         currentOrdersData.forEach( ( row, index ) => {
             const items = row['order_lines'];
-            for ( let item of items )
-            {
-                // discard orders sent with CBL
-                const sku = this.core.mapSku( item['offer_sku'] );
-                const transport = this.core.getTransportForItem( sku, item['quantity'] );
-                if ( transport === 'CBL' ) continue;
-
+            items.forEach( ( item, itemIndex ) => {
                 const lRow = [];
 
                 for ( let c of columnData )
@@ -775,11 +779,11 @@ class MiraklApp extends BaseApp
                         if ( orderNumbers.has( orderNumber ) )
                         {
                             const val = orderNumbers.get( orderNumber );
-                            orderNumbers.set( orderNumber, [ ...val, index ] );
+                            orderNumbers.set( orderNumber, [ ...val, index + itemIndex ] );
                         }
                         else
                         {
-                            orderNumbers.set( orderNumber, [ index ] );
+                            orderNumbers.set( orderNumber, [ index + itemIndex ] );
                         }
                     }
 
@@ -812,7 +816,7 @@ class MiraklApp extends BaseApp
                 }
 
                 rows.push( lRow );
-            }
+            } );
         } );
 
         rows = rows.filter( ( r ) => r !== undefined );
@@ -847,11 +851,16 @@ class MiraklApp extends BaseApp
 
         // Filter empty, remove tmp quantity from ROW data, and sort by sku
         rows = rows
-            .filter( ( r ) => r !== undefined )
+            .filter( ( r ) => r !== undefined && !r[skuIdx].includes( '+' ) ) // Remove multiple item orders -> CBL
+            .filter( ( r ) => {
+                const q = r.at( -1 );
+                const transport = this.core.getTransportForItem( r[skuIdx], q );
+                return transport === 'SEUR';
+            } ) // Remove CBL orders
             .map( ( r ) => {
-                if ( !r[skuIdx].includes( '+' ) )
+                const q = r.at( -1 );
+                if ( q > 1 )
                 {
-                    const q = r.at( -1 );
                     r[skuIdx] += ` x ${q}`;
                 }
                 return r.slice( 0, -1 );
@@ -862,11 +871,23 @@ class MiraklApp extends BaseApp
                 return sku_a.localeCompare( sku_b );
             } );
 
+        if( !rows.length )
+        {
+            LX.toast( 'Error', '❌ Nada que exportar!', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
         this.core.exportXLSXData( [ data, ...rows ], filename, ignoreErrors );
     }
 
     exportSEURTrackings( fixedData, ignoreErrors )
     {
+        if( !this.lastShownSeurTrackingsData.length )
+        {
+            LX.toast( 'Error', '❌ Nada que exportar!', { timeout: -1, position: 'top-center' } );
+            return;
+        }
+
         const filename = `NUMERODEGUIA_${this.vendor.toUpperCase()}.xlsx`;
         const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
 
