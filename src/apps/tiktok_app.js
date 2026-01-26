@@ -348,6 +348,7 @@ class TikTokApp extends BaseApp
             // If same order or more than 1 unit, do not merge items
             if ( q > 1 )
             {
+                row[5] = 'Mismo pedido';
                 listSKU.push( row );
                 continue;
             }
