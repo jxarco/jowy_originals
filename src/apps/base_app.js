@@ -22,6 +22,12 @@ class BaseApp
         this.currentDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
         this.albNumber = -1;
         this.countries = [];
+        this.countryTransportCostPct = {
+            'ESPAÑA': 1e10,
+            'PORTUGAL': 1e10,
+            'FRANCIA': 1e10,
+            'ITALIA': 1e10
+        };
 
         this._trackingSyncErrors = [];
     }

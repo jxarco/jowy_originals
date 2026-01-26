@@ -61,12 +61,6 @@ const core = {
         'FRANCIA': 1.2,
         'ITALIA': 1.22
     },
-    countryTransportCostPct: {
-        'ESPAÑA': 0.303,
-        'PORTUGAL': 0.32,
-        'FRANCIA': 0.32,
-        'ITALIA': 0.32
-    },
     orderStatus: {
         'pending': 'Pendiente de pago',
         'processing': 'Procesando',

@@ -1,6 +1,6 @@
 import { LX } from 'lexgui';
 import { BaseApp } from './base_app.js';
-import { Constants, NumberFormatter } from '../constants.js';
+import { Constants } from '../constants.js';
 import { Data } from '../data.js';
 import * as Utils from '../utils.js';
 
@@ -76,6 +76,10 @@ class MiraviaApp extends BaseApp
         this.albaranArea = albaranArea;
 
         this.countries = [ 'ESPAÑA', 'PORTUGAL', 'FRANCIA', 'ITALIA' ];
+        this.countryTransportCostPct['ESPAÑA'] = 0.303;
+        this.countryTransportCostPct['PORTUGAL'] = 0.32;
+        this.countryTransportCostPct['FRANCIA'] = 0.32;
+        this.countryTransportCostPct['ITALIA'] = 0.32;
 
         this.clear();
     }
@@ -405,12 +409,10 @@ class MiraviaApp extends BaseApp
                 [ 'IVA', null, ( str, row ) => {
                     const priceWithoutIVA = getPriceWithoutIVA( row );
                     const totalIva = parseFloat( row[PVP_ATTR] ) - priceWithoutIVA;
-                    const formatted = NumberFormatter.format( totalIva );
-                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                    return LX.round( totalIva );
                 } ],
                 [ PVP_ATTR, 'PVP', ( str, row ) => {
-                    const formatted = NumberFormatter.format( str );
-                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                    return LX.round( parseFloat( str ) );
                 } ]
             ];
 
@@ -454,11 +456,9 @@ class MiraviaApp extends BaseApp
             this.fiscalTabs.add( 'LAL', LALContainer, { selected: ( selectedTab === 'LAL' ) } );
 
             const getProductPrice = ( row ) => {
-                const totalFormatted = NumberFormatter.format( row['Total'] );
-                const total = parseFloat( totalFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                const total = LX.round( parseFloat( row['Total'] ) );
                 const productPrice = total / row['Cantidad'];
-                const productPriceFormatted = NumberFormatter.format( productPrice );
-                return parseFloat( productPriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                return LX.round( productPrice );
             };
 
             this.LAL_COLS = [
@@ -476,8 +476,7 @@ class MiraviaApp extends BaseApp
                 [ 'Base', null, ( str, row ) => {
                     const productPrice = getProductPrice( row );
                     const basePrice = productPrice * row['Cantidad'];
-                    const basePriceFormatted = NumberFormatter.format( basePrice );
-                    return parseFloat( basePriceFormatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                    return LX.round( basePrice );
                 } ], // 'K',
                 [ 'T', null, () => 0 ], // 'L',
                 [ '' ], // 'M',
@@ -500,8 +499,7 @@ class MiraviaApp extends BaseApp
                 [ '' ], // 'AD'
                 [ '' ], // 'AE'
                 [ 'Total', null, ( str ) => {
-                    const formatted = NumberFormatter.format( str );
-                    return parseFloat( formatted.replace( '€', '' ).replace( ',', '.' ).trim() );
+                    return LX.round( parseFloat( str ) );
                 } ], // 'AF'
                 [ 'Cantidad', 'CantidadR' ] // 'AG'
             ];
@@ -520,7 +518,7 @@ class MiraviaApp extends BaseApp
                     const country = row[PAIS_ATTR];
                     const skuPriceFactor = skuObj.price;
                     const priceWithoutIVA = getPriceWithoutIVA( row ) * skuPriceFactor;
-                    const transportPrice = this.core.countryTransportCostPct[country];
+                    const transportPrice = this.countryTransportCostPct[country];
                     const totalProductTransport = LX.round( priceWithoutIVA * transportPrice );
                     const productTotal = LX.round( priceWithoutIVA - totalProductTransport );
 
