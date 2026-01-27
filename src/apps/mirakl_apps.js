@@ -702,7 +702,7 @@ class MiraklApp extends BaseApp
                     pBottom.addButton( null, 'Ignorar', () => {
                         dialog.close();
                         this.exportSEUR( true );
-                    }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
+                    }, { width: '50%', buttonClass: 'destructive' } );
                     pBottom.addButton( null, 'Exportar', () => {
                         dialog.close();
                         this.exportSEUR( false, fixedData );
@@ -867,7 +867,7 @@ class MiraklApp extends BaseApp
             return;
         }
 
-        const filename = `NUMERODEGUIA_${this.vendor.toUpperCase()}.xlsx`;
+        const filename = `NUMERODEGUIA_SEUR_${this.vendor.toUpperCase()}_${Utils.getTodayStringDate()}.xlsx`;
         const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
 
         if ( !ignoreErrors && this._trackingSyncErrors.length )
@@ -898,7 +898,7 @@ class MiraklApp extends BaseApp
                 pBottom.addButton( null, 'Ignorar', () => {
                     dialog.close();
                     this.exportSEURTrackings( data, true );
-                }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
+                }, { width: '50%', buttonClass: 'destructive' } );
                 pBottom.addButton( null, 'Exportar', () => {
                     dialog.close();
                     this.exportSEURTrackings( data, true );

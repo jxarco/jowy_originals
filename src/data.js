@@ -273,7 +273,7 @@ LX.requestBinary( 'data/products.xlsx', ( binary ) => {
             };
         }
 
-        console.log(Data.sku_map)
+        // console.log(Data.sku_map)
     }
 
     onLoad();

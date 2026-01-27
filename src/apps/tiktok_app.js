@@ -487,7 +487,7 @@ class TikTokApp extends BaseApp
                     pBottom.addButton( null, 'Ignorar', () => {
                         dialog.close();
                         this.exportSEUR( true );
-                    }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
+                    }, { width: '50%', buttonClass: 'destructive' } );
                     pBottom.addButton( null, 'Exportar', () => {
                         dialog.close();
                         this.exportSEUR( false, fixedData );
@@ -663,7 +663,7 @@ class TikTokApp extends BaseApp
                 pBottom.addButton( null, 'Ignorar', () => {
                     dialog.close();
                     this.exportSEURTrackings( data, true );
-                }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
+                }, { width: '50%', buttonClass: 'destructive' } );
                 pBottom.addButton( null, 'Exportar', () => {
                     dialog.close();
                     this.exportSEURTrackings( data, true );

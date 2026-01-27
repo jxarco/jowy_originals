@@ -786,7 +786,7 @@ class MiraviaApp extends BaseApp
         this.showOrdersList( [] );
         this.showStockList( [] );
         // this.showTrackingList( [] );
-        // this.showAlbaranRelatedInfo( [], 0 );
+        this.showAlbaranRelatedInfo( [], 0 );
     }
 }
 

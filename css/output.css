@@ -406,9 +406,6 @@
   .bg-card {
     background-color: var(--color-card);
   }
-  .bg-destructive {
-    background-color: var(--color-destructive);
-  }
   .bg-inherit {
     background-color: inherit;
   }
@@ -548,9 +545,6 @@
   }
   .text-success {
     color: var(--color-success);
-  }
-  .text-white {
-    color: var(--color-white);
   }
   .text-white\! {
     color: var(--color-white) !important;
