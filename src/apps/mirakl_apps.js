@@ -897,7 +897,7 @@ class MiraklApp extends BaseApp
                 pBottom.sameLine( 2 );
                 pBottom.addButton( null, 'Ignorar', () => {
                     dialog.close();
-                    this.exportSEUR( true );
+                    this.exportSEURTrackings( data, true );
                 }, { width: '50%', buttonClass: 'bg-destructive text-white' } );
                 pBottom.addButton( null, 'Exportar', () => {
                     dialog.close();
