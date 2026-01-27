@@ -171,6 +171,8 @@ class SheinApp extends BaseApp
             } );
         }
 
+        console.log(fileData);
+
         this.showOrdersList( fileData );
         this.showStockList( fileData );
 

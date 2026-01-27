@@ -208,7 +208,9 @@ class TikTokApp extends BaseApp
         
         Utils.clearArea( this.ordersArea );
 
-        const tableWidget = this.getOrdersListTable( data, ORDERS_DATA );
+        const tableWidget = this.getOrdersListTable( data, ORDERS_DATA, {
+            centered: [ 'Cantidad', 'Bultos' ]
+        } );
         this.ordersArea.attach( tableWidget );
     }
 

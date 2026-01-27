@@ -57,7 +57,7 @@ class BaseApp
         this._packUnits = {};
     }
 
-    getOrdersListTable( data, columnData )
+    getOrdersListTable( data, columnData, options = {} )
     {
         const tableData = data.map( ( row ) => {
             const lRow = [];
@@ -87,12 +87,13 @@ class BaseApp
         }, {
             selectable: true,
             toggleColumns: true,
-            centered: [ BaseApp.ORDER_ATTR, BaseApp.SKU_ATTR ],
+            centered: [ BaseApp.ORDER_ATTR, BaseApp.SKU_ATTR, ...( options.centered ?? [] ) ],
             filter: BaseApp.SKU_ATTR,
             customFilters: [
                 { name: BaseApp.PAIS_ATTR, options: this.countries }
             ],
-            hiddenColumns: [ BaseApp.ART_ID_ATTR, BaseApp.CP_ATTR, 'Provincia', 'Dirección', 'Número de Teléfono', 'Correo electrónico de usuario' ]
+            hiddenColumns: [ BaseApp.ART_ID_ATTR, BaseApp.CP_ATTR, 
+                'Provincia', 'Dirección', 'Número de Teléfono', 'Correo electrónico de usuario', ...( options.hiddenColumns ?? [] ) ]
         } );
 
         this.lastOrdersData = data;
