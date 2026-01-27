@@ -23,9 +23,8 @@ const VENDOR_TEMPLATES = {
         [ 'product_title', 'Nombre del producto' ],
         [ 'quantity', 'Cantidad' ],
         [ 'Bultos', null, ( row, i ) => {
-            const ogSku = i[SKU_ATTR];
-            const q = core.getIndividualQuantityPerPack( ogSku, parseInt( i['quantity'] ) );
-            const sku = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
+            const sku = i[SKU_ATTR];
+            const q = parseInt( i['quantity'] ) * i[BaseApp.PACK_U_ATTR];
             const udsPerPackage = Data.sku[sku]?.['UDS./BULTO'];
             if ( udsPerPackage === undefined ) return 'SKU no encontrado';
             return Math.ceil( q / udsPerPackage );
@@ -295,8 +294,15 @@ class MiraklApp extends BaseApp
                 {
                     // Map SKUs and Country once on load data
                     const ogSku = item[SKU_ATTR];
-                    item[SKU_ATTR] = this.core.mapSku( ogSku );
-                    if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${row[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
+                    if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
+                    else {
+                        
+                        item[SKU_ATTR + '_OLD'] = ogSku; // Store old sku in case it's necessary
+                        const skuData = this.core.mapSku( ogSku );
+                        item[SKU_ATTR] = skuData.sku; // replace with new sku
+                        this._packUnits[skuData.sku] = skuData.quantity; // save pack quantity
+                        item[BaseApp.PACK_U_ATTR] = skuData.quantity; // store also in row
+                    }
 
                     const lRow = [];
 
@@ -509,7 +515,7 @@ class MiraklApp extends BaseApp
                 continue;
             }
 
-            row[1] = this.core.getIndividualQuantityPerPack( sku, parseInt( row[1] ) );
+            row[1] = parseInt( row[1] ) * this.getPackUnits( sku );
         }
 
         // console.log(tableData)
@@ -921,6 +927,8 @@ class MiraklApp extends BaseApp
 
     clear()
     {
+        super.clear();
+
         this.showOrders( this.vendor.toLowerCase(), true );
         this.showStockList( [] );
         this.showTrackingList( [] );

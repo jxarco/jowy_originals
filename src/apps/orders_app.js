@@ -131,7 +131,7 @@ class OrdersApp extends BaseApp
                 const d = new Date( r['date_created'] );
                 return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
             } ],
-            [ 'sku', 'REFERENCIA', ( r, i ) => core.mapSku( i['sku'] ) ],
+            [ 'sku', 'REFERENCIA', ( r, i ) => core.mapSku( i['sku'] ).sku ],
             // [ "desc", "DESCRIPCIÓN", (r) => "" ],
             [ 'quantity', 'UNIDADES', ( r, i ) => i['quantity'] ],
             [ 'transport', 'TRANSPORTE', ( r, i ) => {
@@ -141,7 +141,7 @@ class OrdersApp extends BaseApp
                     return 'PENDIENTE DE RECOGIDA';
                 }
                 const q = i['quantity'];
-                const sku = core.mapSku( i['sku'] );
+                const sku = core.mapSku( i['sku'] ).sku;
                 if ( ( sku.startsWith( 'JW-D' ) && q > 2 )
                     || sku.startsWith( 'JW-RT' )
                     || sku.startsWith( 'HG-AD' ) ) return 'CBL';
@@ -244,6 +244,8 @@ class OrdersApp extends BaseApp
 
     clear()
     {
+        super.clear();
+
         delete this.orders;
         this.updateOrders();
     }

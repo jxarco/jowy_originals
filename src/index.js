@@ -480,7 +480,7 @@ const core = {
 
     getTransportForItem( sku, quantity )
     {
-        sku = this.mapSku( sku ); // force it
+        sku = this.mapSku( sku ).sku; // .sku bc it also contains quantity (for packs)
 
         if ( ALWAYS_CBL.includes( sku ) )
             return 'CBL';
@@ -498,9 +498,12 @@ const core = {
     {
         const mapData = Data.sku_map[ sku ];
         const skus = mapData?.skus;
-        if( !skus || skus.length > 1 ) return sku; // don't change by now if combined skus
+
+        // don't change by now if combined skus
+        if( !skus || skus.length > 1 ) return { sku, quantity: mapData?.quantity ?? 1 }; 
+
         // console.warn( `SKU mapped from ${sku} to ${skus[ 0 ]}` );
-        return skus[ 0 ];
+        return { sku: skus[ 0 ], quantity: mapData?.quantity ?? 1 };
     },
 
     mapCountry( country )
@@ -538,21 +541,6 @@ const core = {
                 dialog.destroy();
             } } );
         }, { modal: true } );
-    },
-
-    getIndividualQuantityPerPack( sku, quantity )
-    {
-        if ( sku.startsWith( 'JW-T60' ) )
-        {
-            return quantity * 4;
-        }
-
-        if ( [ 'HG-CD020', 'HG-CD040', 'HG-CD050', 'HG-CD060', 'HG-CD080', 'HG-CD100' ].includes( sku ) )
-        {
-            return quantity * 2;
-        }
-
-        return quantity;
     },
 
     getClientCode( platform, country, year )

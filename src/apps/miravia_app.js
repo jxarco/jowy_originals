@@ -95,10 +95,17 @@ class MiraviaApp extends BaseApp
 
         // Map SKUs and Country once on load data
         fileData.forEach( ( r ) => {
+            // Process SKU
             const ogSku = r[SKU_ATTR];
-            r[SKU_ATTR] = this.core.mapSku( ogSku );
             if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
-            // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
+            else {
+                
+                r[SKU_ATTR + '_OLD'] = ogSku; // Store old sku in case it's necessary
+                const skuData = this.core.mapSku( ogSku );
+                r[SKU_ATTR] = skuData.sku; // replace with new sku
+                this._packUnits[skuData.sku] = skuData.quantity; // save pack quantity
+                r[BaseApp.PACK_U_ATTR] = skuData.quantity; // store also in row
+            }
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
             // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
@@ -241,7 +248,7 @@ class MiraviaApp extends BaseApp
                 continue;
             }
 
-            row[1] = this.core.getIndividualQuantityPerPack( sku, parseInt( row[1] ) );
+            row[1] = parseInt( row[1] ) * this.getPackUnits( sku );
         }
 
         // for the skus that contain '+', change the sku to sku x quantity in each of them
@@ -309,10 +316,17 @@ class MiraviaApp extends BaseApp
 
         // Map SKUs and Country once on load data
         data.forEach( ( r ) => {
+            // Process SKU
             const ogSku = r[SKU_ATTR];
-            r[SKU_ATTR] = this.core.mapSku( ogSku );
             if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
-            // if( ogSku !== r[SKU_ATTR] ) console.warn( `SKU mapped from ${ogSku} to ${r[SKU_ATTR]}` );
+            else {
+                
+                r[SKU_ATTR + '_OLD'] = ogSku; // Store old sku in case it's necessary
+                const skuData = this.core.mapSku( ogSku );
+                r[SKU_ATTR] = skuData.sku; // replace with new sku
+                this._packUnits[skuData.sku] = skuData.quantity; // save pack quantity
+                r[BaseApp.PACK_U_ATTR] = skuData.quantity; // store also in row
+            }
             const ogCountry = r[PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
             // if( ogCountry !== r[PAIS_ATTR] ) console.warn( `Country mapped from ${ogCountry} to ${r[PAIS_ATTR]}` );
@@ -400,7 +414,7 @@ class MiraviaApp extends BaseApp
                 [ SKU_ATTR, 'REF' ],
                 [ 'CANTIDAD', null, ( str, row ) => {
                     const sku = row[SKU_ATTR];
-                    return core.getIndividualQuantityPerPack( sku, 1 );
+                    return this.getPackUnits( sku );
                 } ],
                 [ 'PRECIO SIN IVA', null, ( str, row ) => getPriceWithoutIVA( row ) ],
                 [ 'IVA', null, ( str, row ) => {
@@ -509,9 +523,9 @@ class MiraviaApp extends BaseApp
                 const skus = this.core.getIndividualSkusPerPack( sku );
                 // console.log(skus);
                 skus.forEach( ( skuObj ) => {
-                    const mappedSku = this.core.mapSku( skuObj.sku ); // mapping here shouldn't be necessary
-                    const prefix = mappedSku.substring( 0, mappedSku.indexOf( '-' ) );
-                    const totalQuantity = this.core.getIndividualQuantityPerPack( mappedSku, 1 );
+                    const itemSku = skuObj.sku;
+                    const prefix = itemSku.substring( 0, itemSku.indexOf( '-' ) );
+                    const totalQuantity = this.getPackUnits( itemSku );
                     const country = row[PAIS_ATTR];
                     const skuPriceFactor = skuObj.price;
                     const priceWithoutIVA = getPriceWithoutIVA( row ) * skuPriceFactor;
@@ -519,12 +533,12 @@ class MiraviaApp extends BaseApp
                     const totalProductTransport = LX.round( priceWithoutIVA * transportPrice );
                     const productTotal = LX.round( priceWithoutIVA - totalProductTransport );
 
-                    let skuIdx = `${mappedSku}_${country}`;
+                    let skuIdx = `${itemSku}_${country}`;
                     if ( !skuMap[skuIdx] )
                     {
-                        const product = Data.sku[mappedSku];
+                        const product = Data.sku[itemSku];
                         skuMap[skuIdx] = {
-                            'Artículo': mappedSku,
+                            'Artículo': itemSku,
                             'Descripción': product?.['DESCRIPCIÓN'] ?? '',
                             'Cantidad': totalQuantity,
                             'Total': productTotal,
@@ -782,6 +796,8 @@ class MiraviaApp extends BaseApp
 
     clear()
     {
+        super.clear();
+
         delete this.lastOrdersData;
         this.showOrdersList( [] );
         this.showStockList( [] );

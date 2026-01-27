@@ -10,6 +10,7 @@ class BaseApp
     static ART_NAME_ATTR = 'Nombre del producto';
     static CLIENT_NAME_ATTR = 'Nombre de usuario completo';
     static CP_ATTR = 'Código Postal';
+    static PACK_U_ATTR = 'Pack Units';
 
     constructor( core, tool )
     {
@@ -31,6 +32,7 @@ class BaseApp
         };
 
         this._trackingSyncErrors = [];
+        this._packUnits = {};
     }
 
     open( params )
@@ -51,6 +53,8 @@ class BaseApp
 
     clear()
     {
+        this._trackingSyncErrors = [];
+        this._packUnits = {};
     }
 
     getOrdersListTable( data, columnData )
@@ -94,6 +98,11 @@ class BaseApp
         this.lastOrdersData = data;
 
         return tableWidget;
+    }
+
+    getPackUnits( sku )
+    {
+        return this._packUnits[sku] ?? 1;
     }
 
     exportIVA()

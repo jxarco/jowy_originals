@@ -1128,6 +1128,8 @@ class CblTrackingApp extends BaseApp
 
     clear()
     {
+        super.clear();
+
         this.updateLists();
     }
 }
