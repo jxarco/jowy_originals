@@ -9,7 +9,6 @@ import { TikTokApp } from './apps/tiktok_app.js';
 import { MiraviaApp } from './apps/miravia_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import {
-    LAL_SKU_MAPPINGS,
     PLATFORM_CLIENT_CODES,
     CBL_RULES,
     ALWAYS_CBL
@@ -499,7 +498,7 @@ const core = {
     {
         const mapData = Data.sku_map[ sku ];
         const skus = mapData?.skus;
-        if( !mapData || skus.length > 1 ) return sku; // don't change by now if combined skus
+        if( !skus || skus.length > 1 ) return sku; // don't change by now if combined skus
         // console.warn( `SKU mapped from ${sku} to ${skus[ 0 ]}` );
         return skus[ 0 ];
     },
@@ -516,7 +515,13 @@ const core = {
 
     getIndividualSkusPerPack( sku )
     {
-        return LAL_SKU_MAPPINGS[sku] ?? [ { sku, price: 1 } ];
+        const d = Data.sku_map[sku];
+        const skus = d?.skus;
+        if( !skus ) return [ { sku, price: 1 } ];
+
+        return d.skus.map( (v, i) => {
+            return { sku: v, price: d.prices[i] };
+        } )
     },
 
     openPrompt( label, title, callback, icon )
@@ -893,5 +898,10 @@ core.data['bathby'].template = ( id, url, transport ) => {
 
     core.init( menubar.siblingArea );
 }
+
+// const url = "https://scrape.abstractapi.com/v1/?api_key=2a401a83e18b45b7bba20beddcb9ad6e&url=https://news.ycombinator.com"
+// Utils.request({ url, success: (d) => {
+//     console.log(d)
+// } });
 
 window.core = core;

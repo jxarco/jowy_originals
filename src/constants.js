@@ -23,45 +23,6 @@ export const ALWAYS_CBL = [
     'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300'
 ];
 
-export const LAL_SKU_MAPPINGS = {
-    'BY-SUP01-FBT05V': [
-        { sku: 'BY-SUP01', price: 0.55 },
-        { sku: 'BY-FBT05V', price: 0.45 }
-    ],
-    'BY-SUP01-FBT05P': [
-        { sku: 'BY-SUP01', price: 0.55 },
-        { sku: 'BY-FBT05P', price: 0.45 }
-    ],
-    'BY-SUP01-FBT05G': [
-        { sku: 'BY-SUP01', price: 0.55 },
-        { sku: 'BY-FBT05G', price: 0.45 }
-    ],
-    'BY-SUP01-FBT05B': [
-        { sku: 'BY-SUP01', price: 0.55 },
-        { sku: 'BY-FBT05B', price: 0.45 }
-    ],
-    'BY-SBW01P/B': [
-        { sku: 'BY-SBW01P', price: 0.50 },
-        { sku: 'BY-SBW01B', price: 0.50 }
-    ],
-    'BY-SBW01GN/BW': [
-        { sku: 'BY-SBW01V', price: 0.50 },
-        { sku: 'BY-SBW01BW', price: 0.50 }
-    ],
-    'BY-SBW01W/G': [
-        { sku: 'BY-SBW01W', price: 0.50 },
-        { sku: 'BY-SBW01G', price: 0.50 }
-    ],
-    'BY-BTT01P1': [
-        { sku: 'BY-BTT01P', price: 0.95 },
-        { sku: 'BY-BCS02', price: 0.05 }
-    ],
-    'BY-BTT01G1': [
-        { sku: 'BY-BTT01G', price: 0.95 },
-        { sku: 'BY-BCS02', price: 0.05 }
-    ]
-};
-
 export const PLATFORM_CLIENT_CODES = {
     'SHEIN_ESPAÑA_2025': '504',
     'SHEIN_PORTUGAL_2025': '505',

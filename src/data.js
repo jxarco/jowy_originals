@@ -217,7 +217,7 @@ LX.requestBinary( 'data/seur.xlsx', ( binary ) => {
 
 LX.requestBinary( 'data/products.xlsx', ( binary ) => {
     const workbook = XLSX.read( binary, { type: 'binary' } );
-    
+
     // MEDIDAS
     {
         const sheetName = workbook.SheetNames[0];
@@ -249,7 +249,7 @@ LX.requestBinary( 'data/products.xlsx', ( binary ) => {
         // console.log(Data.sku)
     }
 
-    // MAP/CANTIDAD
+    // SKU MAP
     {
         const sheetName = workbook.SheetNames[1];
         const sheet = workbook.Sheets[sheetName];
@@ -258,23 +258,27 @@ LX.requestBinary( 'data/products.xlsx', ( binary ) => {
         for ( const p of data )
         {
             const oldSku = p['old_sku'];
-            const newSku = p['new_sku'];
-
-            if ( !oldSku || !newSku )
+            if ( !oldSku )
             {
                 continue;
             }
 
+            const newSku = p['new_sku'];
+            const priceDistribution = p['price_distr'];
+
             Data.sku_map[oldSku.toString().trim()] = {
-                skus: newSku.trim().split( ',' ).map( s => s.trim() ),
+                skus: newSku ? newSku.trim().split( ',' ).map( s => s.trim() ) : undefined,
+                prices: priceDistribution ? priceDistribution.trim().split( ',' ).map( s => parseFloat( s.trim() ) ) : undefined,
                 quantity: parseInt( p['quantity'] ?? 1 )
             };
         }
 
-        // console.log(Data.sku_map)
+        console.log(Data.sku_map)
     }
 
     onLoad();
 } );
+
+window.Data = Data;
 
 export { Data };
