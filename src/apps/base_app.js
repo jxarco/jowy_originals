@@ -111,10 +111,10 @@ class BaseApp
         const weekN = Utils.getWeekNumber( Utils.convertDateDMYtoMDY( this.currentDate ) );
         const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
         const sheets = this.countries.map( ( c ) => {
-            const filteredRows = LX.deepCopy( this.lastShownSeurIVAData )
+            const filteredRows = LX.deepCopy( this.lastShownIVAData )
                 .filter( ( row ) => ( row[0] === c ) )
                 .map( ( row ) => row.slice( 1 ) );
-            const data = [ LX.deepCopy( this.lastSeurIVAColumnData ).slice( 1 ), ...filteredRows ];
+            const data = [ LX.deepCopy( this.lastIVAColumnData ).slice( 1 ), ...filteredRows ];
             return this.core.createXLSXSheet( data );
         } );
 
@@ -129,7 +129,7 @@ class BaseApp
         } ).slice( 1 );
 
         const filename = `LAL.xlsx`;
-        const filteredRows = LX.deepCopy( this.lastShownSeurLALData )
+        const filteredRows = LX.deepCopy( this.lastShownLALData )
             .filter( ( row ) => ( row[0] === country ) )
             .map( ( row, index ) => {
                 const m = row.slice( 1 );
@@ -157,7 +157,7 @@ class BaseApp
         } ).slice( 1 );
 
         const filename = `ALB.xlsx`;
-        const filteredRows = LX.deepCopy( this.lastShownSeurALBData )
+        const filteredRows = LX.deepCopy( this.lastShownALBData )
             .filter( ( row ) => ( row[0] === country ) )
             .map( ( row, index ) => {
                 const m = row.slice( 1 );

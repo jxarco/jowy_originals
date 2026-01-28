@@ -84,18 +84,18 @@ class MiraviaApp extends BaseApp
         this.clear();
     }
 
-    openData( fileData )
+    openData( data )
     {
-        if ( !fileData?.length )
+        if ( !data?.length )
         {
             return;
         }
 
-        console.log("miravia", fileData)
+        // Remove "ready to ship" / orders that have already been processed
+        data = data.filter( r => r['Estado'] === 'pending' );
 
         // Map SKUs and Country once on load data
-        fileData.forEach( ( r ) => {
-            // Process SKU
+        data.forEach( ( r ) => {
             const ogSku = r[SKU_ATTR];
             if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
             else {
@@ -115,16 +115,16 @@ class MiraviaApp extends BaseApp
         } );
 
         // Sort by ref once
-        {
-            fileData = fileData.sort( ( a, b ) => {
-                const sku_a = a[SKU_ATTR] ?? '?';
-                const sku_b = b[SKU_ATTR] ?? '?';
-                return sku_a.localeCompare( sku_b );
-            } );
-        }
+        data = data.sort( ( a, b ) => {
+            const sku_a = a[SKU_ATTR] ?? '?';
+            const sku_b = b[SKU_ATTR] ?? '?';
+            return sku_a.localeCompare( sku_b );
+        } );
 
-        this.showOrdersList( fileData );
-        this.showStockList( fileData );
+        console.log("miravia", data)
+
+        this.showOrdersList( data );
+        this.showStockList( data );
     }
 
     showOrdersList( data )
@@ -148,7 +148,7 @@ class MiraviaApp extends BaseApp
         let columnData = [
             [ SKU_ATTR ],
             [ 'Unidades', null ],
-            [ 'Transporte', null, () => 'SEUR' ],
+            [ 'Transporte', null, () => 'CORREOS EXPRÉS' ],
             [ 'Plataforma', null, ( str, row ) => {
                 const oN = row[ORDER_ATTR];
                 if( oN.length === 16 ) return 'ALIEXPRESS';
@@ -314,9 +314,11 @@ class MiraviaApp extends BaseApp
 
         data = data ?? this.lastOrdersData;
 
+        // Remove "ready to ship" / orders that have already been processed
+        data = data.filter( r => r['Estado'] === 'pending' );
+
         // Map SKUs and Country once on load data
         data.forEach( ( r ) => {
-            // Process SKU
             const ogSku = r[SKU_ATTR];
             if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
             else {
@@ -457,8 +459,8 @@ class MiraviaApp extends BaseApp
 
             IVAContainer.appendChild( tableWidget.root );
 
-            this.lastSeurIVAColumnData = tableWidget.data.head;
-            this.lastShownSeurIVAData = tableWidget.data.body;
+            this.lastIVAColumnData = tableWidget.data.head;
+            this.lastShownIVAData = tableWidget.data.body;
         }
 
         // LAL
@@ -635,7 +637,7 @@ class MiraviaApp extends BaseApp
             }, { icon: 'Eye', iconPosition: 'start' } );
             subUtilsPanel.endLine( 'ml-auto' );
 
-            this.lastShownSeurLALData = tableWidget.data.body;
+            this.lastShownLALData = tableWidget.data.body;
         }
 
         // ALB
@@ -782,7 +784,7 @@ class MiraviaApp extends BaseApp
 
             ALBContainer.appendChild( tableWidget.root );
 
-            this.lastShownSeurALBData = tableWidget.data.body;
+            this.lastShownALBData = tableWidget.data.body;
         }
 
         // i don't know what is this.. removing it by now

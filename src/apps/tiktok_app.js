@@ -148,24 +148,23 @@ class TikTokApp extends BaseApp
         this.clear();
     }
 
-    openData( fileData )
+    openData( data )
     {
-        if ( !fileData )
+        if ( !data )
         {
             return;
         }
 
         // TikTok contains header descriptions in the first row
-        fileData = fileData.slice( 1 );
+        data = data.slice( 1 );
 
-        if ( !fileData.length )
+        if ( !data.length )
         {
             return;
         }
 
         // Map SKUs and Country once on load data
-        fileData.forEach( ( r ) => {
-            // Process SKU
+        data.forEach( ( r ) => {
             const ogSku = r[SKU_ATTR];
             if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
             else {
@@ -186,18 +185,16 @@ class TikTokApp extends BaseApp
         } );
 
         // Sort by ref once
-        {
-            fileData = fileData.sort( ( a, b ) => {
-                const sku_a = a[SKU_ATTR] ?? '?';
-                const sku_b = b[SKU_ATTR] ?? '?';
-                return sku_a.localeCompare( sku_b );
-            } );
-        }
+        data = data.sort( ( a, b ) => {
+            const sku_a = a[SKU_ATTR] ?? '?';
+            const sku_b = b[SKU_ATTR] ?? '?';
+            return sku_a.localeCompare( sku_b );
+        } );
 
-        console.log(fileData)
+        console.log("tiktok", data)
 
-        this.showOrdersList( fileData );
-        this.showStockList( fileData );
+        this.showOrdersList( data );
+        this.showStockList( data );
 
         Utils.toggleButtonDisabled( this.exportLabelsButton, false );
     }
@@ -700,7 +697,6 @@ class TikTokApp extends BaseApp
 
         // Map SKUs and Country once on load data
         data.forEach( ( r ) => {
-            // Process SKU
             const ogSku = r[SKU_ATTR];
             if ( !ogSku || ogSku === '' ) LX.toast( 'Aviso!', `⚠️ Falta SKU para el pedido ${r[ORDER_ATTR]}.`, { timeout: -1, position: 'top-center' } );
             else {
@@ -841,8 +837,8 @@ class TikTokApp extends BaseApp
 
             IVAContainer.appendChild( tableWidget.root );
 
-            this.lastSeurIVAColumnData = tableWidget.data.head;
-            this.lastShownSeurIVAData = tableWidget.data.body;
+            this.lastIVAColumnData = tableWidget.data.head;
+            this.lastShownIVAData = tableWidget.data.body;
         }
 
         // LAL
@@ -1019,7 +1015,7 @@ class TikTokApp extends BaseApp
             }, { icon: 'Eye', iconPosition: 'start' } );
             subUtilsPanel.endLine( 'ml-auto' );
 
-            this.lastShownSeurLALData = tableWidget.data.body;
+            this.lastShownLALData = tableWidget.data.body;
         }
 
         // ALB
@@ -1166,7 +1162,7 @@ class TikTokApp extends BaseApp
 
             ALBContainer.appendChild( tableWidget.root );
 
-            this.lastShownSeurALBData = tableWidget.data.body;
+            this.lastShownALBData = tableWidget.data.body;
         }
 
         // i don't know what is this.. removing it by now
