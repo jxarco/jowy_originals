@@ -267,8 +267,8 @@ LX.requestBinary( 'data/products.xlsx', ( binary ) => {
             const priceDistribution = p['price_distr'];
 
             Data.sku_map[oldSku.toString().trim()] = {
-                skus: newSku ? newSku.trim().split( ',' ).map( s => s.trim() ) : undefined,
-                prices: priceDistribution ? priceDistribution.trim().split( ',' ).map( s => parseFloat( s.trim() ) ) : undefined,
+                skus: newSku ? newSku.trim().split( ',' ).map( ( s ) => s.trim() ) : undefined,
+                prices: priceDistribution ? priceDistribution.trim().split( ',' ).map( ( s ) => parseFloat( s.trim() ) ) : undefined,
                 quantity: parseInt( p['quantity'] ?? 1 )
             };
         }

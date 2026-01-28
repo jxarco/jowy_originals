@@ -4,6 +4,7 @@ import * as Utils from '../utils.js';
 class BaseApp
 {
     static SKU_ATTR = 'SKU del vendedor';
+    static OLD_SKU_ATTR = 'SKU del vendedor_OLD';
     static PAIS_ATTR = 'País';
     static ORDER_ATTR = 'Número del pedido';
     static ART_ID_ATTR = 'ID del artículo';
@@ -72,7 +73,7 @@ class BaseApp
                 else
                 {
                     const fn = c[2] ?? ( ( str ) => str );
-                    const val = fn( row[ogColName] ?? '?', row );
+                    const val = fn( row[ogColName] ?? '?', row, this );
                     lRow.push( val );
                 }
             }
@@ -87,13 +88,12 @@ class BaseApp
         }, {
             selectable: true,
             toggleColumns: true,
-            centered: [ BaseApp.ORDER_ATTR, BaseApp.SKU_ATTR, ...( options.centered ?? [] ) ],
+            centered: [ BaseApp.ORDER_ATTR, BaseApp.SKU_ATTR, BaseApp.OLD_SKU_ATTR, ...( options.centered ?? [] ) ],
             filter: BaseApp.SKU_ATTR,
             customFilters: [
                 { name: BaseApp.PAIS_ATTR, options: this.countries }
             ],
-            hiddenColumns: [ BaseApp.ART_ID_ATTR, BaseApp.CP_ATTR, 
-                'Provincia', 'Dirección', 'Número de Teléfono', 'Correo electrónico de usuario', ...( options.hiddenColumns ?? [] ) ]
+            hiddenColumns: [ BaseApp.ART_ID_ATTR, BaseApp.CP_ATTR, 'Provincia', 'Dirección', 'Número de Teléfono', 'Correo electrónico de usuario', ...( options.hiddenColumns ?? [] ) ]
         } );
 
         this.lastOrdersData = data;

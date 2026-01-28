@@ -3,19 +3,19 @@ import { CblTrackingApp } from './apps/cbl_tracking_app.js';
 import { ChillApp } from './apps/chill_app.js';
 import { ManualApp } from './apps/manual_app.js';
 import { MiraklApp } from './apps/mirakl_apps.js';
+import { MiraviaApp } from './apps/miravia_app.js';
 import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
 import { TikTokApp } from './apps/tiktok_app.js';
-import { MiraviaApp } from './apps/miravia_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import {
-    PLATFORM_CLIENT_CODES,
+    ALWAYS_CBL,
     CBL_RULES,
-    ALWAYS_CBL
+    PLATFORM_CLIENT_CODES
 } from './constants.js';
-import { WooCommerceClient } from './woocomerce.js';
-import * as Utils from './utils.js';
 import { Data } from './data.js';
+import * as Utils from './utils.js';
+import { WooCommerceClient } from './woocomerce.js';
 
 window.LX = LX;
 
@@ -483,12 +483,16 @@ const core = {
         sku = this.mapSku( sku ).sku; // .sku bc it also contains quantity (for packs)
 
         if ( ALWAYS_CBL.includes( sku ) )
+        {
             return 'CBL';
+        }
 
         for ( const rule of CBL_RULES )
         {
             if ( sku.startsWith( rule.prefix ) && quantity > rule.max )
+            {
                 return 'CBL';
+            }
         }
 
         return 'SEUR';
@@ -496,14 +500,14 @@ const core = {
 
     mapSku( sku )
     {
-        const mapData = Data.sku_map[ sku ];
+        const mapData = Data.sku_map[sku];
         const skus = mapData?.skus;
 
         // don't change by now if combined skus
-        if( !skus || skus.length > 1 ) return { sku, quantity: mapData?.quantity ?? 1 }; 
+        if ( !skus || skus.length > 1 ) return { sku, quantity: mapData?.quantity ?? 1 };
 
         // console.warn( `SKU mapped from ${sku} to ${skus[ 0 ]}` );
-        return { sku: skus[ 0 ], quantity: mapData?.quantity ?? 1 };
+        return { sku: skus[0], quantity: mapData?.quantity ?? 1 };
     },
 
     mapCountry( country )
@@ -520,11 +524,11 @@ const core = {
     {
         const d = Data.sku_map[sku];
         const skus = d?.skus;
-        if( !skus ) return [ { sku, price: 1 } ];
+        if ( !skus ) return [ { sku, price: 1 } ];
 
-        return d.skus.map( (v, i) => {
+        return d.skus.map( ( v, i ) => {
             return { sku: v, price: d.prices[i] };
-        } )
+        } );
     },
 
     openPrompt( label, title, callback, icon )

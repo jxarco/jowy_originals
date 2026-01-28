@@ -1,7 +1,7 @@
 import { LX } from 'lexgui';
-import { BaseApp } from './base_app.js';
 import { Constants, NumberFormatter } from '../constants.js';
 import * as Utils from '../utils.js';
+import { BaseApp } from './base_app.js';
 
 class OrdersApp extends BaseApp
 {

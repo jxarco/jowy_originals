@@ -1,7 +1,7 @@
 import { LX } from 'lexgui';
-import { BaseApp } from './base_app.js';
 import { Constants, NumberFormatter } from '../constants.js';
 import * as Utils from '../utils.js';
+import { BaseApp } from './base_app.js';
 
 const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.aspx`;
 const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;

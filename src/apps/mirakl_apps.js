@@ -10,8 +10,8 @@ const ORDER_ATTR = 'order_id';
 
 const VENDOR_TEMPLATES = {
     'DECATHLON_ORDERS_DATA': [
-        [ 'preview', 'PREVIEW', ( row, i, url ) => {
-            return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${url}${i['product_medias'][1]['media_url']}">`;
+        [ 'preview', 'PREVIEW', ( row, i, app ) => {
+            return `<img title="${i['product_title']}" class="rounded" style="width:3rem;" src="${app.url}${i['product_medias'][1]['media_url']}">`;
         } ],
         [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
         [ 'date', 'FECHA', ( r ) => {

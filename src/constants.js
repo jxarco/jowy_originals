@@ -12,15 +12,20 @@ export const CBL_RULES = [
     { prefix: 'JW-DF25', max: 2 },
     { prefix: 'JW-DT25', max: 2 },
     { prefix: 'JW-DS25', max: 2 },
-    { prefix: 'JW-DF3',  max: 1 },
-    { prefix: 'JW-DF4',  max: 1 },
-    { prefix: 'JW-DT4',  max: 1 }
+    { prefix: 'JW-DF3', max: 1 },
+    { prefix: 'JW-DF4', max: 1 },
+    { prefix: 'JW-DT4', max: 1 }
 ];
 
 export const ALWAYS_CBL = [
-    'HG-AD24', 'HG-AD32', 'HG-AD40',
+    'HG-AD24',
+    'HG-AD32',
+    'HG-AD40',
     'HG-BPB02',
-    'HG-CD225', 'HG-CD250', 'HG-CD275', 'HG-CD300'
+    'HG-CD225',
+    'HG-CD250',
+    'HG-CD275',
+    'HG-CD300'
 ];
 
 export const PLATFORM_CLIENT_CODES = {

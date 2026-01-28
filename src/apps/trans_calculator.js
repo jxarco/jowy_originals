@@ -1,7 +1,7 @@
 import { LX } from 'lexgui';
-import { BaseApp } from './base_app.js';
 import { NumberFormatter } from '../constants.js';
 import { Data } from '../data.js';
+import { BaseApp } from './base_app.js';
 
 const VOLUME_BRACKETS_CBL = [ 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 500, 750, 1000, 3000 ];
 const VOLUME_BRACKETS_SEUR = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30 ];

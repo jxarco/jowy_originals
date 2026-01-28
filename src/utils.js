@@ -1,3 +1,27 @@
+export function combineRowsByKeys( rows, keyA, keyB )
+{
+    const map = {};
+
+    for ( const row of rows )
+    {
+        const k = `${row[keyA]}|${row[keyB]}`;
+
+        if ( !map[k] )
+        {
+            map[k] = {
+                ...row,
+                _quantity: 1
+            };
+        }
+        else
+        {
+            map[k]._quantity++;
+        }
+    }
+
+    return Object.values( map );
+}
+
 export const convertDateDMYtoMDY = ( str ) => {
     const [ day, month, year ] = str.split( '/' );
     return `${month}/${day}/${year}`;
