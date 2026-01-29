@@ -779,9 +779,9 @@ class BaseApp
                 [ '' ],
                 [ '' ], // 'AX', 'AY'
                 [ 'Cuota', null, ( str, row ) => {
-                    const net = row['Total'];
                     const country = row['País'];
                     const iva = this.core.countryIVA[country];
+                    const net = row['Total'] / iva;
                     return LX.round( net * ( iva - 1 ) );
                 } ], // 'AZ'
                 [ '' ],
