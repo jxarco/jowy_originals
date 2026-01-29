@@ -220,7 +220,7 @@ class DecathlonApp extends BaseApp
                 const qnt = parseInt( row[QNT_ATTR] ) * this.getPackUnits( row[OLD_SKU_ATTR] );
                 return this.core.getTransportForItem( row[SKU_ATTR], qnt );
             } ],
-            [ 'Plataforma', null, () => 'TIKTOK' ],
+            [ 'Plataforma', null, () => 'DECATHLON' ],
             [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
             [ 'Observaciones', null ],
             [ ORDER_ATTR, BaseApp.ORDER_ATTR ]
