@@ -105,6 +105,7 @@ class DecathlonApp extends BaseApp
         this.title = 'Decathlon';
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
         this.icon = 'Decathlon';
+        this.loadRaw = true; // load xlsx files in raw mode
 
         // Create utility buttons
         const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
@@ -235,8 +236,8 @@ class DecathlonApp extends BaseApp
         
         const tableWidget = this.getTrackingListTable( tData, TRACKING_DATA, {
             centered: true,
-            filter: 'Tracking Number',
-            hiddenColumns: [ 'Nombre del almacén', 'Destino', 'Cantidad', 'Variantes', 'ID de SKU', 'Nombre de producto', 'ID de recibo' ]
+            filter: 'tracking-number',
+            hiddenColumns: [ 'carrier-standard-code' ]
         } );
         this.trackingArea.attach( tableWidget );
 

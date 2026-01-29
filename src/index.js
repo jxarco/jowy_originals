@@ -154,7 +154,7 @@ const core = {
         // } );
     },
 
-    readExcelFile: function( file )
+    readExcelFile: function( file, raw = false )
     {
         return new Promise( ( resolve, reject ) => {
             const reader = new FileReader();
@@ -165,7 +165,7 @@ const core = {
                     const workbook = XLSX.read( data, { type: 'binary', WTF: true } );
                     const sheetName = workbook.SheetNames[0];
                     const sheet = workbook.Sheets[sheetName];
-                    const rowsData = XLSX.utils.sheet_to_json( sheet, { raw: false } );
+                    const rowsData = XLSX.utils.sheet_to_json( sheet, { raw } );
 
                     resolve( {
                         sheetName,
@@ -192,7 +192,7 @@ const core = {
         {
             try
             {
-                const result = await this.readExcelFile( file );
+                const result = await this.readExcelFile( file, this.currentApp.loadRaw );
                 if ( callback )
                 {
                     const r = callback( result.rowsData );
