@@ -68,6 +68,11 @@ class BaseApp
         return this._packUnits[sku] ?? 1;
     }
 
+    openData( data )
+    {
+        console.warn( "[openData] not implemented for this app" );
+    }
+
     parseData( data, ATTR_PARAMS )
     {
         const { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR } = ATTR_PARAMS;

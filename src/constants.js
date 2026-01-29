@@ -36,6 +36,7 @@ export const PLATFORM_CLIENT_CODES = {
     'Miravia_FRANCIA_2025': '497', // Spain code for 2025
     'Miravia_ITALIA_2025': '598',
     'TikTok_ESPAÑA_2025': '502',
+    'Decathlon_ESPAÑA_2025': '600',
 
     'SHEIN_ESPAÑA_2026': '131',
     'SHEIN_PORTUGAL_2026': '132',
@@ -43,5 +44,6 @@ export const PLATFORM_CLIENT_CODES = {
     'Miravia_PORTUGAL_2026': '122',
     'Miravia_FRANCIA_2026': '123',
     'Miravia_ITALIA_2026': '124',
-    'TikTok_ESPAÑA_2026': '163'
+    'TikTok_ESPAÑA_2026': '163',
+    'Decathlon_ESPAÑA_2026': '161',
 };

@@ -1,6 +1,7 @@
 import { LX } from 'lexgui';
 import { CblTrackingApp } from './apps/cbl_tracking_app.js';
 import { ChillApp } from './apps/chill_app.js';
+import { DecathlonApp } from './apps/decathlon_app.js';
 import { ManualApp } from './apps/manual_app.js';
 import { MiraklApp } from './apps/mirakl_apps.js';
 import { MiraviaApp } from './apps/miravia_app.js';
@@ -117,7 +118,8 @@ const core = {
         this.sheinApp = new SheinApp( this, 'shein' );
         this.tikTokApp = new TikTokApp( this, 'tiktok' );
         this.miraviaApp = new MiraviaApp( this, 'miravia' );
-        this.decathlonApp = new MiraklApp( this, 'Decathlon' );
+        this.decathlonOnlineApp = new MiraklApp( this, 'Decathlon' );
+        this.decathlonApp = new DecathlonApp( this, 'decathlon' );
         // this.carrefourApp = new MiraklApp( this, 'Carrefour' );
         this.transportCalculatorApp = new TransportCalculatorApp( this, 't-calc' );
         this.manualApp = new ManualApp( this, 'manual' );
@@ -160,7 +162,7 @@ const core = {
                 try
                 {
                     const data = e.target.result;
-                    const workbook = XLSX.read( data, { type: 'binary' } );
+                    const workbook = XLSX.read( data, { type: 'binary', WTF: true } );
                     const sheetName = workbook.SheetNames[0];
                     const sheet = workbook.Sheets[sheetName];
                     const rowsData = XLSX.utils.sheet_to_json( sheet, { raw: false } );
@@ -382,17 +384,9 @@ const core = {
 
             this.cblTrackingApp.showList( 'jowy', true, true );
         }
-        else if ( this.tool == 'shein' )
+        else
         {
-            this.sheinApp.openData( fileData );
-        }
-        else if ( this.tool == 'tiktok' )
-        {
-            this.tikTokApp.openData( fileData );
-        }
-        else if ( this.tool == 'miravia' )
-        {
-            this.miraviaApp.openData( fileData );
+            this.currentApp.openData( fileData );
         }
 
         if ( err !== null )

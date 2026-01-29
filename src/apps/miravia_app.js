@@ -88,6 +88,11 @@ class MiraviaApp extends BaseApp
         this.countryTransportCostPct['FRANCIA'] = 0.32;
         this.countryTransportCostPct['ITALIA'] = 0.32;
 
+        this._onAlbaranData = ( data, external ) => {
+            // Remove "ready to ship" / orders that have already been processed (Miravia only)
+            return data.filter( ( r ) => r['Estado'] === 'pending' );
+        };
+
         this.clear();
     }
 
