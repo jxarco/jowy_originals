@@ -14,6 +14,9 @@ class BaseApp
     static CLIENT_NAME_ATTR = 'Nombre de usuario completo';
     static CP_ATTR = 'Código Postal';
     static PHONE_ATTR = 'Número de Teléfono';
+    static STREET_ATTR = 'Dirección';
+    static CITY_ATTR = 'Ciudad';
+    static EMAIL_ATTR = 'Correo electrónico de usuario';
     static PACK_U_ATTR = 'Pack Units';
 
     constructor( core, tool )
@@ -37,8 +40,8 @@ class BaseApp
 
         this._trackingSyncErrors = [];
         this._packUnits = {};
+        this._onParseData = null;
         this._onParseRowData = null;
-        this._onAlbaranData = null;
     }
 
     open( params )
@@ -77,6 +80,11 @@ class BaseApp
     {
         const { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR } = ATTR_PARAMS;
 
+        if( this._onParseData )
+        {
+            data = this._onParseData( data, true );
+        }
+
         // Map SKUs and Country once on load data
         data.forEach( ( r ) => {
             const ogSku = r[SKU_ATTR];
@@ -94,10 +102,21 @@ class BaseApp
             const ogZipCode = r[CP_ATTR];
             r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
             const ogPhone = r[PHONE_ATTR];
-            if( ogPhone ) r[PHONE_ATTR] = ogPhone.replace( /[()]/g, '' );
+            if( ogPhone )
+            {
+                r[PHONE_ATTR] = ogPhone.replace( /[()]/g, '' );
+            }
             const ogPVP = r[PVP_ATTR];
-            if( ogPVP ) r[PVP_ATTR] = ogPVP.constructor === String ?
-                ogPVP.replace( '€', '' ).replace( ',', '.' ).trim() : ogPVP;
+            if( ogPVP )
+            {
+                r[PVP_ATTR] = ogPVP.constructor === String ?
+                    ogPVP.replace( '€', '' ).replace( ',', '.' ).trim() : ogPVP;
+            }
+
+            if( this._onParseRowData )
+            {
+                this._onParseRowData( r );
+            }
         } );
 
         // Sort by ref once
@@ -147,7 +166,8 @@ class BaseApp
             customFilters: [
                 { name: BaseApp.PAIS_ATTR, options: this.countries }
             ],
-            hiddenColumns: [ BaseApp.ART_ID_ATTR, BaseApp.CP_ATTR, 'Provincia', 'Dirección', 'Número de Teléfono', 'Correo electrónico de usuario', ...( options.hiddenColumns ?? [] ) ]
+            xhiddenColumns: [ BaseApp.ART_ID_ATTR, BaseApp.CP_ATTR, 'Provincia', BaseApp.STREET_ATTR,
+                BaseApp.PHONE_ATTR, BaseApp.EMAIL_ATTR, ...( options.hiddenColumns ?? [] ) ]
         } );
 
         this.lastOrdersData = data;
@@ -331,7 +351,7 @@ class BaseApp
         return tableWidget;
     }
 
-    showAlbaranRelatedInfo( data, ATTR_PARAMS, external = false )
+    showAlbaranRelatedInfo( data, ATTR_PARAMS, external )
     {
         const { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR } = ATTR_PARAMS;
 
@@ -339,9 +359,9 @@ class BaseApp
 
         data = data ?? this.lastOrdersData;
 
-        if( this._onAlbaranData )
+        if( this._onParseData )
         {
-            data = this._onAlbaranData( data, external );
+            data = this._onParseData( data, external ?? true );
         }
 
         // Map SKUs and Country once on load data
@@ -361,10 +381,21 @@ class BaseApp
             const ogZipCode = r[CP_ATTR];
             r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
             const ogPhone = r[PHONE_ATTR];
-            if( ogPhone ) r[PHONE_ATTR] = ogPhone.replace( /[()]/g, '' );
+            if( ogPhone )
+            {
+                r[PHONE_ATTR] = ogPhone.replace( /[()]/g, '' );
+            }
             const ogPVP = r[PVP_ATTR];
-            if( ogPVP ) r[PVP_ATTR] = ogPVP.constructor === String ?
-                ogPVP.replace( '€', '' ).replace( ',', '.' ).trim() : ogPVP;
+            if( ogPVP )
+            {
+                r[PVP_ATTR] = ogPVP.constructor === String ?
+                    ogPVP.replace( '€', '' ).replace( ',', '.' ).trim() : ogPVP;
+            }
+
+            if( this._onParseRowData )
+            {
+                this._onParseRowData( r );
+            }
         } );
 
         // Sort by ref once
@@ -657,7 +688,7 @@ class BaseApp
                 fit: true, skipReset: true } );
             subUtilsPanel.addDate( 'FECHA CREACIÓN', this.currentDate, ( v ) => {
                 this.currentDate = v;
-                LX.doAsync( () => this.showAlbaranRelatedInfo( data, ATTR_PARAMS ) );
+                LX.doAsync( () => this.showAlbaranRelatedInfo( data, ATTR_PARAMS, false ) );
             }, { nameWidth: 'fit-content' } );
             const popoverButton = subUtilsPanel.addButton( null, 'Ver Ingresos', () => {
                 const incomeArea = new LX.Area( { width: `${Math.max( 6 * this.countries.length, 16 )}rem`, skipAppend: true } );

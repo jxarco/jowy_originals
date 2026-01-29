@@ -12,10 +12,12 @@ const CLIENT_NAME_ATTR = BaseApp.CLIENT_NAME_ATTR;
 const PAIS_ATTR = BaseApp.PAIS_ATTR;
 const CP_ATTR = BaseApp.CP_ATTR;
 const PHONE_ATTR = BaseApp.PHONE_ATTR;
+const STREET_ATTR = 'dirección de usuario';
+const CITY_ATTR = BaseApp.CITY_ATTR;
 const PVP_ATTR = 'precio de los productos básicos';
 const ORDER_DATE_ATTR = 'Fecha y hora de creación de pedido';
 const QNT_ATTR = '_quantity';
-const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
+const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, STREET_ATTR, CITY_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
 
 const ORDERS_DATA = [
     [ ORDER_ATTR ],
@@ -31,11 +33,11 @@ const ORDERS_DATA = [
     [ CLIENT_NAME_ATTR ],
     [ CP_ATTR ],
     [ PAIS_ATTR ],
-    [ 'Provincia', null ],
-    [ 'Ciudad', null ],
-    [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
+    [ 'Provincia' ],
+    [ CITY_ATTR ],
+    [ STREET_ATTR, BaseApp.STREET_ATTR ],
     [ PHONE_ATTR ],
-    [ 'Correo electrónico de usuario' ]
+    [ BaseApp.EMAIL_ATTR ]
 ];
 
 const LABEL_DATA = [
@@ -54,10 +56,10 @@ const LABEL_DATA = [
     [ PAIS_ATTR ],
     [ 'Provincia', null ],
     [ 'Ciudad', null ],
-    [ 'dirección de usuario 1+dirección de usuario 2', 'Dirección' ],
+    [ STREET_ATTR, BaseApp.STREET_ATTR ],
     [ CLIENT_NAME_ATTR ],
     [ PHONE_ATTR ],
-    [ 'Correo electrónico de usuario' ],
+    [ BaseApp.EMAIL_ATTR ],
     // THIS ONE HAS TO BE DELETED
     [ QNT_ATTR, null, ( str, row ) => {
         return parseInt( str ) * row[BaseApp.PACK_U_ATTR];
@@ -150,9 +152,15 @@ class SheinApp extends BaseApp
         this.countryTransportCostPct['ESPAÑA'] = 0.303;
         this.countryTransportCostPct['PORTUGAL'] = 0.32;
 
-        this._onAlbaranData = ( data, external ) => {
-            // Combine by ORDER_SKU
+        this._onParseData = ( data, external ) => {
+            // Combine by ORDER_SKU (SHEIN, Miravia only)
             return Utils.combineRowsByKeys( data, ORDER_ATTR, SKU_ATTR );
+        };
+
+        this._onParseRowData = ( row ) => {
+            const street1 = row['dirección de usuario 1'] ?? '';
+            const street2 = row['dirección de usuario 2'] ?? '';
+            row[STREET_ATTR] = `${street1} ${street2}`.trim();
         };
 
         this.clear();
@@ -164,9 +172,6 @@ class SheinApp extends BaseApp
         {
             return;
         }
-
-        // Combine by ORDER_SKU (SHEIN, Miravia only)
-        data = Utils.combineRowsByKeys( data, ORDER_ATTR, SKU_ATTR );
 
         // Map SKUs, Country, CP, ...
         data = this.parseData( data, ATTR_PARAMS );

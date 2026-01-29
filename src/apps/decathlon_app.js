@@ -7,16 +7,19 @@ import { BaseApp } from './base_app.js';
 const SKU_ATTR = 'SKU de Tienda';
 const OLD_SKU_ATTR = `${SKU_ATTR}_OLD`;
 const ORDER_ATTR = 'Decathlon ID pedido';
+const ORDER_LINE_ATTR = 'N.º de asiento de pedido';
 const ART_ID_ATTR = 'SKU del producto';
 const ART_NAME_ATTR = 'Detalles';
-const CLIENT_NAME_ATTR = 'Dirección de entrega: nombre de pila';
+const CLIENT_NAME_ATTR = 'Dirección de entrega: nombre';
 const PAIS_ATTR = 'Dirección de entrega: país';
 const CP_ATTR = 'Dirección de entrega: código postal';
 const PHONE_ATTR = 'Dirección de entrega: teléfono';
+const STREET_ATTR = 'Dirección de entrega: calle';
+const CITY_ATTR = 'Dirección de entrega: ciudad';
 const PVP_ATTR = 'Precio por unidad';
 const ORDER_DATE_ATTR = 'Fecha de creación';
 const QNT_ATTR = 'Cantidad';
-const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
+const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ORDER_LINE_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, STREET_ATTR, CITY_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
 
 const ORDERS_DATA = [
     [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
@@ -32,11 +35,11 @@ const ORDERS_DATA = [
     [ CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR ],
     [ CP_ATTR, BaseApp.CP_ATTR ],
     [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
-    [ 'Province', 'Provincia' ],
-    [ 'City', 'Ciudad' ],
-    [ 'Street Name', 'Dirección' ],
-    [ PHONE_ATTR, 'Número de Teléfono' ],
-    [ 'Email', 'Correo electrónico de usuario' ]
+    [ 'Provincia', null, ( str, row ) => '' ],
+    [ CITY_ATTR, BaseApp.CITY_ATTR ],
+    [ STREET_ATTR, BaseApp.STREET_ATTR ],
+    [ PHONE_ATTR, BaseApp.PHONE_ATTR ],
+    [ BaseApp.EMAIL_ATTR, null, ( str, row ) => '' ],
 ];
 
 const LABEL_DATA = [
@@ -53,12 +56,12 @@ const LABEL_DATA = [
     [ SKU_ATTR, BaseApp.SKU_ATTR ],
     [ CP_ATTR, BaseApp.CP_ATTR ],
     [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
-    [ 'Province', 'Provincia' ],
-    [ 'City', 'Ciudad' ],
-    [ 'Street Name', 'Dirección' ],
-    [ CLIENT_NAME_ATTR, 'Nombre de usuario completo' ],
-    [ PHONE_ATTR, 'Número de Teléfono' ],
-    [ 'Email', 'Correo electrónico de usuario' ],
+    [ 'Provincia', null, ( str, row ) => '' ],
+    [ CITY_ATTR, BaseApp.CITY_ATTR ],
+    [ STREET_ATTR, BaseApp.STREET_ATTR ],
+    [ CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR ],
+    [ PHONE_ATTR, BaseApp.PHONE_ATTR ],
+    [ BaseApp.EMAIL_ATTR, null, ( str, row ) => '' ],
     // THIS ONE HAS TO BE DELETED
     [ QNT_ATTR, null, ( str, row, app ) => {
         return parseInt( str ) * app.getPackUnits( row[OLD_SKU_ATTR] );
@@ -67,20 +70,17 @@ const LABEL_DATA = [
 
 // (str, row, tracking_data, app)
 const TRACKING_DATA = [
-    [ ORDER_ATTR, 'ID de pedido' ],
-    [ 'Nombre del almacén', null, () => '' ],
-    [ 'Destino', null, () => '' ],
-    [ 'ID de SKU', null, () => '' ],
-    [ 'Nombre de producto', null, () => '' ],
-    [ 'Variantes', null, () => '' ],
-    [ 'Cantidad', null, () => '' ],
-    [ 'Nombre del transportista', null, () => 'Seur' ],
-    [ 'ID de seguimiento', null, ( str, row, tdata, app ) => {
-        const name = row[CLIENT_NAME_ATTR].toUpperCase();
-        const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
+    [ ORDER_ATTR, 'order-id' ],
+    [ 'carrier_code', 'carrier-code', () => 'SEUR (Spain)' ],
+    [ 'carrier_standard_code', 'carrier-standard-code', () => '' ],
+    [ 'carrier_name', 'carrier-name', () => 'SEUR' ],
+    [ 'carrier_url', 'carrier-url', () => 'https://www.seur.com/livetracking?segOnlineIdentificador=%7BtrackingId%7D&segOnlineIdioma=en' ],
+    [ 'tracking_number', 'tracking-number', ( str, row, tdata, app ) => {
+        const name = row[CLIENT_NAME_ATTR];
+        const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name.toUpperCase() );
         if ( !tentry )
         {
-            app._trackingSyncErrors.push( { name, uid: `${row[ORDER_ATTR]}` } );
+            app._trackingSyncErrors.push( { name, uid: row[ORDER_LINE_ATTR] } );
             const status = core.trackStatusColors['Incidencia'];
             let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
             return `${
@@ -91,7 +91,9 @@ const TRACKING_DATA = [
         }
         return tentry['LOCALIZADOR'];
     } ],
-    [ 'ID de recibo', null, () => '' ]
+    [ SKU_ATTR, 'offer-sku' ],
+    [ ORDER_LINE_ATTR, 'order-line-id' ],
+    [ QNT_ATTR, 'quantity' ]
 ];
 
 class DecathlonApp extends BaseApp
@@ -156,9 +158,19 @@ class DecathlonApp extends BaseApp
         this.countries = [ 'ESPAÑA' ]; // , 'PORTUGAL', 'FRANCIA' ];
         this.countryTransportCostPct['ESPAÑA'] = 0.303;
 
-        this._onAlbaranData = ( data, external ) => {
+        this._onParseData = ( data, external ) => {
             // Filter "Esperando envío"
             return data.filter( ( r ) => r['Estado'] === 'Esperando envío' );
+        };
+
+        this._onParseRowData = ( row ) => {
+            const name1 = row['Dirección de entrega: nombre de pila'] ?? '';
+            const name2 = row['Dirección de entrega: apellido'] ?? '';
+            row[CLIENT_NAME_ATTR] = `${name1} ${name2}`.trim();
+
+            const street1 = row['Dirección de entrega: calle 1'] ?? '';
+            const street2 = row['Dirección de entrega: calle 2'] ?? '';
+            row[STREET_ATTR] = `${street1} ${street2}`.trim();
         };
 
         this.clear();
@@ -170,9 +182,6 @@ class DecathlonApp extends BaseApp
         {
             return;
         }
-
-        // Filter "Esperando envío"
-        data = data.filter( ( r ) => r['Estado'] === 'Esperando envío' );
 
         // Map SKUs, Country, CP, ...
         data = this.parseData( data, ATTR_PARAMS );

@@ -12,10 +12,12 @@ const CLIENT_NAME_ATTR = 'Nombre del comprador';
 const PAIS_ATTR = 'País de envío';
 const CP_ATTR = 'Código postal';
 const PHONE_ATTR = '';
+const STREET_ATTR = 'Dirección de envío';
+const CITY_ATTR = 'Dirección de envío 3';
 const PVP_ATTR = 'Precio con descuento';
 const ORDER_DATE_ATTR = 'Fecha de creación';
 const QNT_ATTR = '_quantity';
-const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
+const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, STREET_ATTR, CITY_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
 
 const ORDERS_DATA = [
     [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
@@ -28,11 +30,11 @@ const ORDERS_DATA = [
     [ ART_NAME_ATTR, null, ( str, row ) => {
         return `<span title='${str}'>${str}</span>`;
     } ],
-    [ CLIENT_NAME_ATTR ],
+    [ CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR ],
     [ CP_ATTR ],
     [ PAIS_ATTR ],
-    [ 'Dirección de envío 3', 'Ciudad' ],
-    [ 'Dirección de envío+Dirección de envío 2', 'Dirección' ]
+    [ CITY_ATTR, BaseApp.CITY_ATTR ],
+    [ STREET_ATTR, BaseApp.STREET_ATTR ]
 ];
 
 class MiraviaApp extends BaseApp
@@ -88,9 +90,18 @@ class MiraviaApp extends BaseApp
         this.countryTransportCostPct['FRANCIA'] = 0.32;
         this.countryTransportCostPct['ITALIA'] = 0.32;
 
-        this._onAlbaranData = ( data, external ) => {
+        this._onParseData = ( data, external ) => {
             // Remove "ready to ship" / orders that have already been processed (Miravia only)
-            return data.filter( ( r ) => r['Estado'] === 'pending' );
+            data = data.filter( ( r ) => r['Estado'] === 'pending' );
+            // Combine by ORDER_SKU (SHEIN, Miravia only)
+            data = Utils.combineRowsByKeys( data, ORDER_ATTR, SKU_ATTR );
+            return data;
+        };
+
+        this._onParseRowData = ( row ) => {
+            const street1 = row['Dirección de envío'] ?? '';
+            const street2 = row['Dirección de envío 2'] ?? '';
+            row[STREET_ATTR] = `${street1} ${street2}`.trim();
         };
 
         this.clear();
@@ -102,12 +113,6 @@ class MiraviaApp extends BaseApp
         {
             return;
         }
-
-        // Remove "ready to ship" / orders that have already been processed (Miravia only)
-        data = data.filter( ( r ) => r['Estado'] === 'pending' );
-
-        // Combine by ORDER_SKU (SHEIN, Miravia only)
-        data = Utils.combineRowsByKeys( data, ORDER_ATTR, SKU_ATTR );
 
         // Map SKUs, Country, CP, ...
         data = this.parseData( data, ATTR_PARAMS );

@@ -811,10 +811,12 @@ core.data['bathby'].template = ( id, url, transport ) => {
             name: 'Plataformas',
             submenu: [
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' },
-                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp, v ), icon: 'Decathlon' },
+                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp ), icon: 'Decathlon' },
                 { name: 'TikTok', callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
                 { name: 'Miravia', callback: ( v, e ) => core.openApp( core.miraviaApp ), icon: 'ShoppingBag' },
-                { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' }
+                { name: 'Carrefour', disabled: true, callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' },
+                null,
+                { name: 'DecathlonMirakl', callback: ( v, e ) => core.openApp( core.decathlonOnlineApp ), icon: 'Decathlon' }
             ]
         },
         {

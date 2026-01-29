@@ -13,10 +13,12 @@ const CLIENT_NAME_ATTR = 'Recipient';
 const PAIS_ATTR = 'Country';
 const CP_ATTR = 'Zipcode';
 const PHONE_ATTR = 'Phone #';
+const STREET_ATTR = 'Street Name';
+const CITY_ATTR = 'City';
 const PVP_ATTR = 'SKU Unit Original Price';
 const ORDER_DATE_ATTR = 'Created Time';
 const QNT_ATTR = 'Quantity';
-const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
+const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, STREET_ATTR, CITY_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
 
 const ORDERS_DATA = [
     [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
@@ -33,10 +35,10 @@ const ORDERS_DATA = [
     [ CP_ATTR, BaseApp.CP_ATTR ],
     [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
     [ 'Province', 'Provincia' ],
-    [ 'City', 'Ciudad' ],
-    [ 'Street Name', 'Dirección' ],
-    [ PHONE_ATTR, 'Número de Teléfono' ],
-    [ 'Email', 'Correo electrónico de usuario' ]
+    [ CITY_ATTR, BaseApp.CITY_ATTR ],
+    [ STREET_ATTR, BaseApp.STREET_ATTR ],
+    [ PHONE_ATTR, BaseApp.PHONE_ATTR ],
+    [ 'Email', BaseApp.EMAIL_ATTR ]
 ];
 
 const LABEL_DATA = [
@@ -54,11 +56,11 @@ const LABEL_DATA = [
     [ CP_ATTR, BaseApp.CP_ATTR ],
     [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
     [ 'Province', 'Provincia' ],
-    [ 'City', 'Ciudad' ],
-    [ 'Street Name', 'Dirección' ],
-    [ CLIENT_NAME_ATTR, 'Nombre de usuario completo' ],
-    [ PHONE_ATTR, 'Número de Teléfono' ],
-    [ 'Email', 'Correo electrónico de usuario' ],
+    [ CITY_ATTR, BaseApp.CITY_ATTR ],
+    [ STREET_ATTR, BaseApp.STREET_ATTR ],
+    [ CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR ],
+    [ PHONE_ATTR, BaseApp.PHONE_ATTR ],
+    [ 'Email', BaseApp.EMAIL_ATTR ],
     // THIS ONE HAS TO BE DELETED
     [ QNT_ATTR, null, ( str, row, app ) => {
         return parseInt( str ) * app.getPackUnits( row[OLD_SKU_ATTR] );
@@ -140,7 +142,7 @@ class TikTokApp extends BaseApp
         const albaranContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'IVA/Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
             albaranArea.root.innerHTML = '';
-            albaranArea.attach( this.core.createDropZone( this.area, ( fileData ) => this.showAlbaranRelatedInfo( fileData, ATTR_PARAMS, true ), 'listados de envíos' ) );
+            albaranArea.attach( this.core.createDropZone( this.area, ( fileData ) => this.showAlbaranRelatedInfo( fileData, ATTR_PARAMS ), 'listados de envíos' ) );
         } } );
         const albaranArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         albaranContainer.appendChild( albaranArea.root );
@@ -156,7 +158,7 @@ class TikTokApp extends BaseApp
         this.countries = [ 'ESPAÑA' ]; // , 'PORTUGAL', 'FRANCIA' ];
         this.countryTransportCostPct['ESPAÑA'] = 0.303;
 
-        this._onAlbaranData = ( data, external ) => {
+        this._onParseData = ( data, external ) => {
             // TikTok contains header descriptions in the first row
             return data.slice( external ? 1 : 0 );
         };
@@ -167,13 +169,6 @@ class TikTokApp extends BaseApp
     openData( data )
     {
         if ( !data?.length )
-        {
-            return;
-        }
-
-        // TikTok contains header descriptions in the first row
-        data = data.slice( 1 );
-        if ( !data.length )
         {
             return;
         }
