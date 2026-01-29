@@ -1,10 +1,9 @@
-let xlsx_loaded = 0;
-
 const Data = {
-    'ready': false,
-    'sku': {}, // LOADED USING THE XLSX,
-    'sku_map': {}, // LOADED USING THE XLSX,
-    'zoneRules': {
+    xlsx_loaded: 0,
+    ready: false,
+    sku: {}, // LOADED USING THE XLSX,
+    sku_map: {}, // LOADED USING THE XLSX,
+    zoneRules: {
         'España': [
             { 'prefix': '04', city: 'ALMERÍA', zone: [ [ 6 ], [ 3 ] ] },
             { 'prefix': '11', city: 'CÄDIZ', zone: [ [ 6 ], [ 3 ] ] },
@@ -119,7 +118,7 @@ const Data = {
             { 'prefix': [ '98' ], city: 'FRANCIA Z49', zone: [ [], [], [ 49 ] ] }
         ]
     },
-    'pricesByZone': {
+    pricesByZone: {
         'CBL': {
             '1': { '5': 5.03, '10': 6.10, '20': 7.81, '30': 8.26, '40': 9.52, '50': 9.82, '60': 10.83, '70': 12.08, '80': 13.50, '90': 15.03, '100': 16.52, '150': 21.69, '200': 29.39, '250': 30.54,
                 '300': 33.58, '500': 0.129, '750': 0.125, '1000': 0.107, '3000': 0.102, 'max': 0.098 },
@@ -146,138 +145,143 @@ const Data = {
         },
         'SEUR': {}, // LOADED USING THE XLSX
         'SALVAT': {} // LOADED USING THE XLSX
+    },
+    load: function( callback ) {
+
+        this.callback = callback;
+
+        LX.requestBinary( 'data/salvat.xlsx', ( binary ) => {
+            const workbook = XLSX.read( binary, { type: 'binary' } );
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
+
+            for ( let i = 1; i <= 49; ++i )
+            {
+                const zone = `ZONA ${i}`;
+                this.pricesByZone.SALVAT[i] = {};
+
+                for ( const row of data )
+                {
+                    const price = row[zone];
+                    if ( !price )
+                    {
+                        throw ( 'Something happened reading SALVAT prices' );
+                    }
+                    const kgs = row['KG'];
+
+                    this.pricesByZone.SALVAT[i][kgs] = parseFloat( price );
+                }
+            }
+
+            // console.log(this.pricesByZone.SALVAT)
+
+            this.onLoad();
+        } );
+        LX.requestBinary( 'data/seur.xlsx', ( binary ) => {
+            const workbook = XLSX.read( binary, { type: 'binary' } );
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
+
+            for ( let i = 1; i <= 7; ++i )
+            {
+                this.pricesByZone.SEUR[i] = {};
+
+                for ( const row of data )
+                {
+                    const price = row[i];
+                    if ( !price )
+                    {
+                        throw ( 'Something happened reading SALVAT prices' );
+                    }
+                    const kgs = row['Kilos'];
+
+                    this.pricesByZone.SEUR[i][kgs] = parseFloat( price );
+                }
+            }
+
+            // console.log(this.pricesByZone.SEUR)
+
+            this.onLoad();
+        } );
+        LX.requestBinary( 'data/products.xlsx', ( binary ) => {
+            const workbook = XLSX.read( binary, { type: 'binary' } );
+
+            // MEDIDAS
+            {
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
+
+                for ( const p of data )
+                {
+                    if ( !p['GROSOR'] )
+                    {
+                        continue;
+                    }
+
+                    // Default values
+                    p['ANCHO'] = parseFloat( p['ANCHO'] ?? 0 ) / 100;
+                    p['GROSOR'] = parseFloat( p['GROSOR'] ?? 0 ) / 100;
+                    p['LARGO'] = parseFloat( p['LARGO'] ?? 0 ) / 100;
+                    p['PESO'] = parseFloat( p['PESO'] ?? 0 );
+                    p['UDS./BULTO'] = parseFloat( p['UDS./BULTO'] ?? 1 );
+                    p['EXCLUIR'] = !!parseFloat( p['EXCLUIR'] ?? 0 );
+
+                    // Remove prefix and store
+                    // const ogSku = p['CÓDIGO'];
+                    // p['CÓDIGO'] = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
+
+                    this.sku[p['CÓDIGO']] = p;
+                }
+
+                // console.log(this.sku)
+            }
+
+            // SKU MAP
+            {
+                const sheetName = workbook.SheetNames[1];
+                const sheet = workbook.Sheets[sheetName];
+                const data = XLSX.utils.sheet_to_json( sheet, { raw: true } );
+
+                for ( const p of data )
+                {
+                    const oldSku = p['old_sku'];
+                    if ( !oldSku )
+                    {
+                        continue;
+                    }
+
+                    const newSku = p['new_sku'];
+                    const priceDistribution = p['price_distr'];
+
+                    this.sku_map[oldSku.toString().trim()] = {
+                        skus: newSku ? newSku.trim().split( ',' ).map( ( s ) => s.trim() ) : undefined,
+                        prices: priceDistribution ? priceDistribution.trim().split( ',' ).map( ( s ) => parseFloat( s.trim() ) ) : undefined,
+                        quantity: parseInt( p['quantity'] ?? 1 )
+                    };
+                }
+
+                // console.log(this.sku_map)
+            }
+
+            this.onLoad();
+        } );
+    },
+    onLoad: function() {
+        this.xlsx_loaded++;
+        if ( this.xlsx_loaded === 3 )
+        {
+            this.ready = true;
+            console.log( 'XLSX data ready!' );
+            if( this.callback )
+            {
+                this.callback( this );
+            }
+        }
     }
 };
-
-const onLoad = () => {
-    xlsx_loaded++;
-    if ( xlsx_loaded === 3 )
-    {
-        Data.ready = true;
-        console.log( 'Data ready' );
-    }
-};
-
-LX.requestBinary( 'data/salvat.xlsx', ( binary ) => {
-    const workbook = XLSX.read( binary, { type: 'binary' } );
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
-
-    for ( let i = 1; i <= 49; ++i )
-    {
-        const zone = `ZONA ${i}`;
-        Data.pricesByZone.SALVAT[i] = {};
-
-        for ( const row of data )
-        {
-            const price = row[zone];
-            if ( !price )
-            {
-                throw ( 'Something happened reading SALVAT prices' );
-            }
-            const kgs = row['KG'];
-
-            Data.pricesByZone.SALVAT[i][kgs] = parseFloat( price );
-        }
-    }
-
-    // console.log(Data.pricesByZone.SALVAT)
-
-    onLoad();
-} );
-
-LX.requestBinary( 'data/seur.xlsx', ( binary ) => {
-    const workbook = XLSX.read( binary, { type: 'binary' } );
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
-
-    for ( let i = 1; i <= 7; ++i )
-    {
-        Data.pricesByZone.SEUR[i] = {};
-
-        for ( const row of data )
-        {
-            const price = row[i];
-            if ( !price )
-            {
-                throw ( 'Something happened reading SALVAT prices' );
-            }
-            const kgs = row['Kilos'];
-
-            Data.pricesByZone.SEUR[i][kgs] = parseFloat( price );
-        }
-    }
-
-    // console.log(Data.pricesByZone.SEUR)
-
-    onLoad();
-} );
-
-LX.requestBinary( 'data/products.xlsx', ( binary ) => {
-    const workbook = XLSX.read( binary, { type: 'binary' } );
-
-    // MEDIDAS
-    {
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
-
-        for ( const p of data )
-        {
-            if ( !p['GROSOR'] )
-            {
-                continue;
-            }
-
-            // Default values
-            p['ANCHO'] = parseFloat( p['ANCHO'] ?? 0 ) / 100;
-            p['GROSOR'] = parseFloat( p['GROSOR'] ?? 0 ) / 100;
-            p['LARGO'] = parseFloat( p['LARGO'] ?? 0 ) / 100;
-            p['PESO'] = parseFloat( p['PESO'] ?? 0 );
-            p['UDS./BULTO'] = parseFloat( p['UDS./BULTO'] ?? 1 );
-            p['EXCLUIR'] = !!parseFloat( p['EXCLUIR'] ?? 0 );
-
-            // Remove prefix and store
-            // const ogSku = p['CÓDIGO'];
-            // p['CÓDIGO'] = ogSku.substring( ogSku.indexOf( '-' ) + 1 );
-
-            Data.sku[p['CÓDIGO']] = p;
-        }
-
-        // console.log(Data.sku)
-    }
-
-    // SKU MAP
-    {
-        const sheetName = workbook.SheetNames[1];
-        const sheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json( sheet, { raw: true } );
-
-        for ( const p of data )
-        {
-            const oldSku = p['old_sku'];
-            if ( !oldSku )
-            {
-                continue;
-            }
-
-            const newSku = p['new_sku'];
-            const priceDistribution = p['price_distr'];
-
-            Data.sku_map[oldSku.toString().trim()] = {
-                skus: newSku ? newSku.trim().split( ',' ).map( ( s ) => s.trim() ) : undefined,
-                prices: priceDistribution ? priceDistribution.trim().split( ',' ).map( ( s ) => parseFloat( s.trim() ) ) : undefined,
-                quantity: parseInt( p['quantity'] ?? 1 )
-            };
-        }
-
-        // console.log(Data.sku_map)
-    }
-
-    onLoad();
-} );
 
 window.Data = Data;
 

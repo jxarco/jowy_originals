@@ -884,7 +884,14 @@ core.data['bathby'].template = ( id, url, transport ) => {
         LX.insertChildAtIndex( menubar.root, entry );
     }
 
-    core.init( menubar.siblingArea );
+    const dialog = Utils.makeLoadingDialog( "Cargando datos de productos... " );
+
+    Data.load( () => {
+        LX.doAsync( () => {
+            dialog.destroy();
+            core.init( menubar.siblingArea );
+        }, 10 );
+    });
 }
 
 // const url = "https://scrape.abstractapi.com/v1/?api_key=2a401a83e18b45b7bba20beddcb9ad6e&url=https://news.ycombinator.com"

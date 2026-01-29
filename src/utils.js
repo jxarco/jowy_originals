@@ -207,5 +207,5 @@ export const makeLoadingDialog = ( title ) => {
     return new LX.Dialog( title ?? 'Acción en curso, espere...', ( p ) => {
         const spinner = new LX.Spinner( { size: '2xl', icon: 'LoaderCircle', iconClass: 'p-2' } );
         p.attach( spinner.root );
-    }, { modal: true, position: [ 'calc(50% - 150px)', '250px' ], size: [ '300px', null ], closable: false, draggable: false } );
+    }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: false, draggable: false } );
 };
