@@ -356,9 +356,10 @@ class BaseApp
             const ogZipCode = r[CP_ATTR];
             r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
             const ogPhone = r[PHONE_ATTR];
-            r[PHONE_ATTR] = ogPhone.replace( /[()]/g, '' );
+            if( ogPhone ) r[PHONE_ATTR] = ogPhone.replace( /[()]/g, '' );
             const ogPVP = r[PVP_ATTR];
-            r[PVP_ATTR] = ogPVP.constructor === String ? ogPVP.replace( '€', '' ).replace( ',', '.' ).trim() : ogPVP;
+            if( ogPVP ) r[PVP_ATTR] = ogPVP.constructor === String ?
+                ogPVP.replace( '€', '' ).replace( ',', '.' ).trim() : ogPVP;
         } );
 
         // Sort by ref once
