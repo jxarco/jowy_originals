@@ -163,6 +163,12 @@ class TikTokApp extends BaseApp
             return data.slice( external ? 1 : 0 );
         };
 
+        this._onParseRowData = ( row ) => {
+            const street1 = row[STREET_ATTR] ?? '';
+            const street2 = row['House Name or Number'] ?? '';
+            row[STREET_ATTR] = `${street1} ${street2}`.trim();
+        };
+
         this.clear();
     }
 
