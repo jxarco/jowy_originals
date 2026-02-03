@@ -6,7 +6,7 @@ import { BaseApp } from './base_app.js';
 
 const SKU_ATTR = 'SKU de Tienda';
 const OLD_SKU_ATTR = `${SKU_ATTR}_OLD`;
-const ORDER_ATTR = 'Decathlon ID pedido';
+const ORDER_ATTR = 'Número de pedido';
 const ORDER_LINE_ATTR = 'N.º de asiento de pedido';
 const ART_ID_ATTR = 'SKU del producto';
 const ART_NAME_ATTR = 'Detalles';
