@@ -18,6 +18,7 @@ class BaseApp
     static CITY_ATTR = 'Ciudad';
     static EMAIL_ATTR = 'Correo electrónico de usuario';
     static PACK_U_ATTR = 'Pack Units';
+    static TRANS_ATTR = 'Transport';
 
     constructor( core, tool )
     {
@@ -307,10 +308,8 @@ class BaseApp
         return tableWidget;
     }
 
-    getTrackingListTable( tData, columnData, options = {} )
+    getTrackingListTable( data, tData, columnData, options = {} )
     {
-        const data = this.lastOrdersData;
-
         this._trackingSyncErrors = [];
 
         // Create table data from the list

@@ -167,6 +167,9 @@ class TikTokApp extends BaseApp
             const street1 = row[STREET_ATTR] ?? '';
             const street2 = row['House Name or Number'] ?? '';
             row[STREET_ATTR] = `${street1} ${street2.length ? `(${street2})` : ''}`.trim();
+
+            const qnt = parseInt( row[QNT_ATTR] ) * row[BaseApp.PACK_U_ATTR];
+            row[BaseApp.TRANS_ATTR] = this.core.getTransportForItem( row[SKU_ATTR], qnt );
         };
 
         this.clear();
@@ -211,10 +214,7 @@ class TikTokApp extends BaseApp
             [ 'Unidades', null, ( str, row ) => {
                 return parseInt( row[QNT_ATTR] ) * this.getPackUnits( row[OLD_SKU_ATTR] );
             } ],
-            [ 'Transporte', null, ( str, row ) => {
-                const qnt = parseInt( row[QNT_ATTR] ) * this.getPackUnits( row[OLD_SKU_ATTR] );
-                return this.core.getTransportForItem( row[SKU_ATTR], qnt );
-            } ],
+            [ BaseApp.TRANS_ATTR, 'Transporte' ],
             [ 'Plataforma', null, () => 'TIKTOK' ],
             [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
             [ 'Observaciones', null ],
@@ -229,7 +229,12 @@ class TikTokApp extends BaseApp
     {
         Utils.clearArea( this.trackingArea );
         
-        const tableWidget = this.getTrackingListTable( tData, TRACKING_DATA, {
+        // Discard orders sent with CBL (Decathlon and TikTok only)
+        const data = this.lastOrdersData.filter( r => {
+            return r[BaseApp.TRANS_ATTR] !== 'CBL';
+        } );
+
+        const tableWidget = this.getTrackingListTable( data, tData, TRACKING_DATA, {
             centered: true,
             filter: 'Tracking Number',
             hiddenColumns: [ 'Nombre del almacén', 'Destino', 'Cantidad', 'Variantes', 'ID de SKU', 'Nombre de producto', 'ID de recibo' ]
@@ -242,10 +247,9 @@ class TikTokApp extends BaseApp
     exportSEUR( ignoreErrors = false, rawData )
     {
         const filename = `ETIQUETAS_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
+        // Discard orders sent with CBL (Decathlon and TikTok only)
         const data = ( rawData ?? this.lastOrdersData ).filter( r => {
-            // discard orders sent with CBL
-            const qnt = parseInt( r[QNT_ATTR] ) * this.getPackUnits( r[OLD_SKU_ATTR] );
-            return this.core.getTransportForItem( r[SKU_ATTR], qnt ) === 'SEUR';
+            return r[BaseApp.TRANS_ATTR] !== 'CBL';
         } );
         const labelsData = this.getSEURLabelsData( ignoreErrors, data, LABEL_DATA, ORDER_ATTR );
         this.core.exportXLSXData( labelsData, filename, ignoreErrors );

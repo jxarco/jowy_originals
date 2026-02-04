@@ -218,7 +218,9 @@ class SheinApp extends BaseApp
     {
         Utils.clearArea( this.trackingArea );
 
-        const tableWidget = this.getTrackingListTable( tData, TRACKING_DATA, {
+        const data = this.lastOrdersData;
+
+        const tableWidget = this.getTrackingListTable( data, tData, TRACKING_DATA, {
             centered: true,
             filter: 'Tracking Number',
             hiddenColumns: [ 'Delete' ]
