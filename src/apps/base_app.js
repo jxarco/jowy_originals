@@ -42,6 +42,7 @@ class BaseApp
         this._trackingSyncErrors = [];
         this._packUnits = {};
         this._onParseData = null;
+        this._onParseAlbaranData = null;
         this._onParseRowData = null;
     }
 
@@ -358,7 +359,11 @@ class BaseApp
 
         data = data ?? this.lastOrdersData;
 
-        if( this._onParseData )
+        if( this._onParseAlbaranData )
+        {
+            data = this._onParseAlbaranData( data, external ?? true );
+        }
+        else if( this._onParseData )
         {
             data = this._onParseData( data, external ?? true );
         }

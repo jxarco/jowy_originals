@@ -6,10 +6,10 @@ import { BaseApp } from './base_app.js';
 const SKU_ATTR = BaseApp.SKU_ATTR;
 const OLD_SKU_ATTR = `${SKU_ATTR}_OLD`;
 const ORDER_ATTR = 'Número de pedido';
-const ART_ID_ATTR = BaseApp.ART_ID_ATTR;
+const ART_ID_ATTR = 'ID del producto del pedido';
 const ART_NAME_ATTR = BaseApp.ART_NAME_ATTR;
 const CLIENT_NAME_ATTR = 'Nombre del comprador';
-const PAIS_ATTR = 'País de envío';
+const PAIS_ATTR = 'País de envío_1';
 const CP_ATTR = 'Código postal';
 const PHONE_ATTR = '';
 const STREET_ATTR = 'Dirección de envío';
@@ -21,7 +21,7 @@ const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_
 
 const ORDERS_DATA = [
     [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
-    [ ART_ID_ATTR ],
+    [ ART_ID_ATTR, BaseApp.ART_ID_ATTR ],
     [ OLD_SKU_ATTR ],
     [ SKU_ATTR ],
     [ QNT_ATTR, 'Cantidad', ( str, row, app ) => {
@@ -93,6 +93,16 @@ class MiraviaApp extends BaseApp
         this._onParseData = ( data, external ) => {
             // Remove "ready to ship" / orders that have already been processed (Miravia only)
             data = data.filter( ( r ) => r['Estado'] === 'pending' );
+            // Combine by ORDER_SKU (SHEIN, Miravia only)
+            data = Utils.combineRowsByKeys( data, ORDER_ATTR, SKU_ATTR );
+            return data;
+        };
+
+        this._onParseAlbaranData = ( data, external ) => {
+            // Remove everything that's not shipped or delivered and doesn't have tracking number
+            data = data.filter( ( r ) => {
+                return ( ( r['Estado'] === 'shipped' ) || ( r['Estado'] === 'delivered' ) ) && r[''] !== '';
+            } );
             // Combine by ORDER_SKU (SHEIN, Miravia only)
             data = Utils.combineRowsByKeys( data, ORDER_ATTR, SKU_ATTR );
             return data;
