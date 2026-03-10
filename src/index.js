@@ -9,6 +9,8 @@ import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
 import { TikTokApp } from './apps/tiktok_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
+import { SeurPackerApp } from './apps/seur_packer.js';
+import { BillCalculatorApp } from './apps/bill_calculator.js';
 import {
     ALWAYS_CBL,
     CBL_RULES,
@@ -123,6 +125,8 @@ const core = {
         this.decathlonApp = new DecathlonApp( this, 'decathlon' );
         // this.carrefourApp = new MiraklApp( this, 'Carrefour' );
         this.transportCalculatorApp = new TransportCalculatorApp( this, 't-calc' );
+        this.billCalculatorApp = new BillCalculatorApp( this, 'b-calc' );
+        this.seurPackerApp = new SeurPackerApp( this, 'seur-packer' );
         this.manualApp = new ManualApp( this, 'manual' );
         this.chillApp = new ChillApp( this, 'chill' );
 
@@ -264,11 +268,18 @@ const core = {
         {
             const fileInput = document.createElement( 'input' );
             fileInput.type = 'file';
+            fileInput.multiple = true;
 
-            fileInput.addEventListener( 'change', ( e ) => {
+            fileInput.addEventListener( 'change', async ( e ) => {
                 const files = e.target.files;
                 if ( !files.length ) return;
-                this.onLoadFile( files[0] );
+                const allDataRows = [];
+                const innerCallback = ( d ) => allDataRows.push( ...d );
+                for ( const file of files )
+                {
+                    await this.onLoadFile( file, innerCallback );
+                }
+                this.processData( allDataRows );
                 fileInput.value = '';
             } );
 
@@ -292,17 +303,21 @@ const core = {
             header.classList.remove( 'draggingover' );
         } );
 
-        header.addEventListener( 'drop', ( event ) => {
+        header.addEventListener( 'drop', async ( event ) => {
             event.preventDefault();
             event.stopPropagation();
             header.classList.remove( 'draggingover' );
-
             // Check if a file was dropped
-            if ( event.dataTransfer.files.length > 0 )
+            const files = event.dataTransfer.files;
+            if ( !files.length ) return;
+
+            const allDataRows = [];
+            const innerCallback = ( d ) => allDataRows.push( ...d );
+            for ( const file of files )
             {
-                const file = event.dataTransfer.files[0];
-                this.onLoadFile( file );
+                await this.onLoadFile( file, innerCallback );
             }
+            this.processData( allDataRows );
         } );
 
         this.header = header;
@@ -827,9 +842,11 @@ core.data['bathby'].template = ( id, url, transport ) => {
             ]
         },
         {
-            name: 'Calculadoras',
+            name: 'Otros',
             submenu: [
-                { name: 'Transporte', callback: ( v, e ) => core.openApp( core.transportCalculatorApp, v ), icon: 'Truck' },
+                { name: 'Transporte', callback: ( v, e ) => core.openApp( core.transportCalculatorApp ), icon: 'Truck' },
+                { name: 'Packer SEUR', callback: ( v, e ) => core.openApp( core.seurPackerApp ), icon: 'Barcode' },
+                { name: 'Facturas SEUR', callback: ( v, e ) => core.openApp( core.billCalculatorApp ), icon: 'ReceiptEuro', disabled: true },
                 { name: 'Stock', disabled: true, callback: core.redirectToOAuth.bind( core ), icon: 'Boxes' }
             ]
         },
