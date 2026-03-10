@@ -253,12 +253,14 @@ const Data = {
                         continue;
                     }
 
-                    const newSku = p['new_sku'];
+                    const newSkuText = p['new_sku'];
+                    const newSku = newSkuText ? newSkuText.trim().split( ',' ).map( ( s ) => s.trim() ) : undefined;
                     const priceDistribution = p['price_distr'];
 
                     this.sku_map[oldSku.toString().trim()] = {
-                        skus: newSku ? newSku.trim().split( ',' ).map( ( s ) => s.trim() ) : undefined,
-                        prices: priceDistribution ? priceDistribution.trim().split( ',' ).map( ( s ) => parseFloat( s.trim() ) ) : undefined,
+                        skus: newSku,
+                        prices: priceDistribution ? priceDistribution.trim().split( ',' ).map( ( s ) => parseFloat( s.trim() ) ) : 
+                            ( newSku?.length ? newSku.map( v => 1.0 / newSku.length ) : undefined ),
                         quantity: parseInt( p['quantity'] ?? 1 )
                     };
                 }
