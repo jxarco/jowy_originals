@@ -30,7 +30,7 @@ class ManualApp extends BaseApp
 
         {
             const sheinContainer = LX.makeContainer( [ null, 'auto' ], 'flex flex-col relative bg-card p-1 pt-0 rounded-lg overflow-hidden' );
-            tabs.add( 'SHEIN', sheinContainer, { selected: true, onSelect: ( event, name ) => {} } );
+            tabs.add( 'SHEIN', sheinContainer, { Xselected: true, onSelect: ( event, name ) => {} } );
             sheinContainer.appendChild( this.createSheinDocs( 'SHEIN', 'shein.com' ) );
         }
 
