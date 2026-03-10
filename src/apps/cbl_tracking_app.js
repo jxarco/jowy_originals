@@ -73,6 +73,11 @@ class CblTrackingApp extends BaseApp
                         }
                     ]
                 },
+                {
+                    name: 'Deseleccionar todos',
+                    icon: 'Square',
+                    callback: () => this.unselectAllRows()
+                },
                 null,
                 {
                     name: 'Actualizar pedidos',
@@ -411,6 +416,8 @@ class CblTrackingApp extends BaseApp
                     }`;
                     this.dataTable.data.body[index][this.dataTable.data.head.indexOf( 'ESTADO' )] = newData;
                 } );
+
+                this.unselectAllRows();
 
                 this.dataTable.refresh();
 
@@ -1120,6 +1127,25 @@ class CblTrackingApp extends BaseApp
         this.showList( 'bathby', false );
         this.showList( 'hxg', false );
         this.showList( 'jowy', false );
+    }
+
+    unselectAllRows( emitChange = true )
+    {
+        const t = this.dataTable;
+        const body = t.root.querySelector( 'table tbody' );
+        for ( const el of body.childNodes )
+        {
+            el.querySelector( "input[type='checkbox']" ).checked = false;
+        }
+
+        t.data.checkMap = {};
+
+        if( emitChange )
+        {
+            LX.emitSignal( '@rows_selected_changed', 0);
+        }
+
+        t.refresh();
     }
 
     close()
