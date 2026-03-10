@@ -247,13 +247,13 @@ const Data = {
 
                 for ( const p of data )
                 {
-                    const oldSku = p['old_sku'];
+                    const oldSku = p['platform_sku'];
                     if ( !oldSku )
                     {
                         continue;
                     }
 
-                    const newSkuText = p['new_sku'];
+                    const newSkuText = p['excel_sku'];
                     const newSku = newSkuText ? newSkuText.trim().split( ',' ).map( ( s ) => s.trim() ) : undefined;
                     const priceDistribution = p['price_distr'];
 
