@@ -723,7 +723,7 @@ class BaseApp
                 [ 'Fecha', null, () => this.currentDate ], // 'D',
                 [ 'Estado', null, () => 0 ], // 'E',
                 [ 'Alm', null, () => 'LLA' ], // 'F',
-                [ 'Agente', null, () => 7 ], // 'G',
+                [ 'CD.Agente', 'Agente' ], // 'G',
                 [ '' ], // 'H',
                 [ 'CD.Cliente', 'Cliente' ], // 'I',
                 [ 'Cliente' ], // 'J',
@@ -822,7 +822,7 @@ class BaseApp
 
             let modifiedData = this.countries.map( ( c ) => {
                 return { 'Total': totalIncome[c], 'País': c, 'Cliente': `Ventas ${LX.toTitleCase( this.title )} ${c} Semana ${weekN}`,
-                    'CD.Cliente': this.core.getClientCode( this.title, c, currentYear ) };
+                    'CD.Cliente': this.core.getClientCode( this.title, c, currentYear ), 'CD.Agente': this.core.getAgentCode( this.title, currentYear ) };
             } );
 
             // Process with COL info

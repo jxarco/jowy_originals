@@ -12,7 +12,8 @@ import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import {
     ALWAYS_CBL,
     CBL_RULES,
-    PLATFORM_CLIENT_CODES
+    PLATFORM_CLIENT_CODES,
+    PLATFORM_AGENT_CODES
 } from './constants.js';
 import { Data } from './data.js';
 import * as Utils from './utils.js';
@@ -545,6 +546,12 @@ const core = {
     {
         const id = [ platform, country, year ].join( '_' );
         return PLATFORM_CLIENT_CODES[id] ?? -1;
+    },
+
+    getAgentCode( platform, year )
+    {
+        const id = [ platform, year ].join( '_' );
+        return PLATFORM_AGENT_CODES[id] ?? -1;
     },
 
     updateTransport: function( value )

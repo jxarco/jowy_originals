@@ -47,3 +47,15 @@ export const PLATFORM_CLIENT_CODES = {
     'TikTok_ESPAÑA_2026': '163',
     'Decathlon_ESPAÑA_2026': '161',
 };
+
+export const PLATFORM_AGENT_CODES = {
+    'SHEIN_2025': '21',
+    'Miravia_2025': '12',
+    'TikTok_2025': '19',
+    'Decathlon_2025': '23',
+
+    'SHEIN_2026': '21',
+    'Miravia_2026': '12',
+    'TikTok_2026': '19',
+    'Decathlon_2026': '23',
+};
