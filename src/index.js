@@ -334,7 +334,7 @@ const core = {
         this.footer = new LX.Footer( {
             className: 'border-top',
             parent: LX.root,
-            credits: `${new Date().getUTCFullYear()}. Alex Rodríguez (@jxarco) x INOUT ORIENT ATTRACTION SL`,
+            credits: `(v1.0) ${new Date().getUTCFullYear()}. @jxarco x INOUT ORIENT ATTRACTION SL.`,
             socials: [
                 { title: 'Github', link: 'https://github.com/jxarco/', icon: 'Github' }
             ]
