@@ -41,7 +41,7 @@ const ORDERS_DATA = [
 ];
 
 const LABEL_DATA = [
-    [ ORDER_ATTR ],
+    [ SKU_ATTR, BaseApp.REF_ATTR ], // [ ORDER_ATTR ],
     [ 'Bultos', null, ( str, row ) => {
         const sku = row[SKU_ATTR];
         const mSkus = Data.sku_map[sku];

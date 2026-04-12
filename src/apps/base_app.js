@@ -6,6 +6,7 @@ import * as Utils from '../utils.js';
 class BaseApp
 {
     static SKU_ATTR = 'SKU del vendedor';
+    static REF_ATTR = 'Referencia';
     static OLD_SKU_ATTR = 'SKU del vendedor_OLD';
     static PAIS_ATTR = 'País';
     static ORDER_ATTR = 'Número del pedido';
