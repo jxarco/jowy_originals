@@ -107,6 +107,8 @@ class BaseApp
             if( ogPhone )
             {
                 r[PHONE_ATTR] = ogPhone.replace( /[()]/g, '' );
+                // Remove +34 spain prefix
+                r[PHONE_ATTR] = r[PHONE_ATTR].replace( /^\+34/, '' );
             }
             const ogPVP = r[PVP_ATTR];
             if( ogPVP )
