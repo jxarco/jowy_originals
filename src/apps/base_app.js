@@ -1045,6 +1045,26 @@ class BaseApp
                 return r.slice( 0, -1 );
             } );
 
+        // Get param version from the query url
+        const urlParams = new URLSearchParams( window.location.search );
+        const version = urlParams.get( 'version' );
+
+        // Modify 1st col to add sku info to the order number
+        if( version !== 'v0' )
+        {
+            rows = rows.map( r => {
+                const orderNumber = r[0];
+                // replace all '+' to '-' and delete spaces
+                const sku = r[skuIdx].replaceAll( '+', '-' ).replaceAll( ' ', '' );
+                r[0] = `${sku}-${orderNumber}`;
+                return r;
+            } );
+        }
+        else
+        {
+            console.warn( 'Using old label format, consider updating the URL with ?version=v1 for better SKU info on labels.' );
+        }
+
         return [ data, ...rows ];
     }
 
