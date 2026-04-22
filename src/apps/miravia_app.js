@@ -85,12 +85,6 @@ export class MiraviaApp extends BaseApp
         this.albaranArea = albaranArea;
 
         this.countries = [ 'ESPAÑA', 'PORTUGAL', 'FRANCIA', 'ITALIA' ];
-        this.countryTransportCostPct['ESPAÑA'] = 0.167;
-        this.countryTransportCostPct['PORTUGAL'] = 0.184;
-
-        // TODO: Needs confirmation!
-        this.countryTransportCostPct['FRANCIA'] = 0.32;
-        this.countryTransportCostPct['ITALIA'] = 0.32;
 
         this._onParseData = ( data, external ) => {
             // Remove "ready to ship" / orders that have already been processed (Miravia only)

@@ -156,8 +156,7 @@ export class DecathlonApp extends BaseApp
         this.trackingArea = trackingArea;
         this.albaranArea = albaranArea;
 
-        this.countries = [ 'ESPAÑA' ]; // , 'PORTUGAL', 'FRANCIA' ];
-        this.countryTransportCostPct['ESPAÑA'] = 0.19;
+        this.countries = [ 'ESPAÑA' ];
 
         this._onParseData = ( data, external ) => {
             // Filter "Esperando envío"

@@ -4,21 +4,22 @@ import { Data } from '../data.js';
 import * as Utils from '../utils.js';
 import { BaseApp } from './base_app.js';
 
-const SKU_ATTR = 'Seller SKU';
+const SKU_ATTR = 'SKU de la oferta';
 const OLD_SKU_ATTR = `${SKU_ATTR}_OLD`;
-const ORDER_ATTR = 'Order ID';
-const ART_ID_ATTR = 'SKU ID';
-const ART_NAME_ATTR = 'Product Name';
-const CLIENT_NAME_ATTR = 'Recipient';
-const PAIS_ATTR = 'Country';
-const CP_ATTR = 'Zipcode';
-const PHONE_ATTR = 'Phone #';
-const STREET_ATTR = 'Street Name';
-const CITY_ATTR = 'City';
-const PVP_ATTR = 'SKU Unit Original Price';
-const ORDER_DATE_ATTR = 'Created Time';
-const QNT_ATTR = 'Quantity';
-const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, STREET_ATTR, CITY_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
+const ORDER_ATTR = 'Número de pedido';
+const ORDER_LINE_ATTR = 'N.º de asiento de pedido';
+const ART_ID_ATTR = 'SKU del producto';
+const ART_NAME_ATTR = 'Detalles';
+const CLIENT_NAME_ATTR = 'Dirección de entrega: nombre';
+const PAIS_ATTR = 'Dirección de entrega: país';
+const CP_ATTR = 'Dirección de entrega: código postal';
+const PHONE_ATTR = 'Dirección de entrega: teléfono';
+const STREET_ATTR = 'Dirección de entrega: calle';
+const CITY_ATTR = 'Dirección de entrega: ciudad';
+const PVP_ATTR = 'Importe total del pedido con IVA (gastos de envío incluidos)';
+const ORDER_DATE_ATTR = 'Fecha de creación';
+const QNT_ATTR = 'Cantidad';
+const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ORDER_LINE_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, STREET_ATTR, CITY_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
 
 const ORDERS_DATA = [
     [ ORDER_ATTR, BaseApp.ORDER_ATTR ],
@@ -34,11 +35,11 @@ const ORDERS_DATA = [
     [ CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR ],
     [ CP_ATTR, BaseApp.CP_ATTR ],
     [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
-    [ 'Province', 'Provincia' ],
+    [ 'Provincia', null, ( str, row ) => '' ],
     [ CITY_ATTR, BaseApp.CITY_ATTR ],
     [ STREET_ATTR, BaseApp.STREET_ATTR ],
     [ PHONE_ATTR, BaseApp.PHONE_ATTR ],
-    [ 'Email', BaseApp.EMAIL_ATTR ]
+    [ BaseApp.EMAIL_ATTR, null, ( str, row ) => '' ],
 ];
 
 const LABEL_DATA = [
@@ -55,12 +56,12 @@ const LABEL_DATA = [
     [ SKU_ATTR, BaseApp.SKU_ATTR ],
     [ CP_ATTR, BaseApp.CP_ATTR ],
     [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
-    [ 'Province', 'Provincia' ],
-    [ CITY_ATTR, BaseApp.CITY_ATTR ],
+    [ 'Provincia', null, ( str, row ) => '' ],
+    [ CITY_ATTR, BaseApp.CITY_ATTR, ( str, row ) => '' ],
     [ STREET_ATTR, BaseApp.STREET_ATTR ],
     [ CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR ],
     [ PHONE_ATTR, BaseApp.PHONE_ATTR ],
-    [ 'Email', BaseApp.EMAIL_ATTR ],
+    [ BaseApp.EMAIL_ATTR, null, ( str, row ) => '' ],
     // THIS ONE HAS TO BE DELETED
     [ QNT_ATTR, null, ( str, row, app ) => {
         return parseInt( str ) * app.getPackUnits( row[OLD_SKU_ATTR] );
@@ -69,20 +70,17 @@ const LABEL_DATA = [
 
 // (str, row, tracking_data, app)
 const TRACKING_DATA = [
-    [ ORDER_ATTR, 'ID de pedido' ],
-    [ 'Nombre del almacén', null, () => '' ],
-    [ 'Destino', null, () => '' ],
-    [ 'ID de SKU', null, () => '' ],
-    [ 'Nombre de producto', null, () => '' ],
-    [ 'Variantes', null, () => '' ],
-    [ 'Cantidad', null, () => '' ],
-    [ 'Nombre del transportista', null, () => 'Seur' ],
-    [ 'ID de seguimiento', null, ( str, row, tdata, app ) => {
-        const name = row[CLIENT_NAME_ATTR].toUpperCase();
-        const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name );
+    [ ORDER_ATTR, 'order-id' ],
+    [ 'carrier_code', 'carrier-code', () => 'SEUR (Spain)' ],
+    [ 'carrier_standard_code', 'carrier-standard-code', () => '' ],
+    [ 'carrier_name', 'carrier-name', () => 'SEUR' ],
+    [ 'carrier_url', 'carrier-url', () => 'https://www.seur.com/livetracking?segOnlineIdentificador=%7BtrackingId%7D&segOnlineIdioma=en' ],
+    [ 'tracking_number', 'tracking-number', ( str, row, tdata, app ) => {
+        const name = row[CLIENT_NAME_ATTR];
+        const tentry = tdata.find( ( d ) => d['CLIENTE DESTINATARIO'] === name.toUpperCase() );
         if ( !tentry )
         {
-            app._trackingSyncErrors.push( { name, uid: `${row[ORDER_ATTR]}` } );
+            app._trackingSyncErrors.push( { name, uid: row[ORDER_LINE_ATTR] } );
             const status = core.trackStatusColors['Incidencia'];
             let iconStr = status.icon ? LX.makeIcon( status.icon, { svgClass: 'md text-white!' } ).innerHTML : '';
             return `${
@@ -93,18 +91,21 @@ const TRACKING_DATA = [
         }
         return tentry['LOCALIZADOR'];
     } ],
-    [ 'ID de recibo', null, () => '' ]
+    [ SKU_ATTR, 'offer-sku' ],
+    [ ORDER_LINE_ATTR, 'order-line-id' ],
+    [ QNT_ATTR, 'quantity' ]
 ];
 
-export class TikTokApp extends BaseApp
+export class MiraklTemplateApp extends BaseApp
 {
-    constructor( core, tool )
+    constructor( core, tool, title, icon )
     {
         super( core, tool );
 
-        this.title = 'TikTok';
+        this.title = title ?? 'MiraklTemplate';
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
-        this.icon = 'TikTok';
+        this.icon = ( icon ?? title ) ?? 'Bot';
+        this.loadRaw = true; // load xlsx files in raw mode
 
         // Create utility buttons
         const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );
@@ -142,7 +143,7 @@ export class TikTokApp extends BaseApp
         const albaranContainer = LX.makeContainer( [ null, 'auto' ], Constants.TAB_CONTAINER_CLASSNAME );
         tabs.add( 'IVA/Albarán', albaranContainer, { xselected: true, onSelect: ( event, name ) => {
             albaranArea.root.innerHTML = '';
-            albaranArea.attach( this.core.createDropZone( this.area, ( fileData ) => this.showAlbaranRelatedInfo( fileData, ATTR_PARAMS ), 'listados de envíos' ) );
+            albaranArea.attach( this.core.createDropZone( this.area, ( fileData ) => this.showAlbaranRelatedInfo( fileData, ATTR_PARAMS, true ), 'listados de envíos' ) );
         } } );
         const albaranArea = new LX.Area( { className: Constants.TAB_AREA_CLASSNAME } );
         albaranContainer.appendChild( albaranArea.root );
@@ -155,17 +156,21 @@ export class TikTokApp extends BaseApp
         this.trackingArea = trackingArea;
         this.albaranArea = albaranArea;
 
-        this.countries = [ 'ESPAÑA' ];
+        this.countries = [ 'ESPAÑA', 'PORTUGAL' ];
 
         this._onParseData = ( data, external ) => {
-            // TikTok contains header descriptions in the first row
-            return data.slice( external ? 1 : 0 );
+            // Filter "Esperando envío"
+            return data.filter( ( r ) => r['Estado'] === 'Esperando envío' );
         };
 
         this._onParseRowData = ( row ) => {
-            const street1 = row[STREET_ATTR] ?? '';
-            const street2 = row['House Name or Number'] ?? '';
-            row[STREET_ATTR] = `${street1} ${street2.length ? `(${street2})` : ''}`.trim();
+            const name1 = row['Dirección de entrega: nombre de pila'] ?? '';
+            const name2 = row['Dirección de entrega: apellido'] ?? '';
+            row[CLIENT_NAME_ATTR] = `${name1} ${name2}`.trim();
+
+            const street1 = row['Dirección de entrega: calle 1'] ?? '';
+            const street2 = row['Dirección de entrega: calle 2'] ?? '';
+            row[STREET_ATTR] = `${street1} ${street2}`.trim();
 
             const qnt = parseInt( row[QNT_ATTR] ) * row[BaseApp.PACK_U_ATTR];
             row[BaseApp.TRANS_ATTR] = this.core.getTransportForItem( row[SKU_ATTR], qnt );
@@ -214,7 +219,7 @@ export class TikTokApp extends BaseApp
                 return parseInt( row[QNT_ATTR] ) * this.getPackUnits( row[OLD_SKU_ATTR] );
             } ],
             [ BaseApp.TRANS_ATTR, 'Transporte' ],
-            [ 'Plataforma', null, () => 'TIKTOK' ],
+            [ 'Plataforma', null, () => this.title.toUpperCase() ],
             [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
             [ 'Observaciones', null ],
             [ ORDER_ATTR, BaseApp.ORDER_ATTR ]
@@ -235,8 +240,8 @@ export class TikTokApp extends BaseApp
 
         const tableWidget = this.getTrackingListTable( data, tData, TRACKING_DATA, {
             centered: true,
-            filter: 'Tracking Number',
-            hiddenColumns: [ 'Nombre del almacén', 'Destino', 'Cantidad', 'Variantes', 'ID de SKU', 'Nombre de producto', 'ID de recibo' ]
+            filter: 'tracking-number',
+            hiddenColumns: [ 'carrier-standard-code' ]
         } );
         this.trackingArea.attach( tableWidget );
 

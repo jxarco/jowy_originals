@@ -149,8 +149,6 @@ export class SheinApp extends BaseApp
         this.albaranArea = albaranArea;
 
         this.countries = [ 'ESPAÑA', 'PORTUGAL' ];
-        this.countryTransportCostPct['ESPAÑA'] = 0.303;
-        this.countryTransportCostPct['PORTUGAL'] = 0.32;
 
         this._onParseData = ( data, external ) => {
             // Combine by ORDER_SKU (SHEIN, Miravia only)

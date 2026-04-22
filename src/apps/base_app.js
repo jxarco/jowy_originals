@@ -1,6 +1,6 @@
 import { LX } from 'lexgui';
 import { Data } from '../data.js';
-import { Constants } from '../constants.js';
+import { Constants, PLATFORM_TRANSPORT_COST_PCT } from '../constants.js';
 import * as Utils from '../utils.js';
 
 export class BaseApp
@@ -33,12 +33,6 @@ export class BaseApp
         this.currentDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
         this.albNumber = -1;
         this.countries = [];
-        this.countryTransportCostPct = {
-            'ESPAÑA': 1e10,
-            'PORTUGAL': 1e10,
-            'FRANCIA': 1e10,
-            'ITALIA': 1e10
-        };
 
         this._trackingSyncErrors = [];
         this._packUnits = {};
@@ -600,7 +594,8 @@ export class BaseApp
                     const skuPctPrice = skuObj.price;
                     prcPriceCheck += skuPctPrice;
                     const priceWithoutIVA = getPriceWithoutIVA( row ) * skuPctPrice;
-                    const transportPrice = this.countryTransportCostPct[country];
+                    const transportLabel = `${this.title}_${country}`;
+                    const transportPrice = PLATFORM_TRANSPORT_COST_PCT[transportLabel] ?? 1e10;
                     const totalProductTransport = priceWithoutIVA * transportPrice * skuPctPrice;
                     const productTotal = priceWithoutIVA - totalProductTransport;
 

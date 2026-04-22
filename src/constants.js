@@ -28,6 +28,32 @@ export const ALWAYS_CBL = [
     'HG-CD300'
 ];
 
+export const PLATFORM_TRANSPORT_COST_PCT = {
+    // 'Amazon_ESPAÑA': 0.186,
+    // 'Amazon_PORTUGAL': 0.196,
+    // 'Amazon_FRANCIA': 0.19,
+    'Miravia_ESPAÑA': 0.167,
+    'Miravia_PORTUGAL': 0.184,
+    // TODO: Needs confirmation!
+    'Miravia_FRANCIA': 0.32,
+    'Miravia_ITALIA': 0.32,
+    // .........................
+    'SHEIN_ESPAÑA': 0.303,
+    'SHEIN_PORTUGAL': 0.32,
+    'LeroyMerlin_ESPAÑA': 0.19,
+    'LeroyMerlin_PORTUGAL': 0.27,
+    'Worten_ESPAÑA': 0.194,
+    'Worten_PORTUGAL': 0.215,
+    'Decathlon_ESPAÑA': 0.19,
+    'Carrefour_ESPAÑA': 0.216,
+    'TikTok_ESPAÑA': 0.29,
+    'TEMU_ESPAÑA': 0.1,
+    'PlanetaHuerto_ESPAÑA': 0.1,
+    // TODO: Needs confirmation!
+    'Sprinter_ESPAÑA': 0.19,
+    'Sprinter_PORTUGAL': 0.27,
+};
+
 export const PLATFORM_CLIENT_CODES = {
     'SHEIN_ESPAÑA_2025': '504',
     'SHEIN_PORTUGAL_2025': '505',
