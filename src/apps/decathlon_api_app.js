@@ -50,7 +50,7 @@ const VENDOR_TEMPLATES = {
     ]
 };
 
-class MiraklApp extends BaseApp
+export class DecathlonAPIApp extends BaseApp
 {
     constructor( core, vendorName )
     {
@@ -285,5 +285,3 @@ class MiraklApp extends BaseApp
         this.showOrders( this.vendor.toLowerCase(), true );
     }
 }
-
-export { MiraklApp };

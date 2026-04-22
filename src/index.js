@@ -2,8 +2,8 @@ import { LX } from 'lexgui';
 import { CblTrackingApp } from './apps/cbl_tracking_app.js';
 import { ChillApp } from './apps/chill_app.js';
 import { DecathlonApp } from './apps/decathlon_app.js';
+import { DecathlonAPIApp } from './apps/decathlon_api_app.js';
 import { ManualApp } from './apps/manual_app.js';
-import { MiraklApp } from './apps/mirakl_apps.js';
 import { MiraviaApp } from './apps/miravia_app.js';
 import { OrdersApp } from './apps/orders_app.js';
 import { SheinApp } from './apps/shein_app.js';
@@ -121,7 +121,7 @@ const core = {
         this.sheinApp = new SheinApp( this, 'shein' );
         this.tikTokApp = new TikTokApp( this, 'tiktok' );
         this.miraviaApp = new MiraviaApp( this, 'miravia' );
-        this.decathlonOnlineApp = new MiraklApp( this, 'Decathlon' );
+        this.decathlonOnlineApp = new DecathlonAPIApp( this, 'Decathlon' );
         this.decathlonApp = new DecathlonApp( this, 'decathlon' );
         // this.carrefourApp = new MiraklApp( this, 'Carrefour' );
         this.transportCalculatorApp = new TransportCalculatorApp( this, 't-calc' );
