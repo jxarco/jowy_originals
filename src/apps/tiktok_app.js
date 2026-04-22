@@ -156,7 +156,7 @@ class TikTokApp extends BaseApp
         this.albaranArea = albaranArea;
 
         this.countries = [ 'ESPAÑA' ]; // , 'PORTUGAL', 'FRANCIA' ];
-        this.countryTransportCostPct['ESPAÑA'] = 0.303;
+        this.countryTransportCostPct['ESPAÑA'] = 0.29;
 
         this._onParseData = ( data, external ) => {
             // TikTok contains header descriptions in the first row

@@ -157,7 +157,7 @@ class DecathlonApp extends BaseApp
         this.albaranArea = albaranArea;
 
         this.countries = [ 'ESPAÑA' ]; // , 'PORTUGAL', 'FRANCIA' ];
-        this.countryTransportCostPct['ESPAÑA'] = 0.303;
+        this.countryTransportCostPct['ESPAÑA'] = 0.19;
 
         this._onParseData = ( data, external ) => {
             // Filter "Esperando envío"
