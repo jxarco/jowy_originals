@@ -8,7 +8,7 @@ const TRANSPORT_NAMES = [ 'CBL', 'SEUR', 'SALVAT' ];
 let lastTotalPrice = [];
 // let lastTotalPackages = 0;
 
-class TransportCalculatorApp extends BaseApp
+export class TransportCalculatorApp extends BaseApp
 {
     // _sku = "Vacío";
     _sku = 'HG-AD12';
@@ -604,5 +604,3 @@ class TransportCalculatorApp extends BaseApp
         }, { position: [ '10%', '250px' ], size: [ '80%', null ], closable: true, draggable: false } );
     }
 }
-
-export { TransportCalculatorApp };

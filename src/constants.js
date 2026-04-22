@@ -37,6 +37,15 @@ export const PLATFORM_CLIENT_CODES = {
     'Miravia_ITALIA_2025': '598',
     'TikTok_ESPAÑA_2025': '502',
     'Decathlon_ESPAÑA_2025': '600',
+    'Worten_ESPAÑA_2025': '596',
+    'Worten_PORTUGAL_2025': '496',
+    'Carrefour_ESPAÑA_2025': '495',
+    'Temu_ESPAÑA_2025': '498',
+    'LeroyMerlin_ESPAÑA_2025': '499',
+    'LeroyMerlin_PORTUGAL_2025': '501',
+    'LeroyMerlin_FRANCIA_2025': '500',
+    'PlanetaHuerto_ESPAÑA_2025': '503',
+    'Sprinter_ESPAÑA_2025': '165', // No client code for Sprinter, using new 2026 code
 
     'SHEIN_ESPAÑA_2026': '131',
     'SHEIN_PORTUGAL_2026': '132',
@@ -46,16 +55,27 @@ export const PLATFORM_CLIENT_CODES = {
     'Miravia_ITALIA_2026': '124',
     'TikTok_ESPAÑA_2026': '163',
     'Decathlon_ESPAÑA_2026': '161',
+    'Worten_ESPAÑA_2026': '151',
+    'Worten_PORTUGAL_2026': '152',
+    'Carrefour_ESPAÑA_2026': '162',
+    'Temu_ESPAÑA_2026': '166',
+    'LeroyMerlin_ESPAÑA_2026': '141',
+    'LeroyMerlin_PORTUGAL_2026': '142',
+    'LeroyMerlin_FRANCIA_2026': '143',
+    'PlanetaHuerto_ESPAÑA_2026': '164',
+    'Sprinter_ESPAÑA_2026': '165',
 };
 
 export const PLATFORM_AGENT_CODES = {
-    'SHEIN_2025': '21',
-    'Miravia_2025': '12',
-    'TikTok_2025': '19',
-    'Decathlon_2025': '23',
-
-    'SHEIN_2026': '21',
-    'Miravia_2026': '12',
-    'TikTok_2026': '19',
-    'Decathlon_2026': '23',
+    // 'Amazon': '7',
+    'Carrefour': '10',
+    'Worten': '11',
+    'Miravia': '12',
+    'TEMU': '15',
+    'LeroyMerlin': '17',
+    'TikTok': '19',
+    'PlanetaHuerto': '20',
+    'SHEIN': '21',
+    'Sprinter': '22',
+    'Decathlon': '23'
 };

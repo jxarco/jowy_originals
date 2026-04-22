@@ -1,7 +1,7 @@
 import { LX } from 'lexgui';
 import { BaseApp } from './base_app.js';
 
-class BillCalculatorApp extends BaseApp
+export class BillCalculatorApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -17,5 +17,3 @@ class BillCalculatorApp extends BaseApp
         super.clear();
     }
 }
-
-export { BillCalculatorApp };

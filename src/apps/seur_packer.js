@@ -17,7 +17,7 @@ const columnData = [
     [ 'Correo electrónico de usuario' ],
 ];
 
-class SeurPackerApp extends BaseApp
+export class SeurPackerApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -117,5 +117,3 @@ class SeurPackerApp extends BaseApp
         Utils.toggleButtonDisabled( this.exportButton, true );
     }
 }
-
-export { SeurPackerApp };

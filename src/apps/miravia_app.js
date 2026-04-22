@@ -37,7 +37,7 @@ const ORDERS_DATA = [
     [ STREET_ATTR, BaseApp.STREET_ATTR ]
 ];
 
-class MiraviaApp extends BaseApp
+export class MiraviaApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -185,5 +185,3 @@ class MiraviaApp extends BaseApp
         this.showAlbaranRelatedInfo( [], ATTR_PARAMS );
     }
 }
-
-export { MiraviaApp };

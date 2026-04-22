@@ -3,7 +3,7 @@ import { BaseApp } from './base_app.js';
 
 const isFriday = new Date().getDay() === 5;
 
-class ChillApp extends BaseApp
+export class ChillApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -170,5 +170,3 @@ class ChillApp extends BaseApp
         }
     }
 }
-
-export { ChillApp };

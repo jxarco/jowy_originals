@@ -565,7 +565,8 @@ const core = {
 
     getAgentCode( platform, year )
     {
-        const id = [ platform, year ].join( '_' );
+        // const id = [ platform, year ].join( '_' );
+        const id = platform;
         return PLATFORM_AGENT_CODES[id] ?? -1;
     },
 

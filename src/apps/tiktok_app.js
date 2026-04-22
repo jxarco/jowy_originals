@@ -96,7 +96,7 @@ const TRACKING_DATA = [
     [ 'ID de recibo', null, () => '' ]
 ];
 
-class TikTokApp extends BaseApp
+export class TikTokApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -314,5 +314,3 @@ class TikTokApp extends BaseApp
         Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
     }
 }
-
-export { TikTokApp };

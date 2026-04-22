@@ -89,7 +89,7 @@ const TRACKING_DATA = [
     [ 'Delete', null, () => '' ]
 ];
 
-class SheinApp extends BaseApp
+export class SheinApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -302,5 +302,3 @@ class SheinApp extends BaseApp
         Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
     }
 }
-
-export { SheinApp };

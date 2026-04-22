@@ -3,7 +3,7 @@ import { Constants, NumberFormatter } from '../constants.js';
 import * as Utils from '../utils.js';
 import { BaseApp } from './base_app.js';
 
-class OrdersApp extends BaseApp
+export class OrdersApp extends BaseApp
 {
     ordersBeforeDays = 7;
 
@@ -250,5 +250,3 @@ class OrdersApp extends BaseApp
         this.updateOrders();
     }
 }
-
-export { OrdersApp };

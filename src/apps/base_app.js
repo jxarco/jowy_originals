@@ -3,7 +3,7 @@ import { Data } from '../data.js';
 import { Constants } from '../constants.js';
 import * as Utils from '../utils.js';
 
-class BaseApp
+export class BaseApp
 {
     static SKU_ATTR = 'SKU del vendedor';
     static REF_ATTR = 'Referencia';
@@ -1046,11 +1046,11 @@ class BaseApp
             } );
 
         // Get param version from the query url
-        const urlParams = new URLSearchParams( window.location.search );
-        const version = urlParams.get( 'version' );
+        // const urlParams = new URLSearchParams( window.location.search );
+        // const version = urlParams.get( 'version' );
 
         // Modify 1st col to add sku info to the order number
-        if( version !== 'v0' )
+        // if( version !== 'v0' )
         {
             rows = rows.map( r => {
                 const orderNumber = r[0];
@@ -1060,10 +1060,10 @@ class BaseApp
                 return r;
             } );
         }
-        else
-        {
-            console.warn( 'Using old label format, consider updating the URL with ?version=v1 for better SKU info on labels.' );
-        }
+        // else
+        // {
+        //     console.warn( 'Using old label format, consider updating the URL with ?version=v1 for better SKU info on labels.' );
+        // }
 
         return [ data, ...rows ];
     }
@@ -1183,5 +1183,3 @@ class BaseApp
         LX.downloadFile( 'ALBARANES.zip', zip );
     }
 }
-
-export { BaseApp };

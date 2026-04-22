@@ -4,7 +4,7 @@ import { DocMaker } from 'lexgui/extensions/DocMaker.js';
 
 const collapsibleClass = 'bg-accent/30 hover:bg-accent/50! rounded-xl border-color cursor-pointer [&_svg]:w-5! [&_svg]:h-5!';
 
-class ManualApp extends BaseApp
+export class ManualApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -344,5 +344,3 @@ class ManualApp extends BaseApp
         return area.root;
     }
 }
-
-export { ManualApp };

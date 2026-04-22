@@ -7,7 +7,7 @@ const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.
 const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
 const glsTrackingUrl = `https://gls-group.com/ES/es/seguimiento-envio/`;
 
-class CblTrackingApp extends BaseApp
+export class CblTrackingApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -1159,5 +1159,3 @@ class CblTrackingApp extends BaseApp
         this.updateLists();
     }
 }
-
-export { CblTrackingApp };

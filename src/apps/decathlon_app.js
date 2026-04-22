@@ -96,7 +96,7 @@ const TRACKING_DATA = [
     [ QNT_ATTR, 'quantity' ]
 ];
 
-class DecathlonApp extends BaseApp
+export class DecathlonApp extends BaseApp
 {
     constructor( core, tool )
     {
@@ -319,5 +319,3 @@ class DecathlonApp extends BaseApp
         Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
     }
 }
-
-export { DecathlonApp };
