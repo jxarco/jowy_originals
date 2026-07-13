@@ -9,7 +9,7 @@ const ORDER_ATTR = BaseApp.ORDER_ATTR;
 const ART_ID_ATTR = BaseApp.ART_ID_ATTR;
 const ART_NAME_ATTR = BaseApp.ART_NAME_ATTR;
 const CLIENT_NAME_ATTR = BaseApp.CLIENT_NAME_ATTR;
-const PAIS_ATTR = BaseApp.PAIS_ATTR;
+const PAIS_ATTR = 'país / región';
 const CP_ATTR = BaseApp.CP_ATTR;
 const PHONE_ATTR = BaseApp.PHONE_ATTR;
 const STREET_ATTR = 'dirección de usuario';
@@ -32,7 +32,7 @@ const ORDERS_DATA = [
     } ],
     [ CLIENT_NAME_ATTR ],
     [ CP_ATTR ],
-    [ PAIS_ATTR ],
+    [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
     [ 'Provincia' ],
     [ CITY_ATTR ],
     [ STREET_ATTR, BaseApp.STREET_ATTR ],
@@ -53,7 +53,7 @@ const LABEL_DATA = [
     } ],
     [ SKU_ATTR ],
     [ CP_ATTR ],
-    [ PAIS_ATTR ],
+    [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
     [ 'Provincia', null ],
     [ 'Ciudad', null ],
     [ STREET_ATTR, BaseApp.STREET_ATTR ],
@@ -203,7 +203,7 @@ export class SheinApp extends BaseApp
             } ],
             [ 'Transporte', null, () => 'SEUR' ],
             [ 'Plataforma', null, () => 'SHEIN' ],
-            [ PAIS_ATTR ],
+            [ PAIS_ATTR, BaseApp.PAIS_ATTR ],
             [ 'Observaciones' ],
             [ ORDER_ATTR ]
         ];
