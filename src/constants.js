@@ -45,12 +45,13 @@ export const PLATFORM_TRANSPORT_COST_PCT = {
     'Worten_ESPAÑA': 0.194,
     'Worten_PORTUGAL': 0.215,
     'Decathlon_ESPAÑA': 0.19,
+    'Decathlon_PORTUGAL': 0.215,
     'Carrefour_ESPAÑA': 0.216,
     'TikTok_ESPAÑA': 0.29,
     'TEMU_ESPAÑA': 0.1,
     'PlanetaHuerto_ESPAÑA': 0.1,
+    'PlanetaHuerto_PORTUGAL': 0.27,
     'MediaMarkt_ESPAÑA': 0.19,
-    // TODO: Needs confirmation!
     'Sprinter_ESPAÑA': 0.19,
     'Sprinter_PORTUGAL': 0.27,
 };
@@ -74,6 +75,9 @@ export const PLATFORM_CLIENT_CODES = {
     'PlanetaHuerto_ESPAÑA_2025': '503',
     // No client codes due to new 2026 additions, using new 2026 code
     'Sprinter_ESPAÑA_2025': '165',
+    'Sprinter_PORTUGAL_2025': '167',
+    'PlanetaHuerto_PORTUGAL_2025': '168',
+    'Decathlon_PORTUGAL_2025': '160',
     'MediaMarkt_ESPAÑA_2026': '169',
 
     'SHEIN_ESPAÑA_2026': '131',
@@ -83,6 +87,7 @@ export const PLATFORM_CLIENT_CODES = {
     'Miravia_FRANCIA_2026': '123',
     'Miravia_ITALIA_2026': '124',
     'TikTok_ESPAÑA_2026': '163',
+    'Decathlon_PORTUGAL_2026': '160',
     'Decathlon_ESPAÑA_2026': '161',
     'Worten_ESPAÑA_2026': '151',
     'Worten_PORTUGAL_2026': '152',
@@ -92,7 +97,9 @@ export const PLATFORM_CLIENT_CODES = {
     'LeroyMerlin_PORTUGAL_2026': '142',
     'LeroyMerlin_FRANCIA_2026': '143',
     'PlanetaHuerto_ESPAÑA_2026': '164',
+    'PlanetaHuerto_PORTUGAL_2026': '168',
     'Sprinter_ESPAÑA_2026': '165',
+    'Sprinter_PORTUGAL_2026': '167',
     'MediaMarkt_ESPAÑA_2026': '169',
 };
 
