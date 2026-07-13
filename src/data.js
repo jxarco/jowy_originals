@@ -123,6 +123,7 @@ const Data = {
         'SEUR': {}, // LOADED USING THE XLSX
         'SALVAT': {} // LOADED USING THE XLSX
     },
+    ac_messages: {}, // LOADED USING THE XLSX
     load: function( callback ) {
 
         this.callback = callback;
@@ -271,6 +272,36 @@ const Data = {
                 }
 
                 // console.log(this.sku_map)
+            }
+
+            // Read CA Messages
+            {
+                const sheetName = workbook.SheetNames[2];
+                const sheet = workbook.Sheets[sheetName];
+                const data = XLSX.utils.sheet_to_json( sheet, { raw: false } );
+
+                for ( const p of data )
+                {
+                    if( !p['title'] || !p['message'] )
+                    {
+                        continue;
+                    }
+
+                    const title = p['title'];
+                    if ( this.ac_messages[title] )
+                    {
+                        alert( `Duplicate title found in CA messages: ${title}` );
+                        continue;
+                    }
+
+                    this.ac_messages[title] = {
+                        title,
+                        message: p['message'],
+                        type: p['type'] ?? 'info'
+                    };
+                }
+
+                // console.log(this.ac_messages)
             }
 
             this.onLoad();

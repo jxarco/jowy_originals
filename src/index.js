@@ -11,12 +11,14 @@ import { TikTokApp } from './apps/tiktok_app.js';
 import { MiraklTemplateApp } from './apps/mirakl_app.js';
 import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import { SeurPackerApp } from './apps/seur_packer.js';
+import { ACMessagesApp } from './apps/ac_messages_app.js';
 import { BillCalculatorApp } from './apps/bill_calculator.js';
 import {
     ALWAYS_CBL,
     CBL_RULES,
     PLATFORM_CLIENT_CODES,
-    PLATFORM_AGENT_CODES
+    PLATFORM_AGENT_CODES,
+    Constants
 } from './constants.js';
 import { Data } from './data.js';
 import * as Utils from './utils.js';
@@ -135,6 +137,7 @@ const core = {
         this.transportCalculatorApp = new TransportCalculatorApp( this, 't-calc' );
         this.billCalculatorApp = new BillCalculatorApp( this, 'b-calc' );
         this.seurPackerApp = new SeurPackerApp( this, 'seur-packer' );
+        this.acMessagesApp = new ACMessagesApp( this, 'ac-messages' );
         this.manualApp = new ManualApp( this, 'manual' );
         this.chillApp = new ChillApp( this, 'chill' );
 
@@ -342,7 +345,7 @@ const core = {
         this.footer = new LX.Footer( {
             className: 'border-top',
             parent: LX.root,
-            credits: `(v1.1) ${new Date().getUTCFullYear()}. @jxarco x INOUT ORIENT ATTRACTION SL.`,
+            credits: `(v${Constants.VERSION}) ${new Date().getUTCFullYear()}. @jxarco x INOUT ORIENT ATTRACTION SL.`,
             socials: [
                 { title: 'Github', link: 'https://github.com/jxarco/', icon: 'Github' }
             ]
@@ -871,6 +874,7 @@ core.data['bathby'].template = ( id, url, transport ) => {
             submenu: [
                 { name: 'Transporte', callback: ( v, e ) => core.openApp( core.transportCalculatorApp ), icon: 'Truck' },
                 { name: 'Packer SEUR', callback: ( v, e ) => core.openApp( core.seurPackerApp ), icon: 'Barcode' },
+                { name: 'Mensajes AC', callback: ( v, e ) => core.openApp( core.acMessagesApp ), icon: 'MessageSquare' },
                 { name: 'Facturas SEUR', callback: ( v, e ) => core.openApp( core.billCalculatorApp ), icon: 'ReceiptEuro', disabled: true },
                 { name: 'Stock', disabled: true, callback: core.redirectToOAuth.bind( core ), icon: 'Boxes' }
             ]
