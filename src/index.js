@@ -124,13 +124,13 @@ const core = {
         this.miraviaApp = new MiraviaApp( this, 'miravia' );
         this.decathlonOnlineApp = new DecathlonAPIApp( this, 'Decathlon' );
         this.decathlonApp = new DecathlonApp( this, 'decathlon' );
-        // Mirakl template apps
-        this.wortenApp = new MiraklTemplateApp( this, 'worten', 'Worten' );
-        this.carrefourApp = new MiraklTemplateApp( this, 'carrefour', 'Carrefour' );
-        this.planetaHuertoApp = new MiraklTemplateApp( this, 'planeta-huerto', 'Planeta Huerto', 'Globe' );
-        this.leroyMerlinApp = new MiraklTemplateApp( this, 'leroy-merlin', 'Leroy Merlin' );
-        this.sprinterApp = new MiraklTemplateApp( this, 'sprinter', 'Sprinter' );
-        this.mediamarktApp = new MiraklTemplateApp( this, 'mediamarkt', 'MediaMarkt' );
+        // Mirakl template apps (5th param is the carrier code, if not provided, defaults to "SEUR (Spain)")
+        this.wortenApp = new MiraklTemplateApp( this, 'worten', 'Worten', undefined, 'SEUR' );
+        this.carrefourApp = new MiraklTemplateApp( this, 'carrefour', 'Carrefour', undefined, 'Seur' );
+        this.planetaHuertoApp = new MiraklTemplateApp( this, 'planeta-huerto', 'Planeta Huerto', 'Globe', 'Seur' );
+        this.leroyMerlinApp = new MiraklTemplateApp( this, 'leroy-merlin', 'Leroy Merlin', undefined, 'ES_SEUR' );
+        this.sprinterApp = new MiraklTemplateApp( this, 'sprinter', 'Sprinter', undefined, 'SEUR' );
+        this.mediamarktApp = new MiraklTemplateApp( this, 'mediamarkt', 'MediaMarkt', undefined, 'SEUR Spain' );
         // .................
         this.transportCalculatorApp = new TransportCalculatorApp( this, 't-calc' );
         this.billCalculatorApp = new BillCalculatorApp( this, 'b-calc' );

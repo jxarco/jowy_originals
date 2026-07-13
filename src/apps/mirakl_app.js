@@ -71,7 +71,7 @@ const LABEL_DATA = [
 // (str, row, tracking_data, app)
 const TRACKING_DATA = [
     [ ORDER_ATTR, 'order-id' ],
-    [ 'carrier_code', 'carrier-code', () => 'SEUR (Spain)' ],
+    [ 'carrier_code', 'carrier-code', ( str, row, tdata, app ) => app.getCarrierCode() ],
     [ 'carrier_standard_code', 'carrier-standard-code', () => '' ],
     [ 'carrier_name', 'carrier-name', () => 'SEUR' ],
     [ 'carrier_url', 'carrier-url', () => 'https://www.seur.com/livetracking?segOnlineIdentificador=%7BtrackingId%7D&segOnlineIdioma=en' ],
@@ -98,7 +98,7 @@ const TRACKING_DATA = [
 
 export class MiraklTemplateApp extends BaseApp
 {
-    constructor( core, tool, title, icon )
+    constructor( core, tool, title, icon, carrierCode )
     {
         super( core, tool );
 
@@ -106,6 +106,7 @@ export class MiraklTemplateApp extends BaseApp
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
         this.icon = Utils.removeWhiteSpaces( ( icon ?? title ) ?? 'Bot' );
         this.loadRaw = true; // load xlsx files in raw mode
+        this.carrierCode = carrierCode ?? 'SEUR (Spain)';
 
         // Create utility buttons
         const utilsPanel = new LX.Panel( { height: 'auto', className: Constants.UTILITY_BUTTONS_PANEL_CLASSNAME } );

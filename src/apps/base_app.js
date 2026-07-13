@@ -68,6 +68,11 @@ export class BaseApp
         return this._packUnits[sku] ?? 1;
     }
 
+    getCarrierCode()
+    {
+        return this.carrierCode;
+    }
+
     openData( data )
     {
         console.warn( "[openData] not implemented for this app" );

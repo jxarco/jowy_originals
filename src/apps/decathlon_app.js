@@ -19,6 +19,7 @@ const CITY_ATTR = 'Dirección de entrega: ciudad';
 const PVP_ATTR = 'Precio por unidad';
 const ORDER_DATE_ATTR = 'Fecha de creación';
 const QNT_ATTR = 'Cantidad';
+const PLATFORM_CARRIER_CODE = 'SEUR (Spain)';
 const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ORDER_LINE_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, STREET_ATTR, CITY_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
 
 const ORDERS_DATA = [
@@ -71,7 +72,7 @@ const LABEL_DATA = [
 // (str, row, tracking_data, app)
 const TRACKING_DATA = [
     [ ORDER_ATTR, 'order-id' ],
-    [ 'carrier_code', 'carrier-code', () => 'SEUR (Spain)' ],
+    [ 'carrier_code', 'carrier-code', () => PLATFORM_CARRIER_CODE ],
     [ 'carrier_standard_code', 'carrier-standard-code', () => '' ],
     [ 'carrier_name', 'carrier-name', () => 'SEUR' ],
     [ 'carrier_url', 'carrier-url', () => 'https://www.seur.com/livetracking?segOnlineIdentificador=%7BtrackingId%7D&segOnlineIdioma=en' ],
