@@ -49,6 +49,7 @@ export const PLATFORM_TRANSPORT_COST_PCT = {
     'TikTok_ESPAÑA': 0.29,
     'TEMU_ESPAÑA': 0.1,
     'PlanetaHuerto_ESPAÑA': 0.1,
+    'MediaMarkt_ESPAÑA': 0.19,
     // TODO: Needs confirmation!
     'Sprinter_ESPAÑA': 0.19,
     'Sprinter_PORTUGAL': 0.27,
@@ -71,7 +72,9 @@ export const PLATFORM_CLIENT_CODES = {
     'LeroyMerlin_PORTUGAL_2025': '501',
     'LeroyMerlin_FRANCIA_2025': '500',
     'PlanetaHuerto_ESPAÑA_2025': '503',
-    'Sprinter_ESPAÑA_2025': '165', // No client code for Sprinter, using new 2026 code
+    // No client codes due to new 2026 additions, using new 2026 code
+    'Sprinter_ESPAÑA_2025': '165',
+    'MediaMarkt_ESPAÑA_2026': '169',
 
     'SHEIN_ESPAÑA_2026': '131',
     'SHEIN_PORTUGAL_2026': '132',
@@ -90,6 +93,7 @@ export const PLATFORM_CLIENT_CODES = {
     'LeroyMerlin_FRANCIA_2026': '143',
     'PlanetaHuerto_ESPAÑA_2026': '164',
     'Sprinter_ESPAÑA_2026': '165',
+    'MediaMarkt_ESPAÑA_2026': '169',
 };
 
 export const PLATFORM_AGENT_CODES = {
@@ -103,5 +107,6 @@ export const PLATFORM_AGENT_CODES = {
     'PlanetaHuerto': '20',
     'SHEIN': '21',
     'Sprinter': '22',
-    'Decathlon': '23'
+    'Decathlon': '23',
+    'MediaMarkt': '24',
 };

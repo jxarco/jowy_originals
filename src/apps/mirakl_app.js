@@ -104,7 +104,7 @@ export class MiraklTemplateApp extends BaseApp
 
         this.title = title ?? 'MiraklTemplate';
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
-        this.icon = ( icon ?? title ) ?? 'Bot';
+        this.icon = Utils.removeWhiteSpaces( ( icon ?? title ) ?? 'Bot' );
         this.loadRaw = true; // load xlsx files in raw mode
 
         // Create utility buttons
@@ -250,7 +250,9 @@ export class MiraklTemplateApp extends BaseApp
 
     exportSEUR( ignoreErrors = false, rawData )
     {
-        const filename = `ETIQUETAS_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
+        // No spaces in the filename
+        const appName = Utils.removeWhiteSpaces( this.title );
+        const filename = `ETIQUETAS_SEUR_${appName}_${Utils.getTodayStringDate()}.xlsx`;
         // Discard orders sent with CBL (Decathlon and TikTok only)
         const data = ( rawData ?? this.lastOrdersData ).filter( r => {
             return r[BaseApp.TRANS_ATTR] !== 'CBL';
@@ -261,7 +263,9 @@ export class MiraklTemplateApp extends BaseApp
 
     exportSEURTrackings( fixedData, ignoreErrors )
     {
-        const filename = `NUMERODEGUIA_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
+        // No spaces in the filename
+        const appName = Utils.removeWhiteSpaces( this.title );
+        const filename = `NUMERODEGUIA_SEUR_${appName}_${Utils.getTodayStringDate()}.xlsx`;
         const data = fixedData ?? [ this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData ];
 
         if ( !ignoreErrors && this._trackingSyncErrors.length )

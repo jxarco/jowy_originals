@@ -152,7 +152,8 @@ export class BaseApp
             return lRow;
         } );
 
-        this.core.setHeaderTitle( `${this.title}: <i>${tableData.length} pedidos cargados</i>`, this.subtitle, this.icon );
+        const suffix = tableData.length > 1 ? 's' : '';
+        this.core.setHeaderTitle( `${this.title}: <i>${tableData.length} pedido${suffix} cargado${suffix}</i>`, this.subtitle, this.icon );
 
         const tableWidget = new LX.Table( null, {
             head: columnData.map( ( c ) => c[1] ?? c[0] ),
@@ -594,7 +595,7 @@ export class BaseApp
                     const skuPctPrice = skuObj.price;
                     prcPriceCheck += skuPctPrice;
                     const priceWithoutIVA = getPriceWithoutIVA( row ) * skuPctPrice;
-                    const transportLabel = `${this.title}_${country}`;
+                    const transportLabel = `${Utils.removeWhiteSpaces( this.title )}_${country}`;
                     const transportPrice = PLATFORM_TRANSPORT_COST_PCT[transportLabel] ?? 1e10;
                     const totalProductTransport = priceWithoutIVA * transportPrice * skuPctPrice;
                     const productTotal = priceWithoutIVA - totalProductTransport;
@@ -1066,7 +1067,8 @@ export class BaseApp
     exportIVA()
     {
         const weekN = Utils.getWeekNumber( Utils.convertDateDMYtoMDY( this.currentDate ) );
-        const filename = `IVA_${this.title}_SEMANA_${weekN}.xlsx`;
+        const appName = Utils.removeWhiteSpaces( this.title );
+        const filename = `IVA_${appName}_SEMANA_${weekN}.xlsx`;
         const sheets = this.countries.map( ( c ) => {
             const filteredRows = LX.deepCopy( this.lastShownIVAData )
                 .filter( ( row ) => ( row[0] === c ) )

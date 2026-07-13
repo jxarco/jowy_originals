@@ -209,3 +209,7 @@ export const makeLoadingDialog = ( title ) => {
         p.attach( spinner.root );
     }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: false, draggable: false } );
 };
+
+export const removeWhiteSpaces = ( str ) => {
+    return str.replace( /\s+/g, '' );
+}
