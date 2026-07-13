@@ -80,7 +80,7 @@ export class BaseApp
 
     parseData( data, ATTR_PARAMS )
     {
-        const { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR } = ATTR_PARAMS;
+        const { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, PVP_ATTR, EMAIL_ATTR } = ATTR_PARAMS;
 
         if( this._onParseData )
         {
@@ -115,6 +115,12 @@ export class BaseApp
             {
                 r[PVP_ATTR] = ogPVP.constructor === String ?
                     ogPVP.replace( '€', '' ).replace( ',', '.' ).trim() : ogPVP;
+            }
+
+            const ogEmail = r[EMAIL_ATTR];
+            if( !ogEmail || ogEmail === '' )
+            {
+                r[EMAIL_ATTR] = 'jowycomercial@gmail.com';
             }
 
             if( this._onParseRowData )

@@ -19,6 +19,7 @@ const CITY_ATTR = 'Dirección de entrega: ciudad';
 const PVP_ATTR = 'Precio por unidad';
 const ORDER_DATE_ATTR = 'Fecha de creación';
 const QNT_ATTR = 'Cantidad';
+const EMAIL_ATTR = 'Dirección de entrega: correo electrónico';
 const PLATFORM_CARRIER_CODE = 'SEUR (Spain)';
 const ATTR_PARAMS = { SKU_ATTR, OLD_SKU_ATTR, ORDER_ATTR, ORDER_LINE_ATTR, ART_ID_ATTR, ART_NAME_ATTR, CLIENT_NAME_ATTR, PAIS_ATTR, CP_ATTR, PHONE_ATTR, STREET_ATTR, CITY_ATTR, PVP_ATTR, ORDER_DATE_ATTR, QNT_ATTR };
 
@@ -40,7 +41,7 @@ const ORDERS_DATA = [
     [ CITY_ATTR, BaseApp.CITY_ATTR ],
     [ STREET_ATTR, BaseApp.STREET_ATTR ],
     [ PHONE_ATTR, BaseApp.PHONE_ATTR ],
-    [ BaseApp.EMAIL_ATTR, null, ( str, row ) => '' ],
+    [ EMAIL_ATTR, BaseApp.EMAIL_ATTR ]
 ];
 
 const LABEL_DATA = [
@@ -62,7 +63,7 @@ const LABEL_DATA = [
     [ STREET_ATTR, BaseApp.STREET_ATTR ],
     [ CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR ],
     [ PHONE_ATTR, BaseApp.PHONE_ATTR ],
-    [ BaseApp.EMAIL_ATTR, null, ( str, row ) => '' ],
+    [ EMAIL_ATTR, BaseApp.EMAIL_ATTR ],
     // THIS ONE HAS TO BE DELETED
     [ QNT_ATTR, null, ( str, row, app ) => {
         return parseInt( str ) * app.getPackUnits( row[OLD_SKU_ATTR] );
