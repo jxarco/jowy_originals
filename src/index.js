@@ -939,10 +939,34 @@ core.data['bathby'].template = ( id, url, transport ) => {
 
     const dialog = Utils.makeLoadingDialog( "Cargando datos de productos... " );
 
+    const sidebar = menubar.siblingArea.addSidebar( m => {
+        m.add( "Shein", { callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' } );
+        m.add( "Decathlon", { callback: ( v, e ) => core.openApp( core.decathlonApp ), icon: 'Decathlon' } );
+        m.add( "TikTok", { callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' } );
+        m.add( "Miravia", { callback: ( v, e ) => core.openApp( core.miraviaApp ), icon: 'ShoppingBag' } );
+        m.separator();
+        m.add( "Carrefour", { callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' } );
+        m.add( "Leroy Merlin", { callback: ( v, e ) => core.openApp( core.leroyMerlinApp ), icon: 'LeroyMerlin' } );
+        m.add( "Sprinter", { callback: ( v, e ) => core.openApp( core.sprinterApp ), icon: 'Sprinter' } );
+        m.add( "Planeta Huerto", { callback: ( v, e ) => core.openApp( core.planetaHuertoApp ), icon: 'Globe' } );
+        m.add( "Worten", { callback: ( v, e ) => core.openApp( core.wortenApp ), icon: 'Worten' } );
+        m.add( "MediaMarkt", { callback: ( v, e ) => core.openApp( core.mediamarktApp ), icon: 'MediaMarkt' } );
+        m.separator();
+        m.add( "Transporte", { callback: ( v, e ) => core.openApp( core.transportCalculatorApp ), icon: 'Truck' } );
+        m.add( "Packer SEUR", { callback: ( v, e ) => core.openApp( core.seurPackerApp ), icon: 'Barcode' } );
+        m.add( "Mensajes AC", { callback: ( v, e ) => core.openApp( core.acMessagesApp ), icon: 'MessageSquare' } );
+    }, {
+        collapsable: false,
+        collapsed: true,
+        collapseToIcons: true,
+        skipFooter: true,
+        skipHeader: true,
+    });
+
     Data.load( () => {
         LX.doAsync( () => {
             dialog.destroy();
-            core.init( menubar.siblingArea );
+            core.init( sidebar.siblingArea );
         }, 10 );
     });
 }
