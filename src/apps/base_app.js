@@ -99,7 +99,7 @@ export class BaseApp
                 this._packUnits[ogSku] = skuData.quantity; // save pack quantity
                 r[BaseApp.PACK_U_ATTR] = skuData.quantity; // store also in row
             }
-            const ogCountry = r[PAIS_ATTR];
+            const ogCountry = r[PAIS_ATTR] || r[BaseApp.PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
             const ogZipCode = r[CP_ATTR];
             r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
@@ -392,7 +392,7 @@ export class BaseApp
                 this._packUnits[ogSku] = skuData.quantity; // save pack quantity
                 r[BaseApp.PACK_U_ATTR] = skuData.quantity; // store also in row
             }
-            const ogCountry = r[PAIS_ATTR];
+            const ogCountry = r[PAIS_ATTR] || r[BaseApp.PAIS_ATTR];
             r[PAIS_ATTR] = this.core.mapCountry( ogCountry );
             const ogZipCode = r[CP_ATTR];
             r[CP_ATTR] = this.core.mapZipCode( ogZipCode );
