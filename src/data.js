@@ -214,7 +214,7 @@ const Data = {
         LX.requestBinary( 'data/products.xlsx', ( binary ) => {
             const workbook = XLSX.read( binary, { type: 'binary' } );
 
-            // MEDIDAS
+            // PRODUCTS
             {
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
