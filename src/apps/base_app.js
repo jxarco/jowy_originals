@@ -1187,7 +1187,17 @@ export class BaseApp
         const folders = {};
 
         this.countries.forEach( ( c, i ) => {
-            folders[c] = [ this.getLALData( c, i ), this.getALBData( c, i ) ];
+
+            // If there's no LAL data for the country, skip it
+            // It has filename and data (array)
+            // If data has only the header row, skip it
+            const LALData = this.getLALData( c, i );
+            if( !LALData || !LALData.data || LALData.data.length <= 1 ) return;
+            console.log(LALData)
+
+            const ALBData = this.getALBData( c, i );
+
+            folders[c] = [ LALData, ALBData ];
         } );
 
         const zip = await this.core.zipWorkbooks( folders );

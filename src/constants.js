@@ -43,6 +43,7 @@ export const PLATFORM_TRANSPORT_COST_PCT = {
     'SHEIN_PORTUGAL': 0.32,
     'LeroyMerlin_ESPAÑA': 0.19,
     'LeroyMerlin_PORTUGAL': 0.27,
+    'LeroyMerlin_FRANCIA': 0.32,
     'Worten_ESPAÑA': 0.194,
     'Worten_PORTUGAL': 0.215,
     'Decathlon_ESPAÑA': 0.19,

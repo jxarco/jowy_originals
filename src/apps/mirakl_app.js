@@ -99,9 +99,13 @@ const TRACKING_DATA = [
 
 export class MiraklTemplateApp extends BaseApp
 {
-    constructor( core, tool, title, icon, carrierCode )
+    constructor( core, tool, options )
     {
         super( core, tool );
+
+        const title = options?.title;
+        const icon = options?.icon;
+        const carrierCode = options?.carrierCode;
 
         this.title = title ?? 'MiraklTemplate';
         this.subtitle = 'Arrastra un <strong>.xlsx</strong> o haz click aquí para cargar un nuevo listado de envíos.';
@@ -158,7 +162,7 @@ export class MiraklTemplateApp extends BaseApp
         this.trackingArea = trackingArea;
         this.albaranArea = albaranArea;
 
-        this.countries = [ 'ESPAÑA', 'PORTUGAL' ];
+        this.countries = [ 'ESPAÑA', 'PORTUGAL', 'FRANCIA' ];
 
         this._onParseData = ( data, external ) => {
             // Filter "Esperando envío"
