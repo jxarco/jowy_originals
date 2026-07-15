@@ -13,6 +13,7 @@ import { TransportCalculatorApp } from './apps/trans_calculator.js';
 import { SeurPackerApp } from './apps/seur_packer.js';
 import { ACMessagesApp } from './apps/ac_messages_app.js';
 import { BillCalculatorApp } from './apps/bill_calculator.js';
+import { SettingsApp } from './apps/settings_app.js';
 import {
     ALWAYS_CBL,
     CBL_RULES,
@@ -140,6 +141,7 @@ const core = {
         this.acMessagesApp = new ACMessagesApp( this, 'ac-messages' );
         this.manualApp = new ManualApp( this, 'manual' );
         this.chillApp = new ChillApp( this, 'chill' );
+        this.settingsApp = new SettingsApp( this, 'settings' );
 
         // Footer
         this.createFooterHtml();
@@ -155,7 +157,8 @@ const core = {
         else
         {
             // Start last tool
-            const lastTool = localStorage.getItem( 'lastTool' ) ?? 'tracking-messages';
+            const useLast = JSON.parse( localStorage.getItem( 'jowy_rememberLastApp' ) ) === true;
+            const lastTool = useLast ? localStorage.getItem( 'jowy_lastTool' ) ?? 'tracking-messages' : 'tracking-messages';
             this.openApp( this.apps[lastTool] );
         }
 
@@ -168,6 +171,33 @@ const core = {
         //         LX.toast( "Datos cargados", `✅ ${ "envios.xlsx" }`, { timeout: 5000, position: "top-left" } );
         //     }
         // } );
+
+        const changelogLastVersion = `jowy_seenChangelog_${Constants.OLD_VERSION}`;
+        if( JSON.parse( localStorage.getItem( changelogLastVersion ) ) === true )
+        {
+            localStorage.removeItem( changelogLastVersion );
+        }
+
+        const changelogVersion = `jowy_seenChangelog_${Constants.VERSION}`;
+        if( JSON.parse( localStorage.getItem( changelogVersion ) ) !== true )
+        {
+            setTimeout( () => {
+                return new LX.Dialog( `Cambios v${Constants.VERSION}`, ( p ) => {
+                    p.attach( LX.makeElement( 'span', 'flex text-muted-foreground font-medium p-4 break-normal', `
+                        - Arreglado País Shein.<br>
+                        - Carpetas ya no se generan con albaranes vacíos.<br>
+                        - Arreglado PVP Albaranes en Mirakl (Carrefour, Worten, Sprinter, etc.).<br>
+                        - Excel de productos actualizado.<br>
+                        - Nueva aplicación de Ajustes.<br>
+                        - Se ha añadido la opción de "Recordar última aplicación utilizada" en Ajustes.<br>
+                        - Se ha añadido la opción de "Click en encabezados para cargar datos" en Ajustes.<br>
+                        - Se ha añadido la opción de "Mostrar panel lateral de aplicaciones" en Ajustes.<br>
+                    ` ) );
+                }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], draggable: false }, );
+            }, 10);
+
+            localStorage.setItem( changelogVersion, true );
+        }
     },
 
     readExcelFile: function( file, raw = false )
@@ -209,6 +239,7 @@ const core = {
             try
             {
                 const result = await this.readExcelFile( file, this.currentApp.loadRaw );
+                window.dialog?.destroy();
                 if ( callback )
                 {
                     const r = callback( result.rowsData );
@@ -220,6 +251,7 @@ const core = {
             }
             catch ( e )
             {
+                window.dialog?.destroy();
                 LX.toast( 'Error', '❌ No se pudo leer el archivo: ' + e, { timeout: -1, position: 'top-center' } );
             }
         }
@@ -275,30 +307,36 @@ const core = {
         header.style.transition = 'transform 0.1s ease-in';
         this.header = header;
 
-        // add click to load events
+        if( JSON.parse( localStorage.getItem( 'jowy_loadDataOnHeadersClick' ) ) == true )
         {
-            const fileInput = document.createElement( 'input' );
-            fileInput.type = 'file';
-            fileInput.multiple = true;
-
-            fileInput.addEventListener( 'change', async ( e ) => {
-                const files = e.target.files;
-                if ( !files.length ) return;
-                const allDataRows = [];
-                const innerCallback = ( d ) => allDataRows.push( ...d );
-                for ( const file of files )
-                {
-                    await this.onLoadFile( file, innerCallback );
-                }
-                this.processData( allDataRows );
-                fileInput.value = '';
-            } );
-
-            header.addEventListener( 'click', ( event ) => {
-                event.preventDefault();
-                event.stopPropagation();
-                fileInput.click();
-            } );
+            // add click to load events
+            {
+                const fileInput = document.createElement( 'input' );
+                fileInput.type = 'file';
+                fileInput.multiple = true;
+    
+                fileInput.addEventListener( 'change', async ( e ) => {
+                    const files = e.target.files;
+                    if ( !files.length ) return;
+                    const allDataRows = [];
+                    const innerCallback = ( d ) => allDataRows.push( ...d );
+                    window.dialog = Utils.makeLoadingDialog( `Cargando: ${ Array.from(files).map((f) => f.name).join(', ') }` );
+                    setTimeout( async () => {
+                        for ( const file of files )
+                        {
+                            await this.onLoadFile( file, innerCallback );
+                        }
+                        this.processData( allDataRows );
+                        fileInput.value = '';
+                    }, 100 );
+                } );
+    
+                header.addEventListener( 'click', ( event ) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    fileInput.click();
+                } );
+            }
         }
 
         // add file drag and drop event to header
@@ -324,11 +362,14 @@ const core = {
 
             const allDataRows = [];
             const innerCallback = ( d ) => allDataRows.push( ...d );
-            for ( const file of files )
-            {
-                await this.onLoadFile( file, innerCallback );
-            }
-            this.processData( allDataRows );
+            window.dialog = Utils.makeLoadingDialog( `Cargando: ${ Array.from(files).map((f) => f.name).join(', ') }` );
+            setTimeout( async () => {
+                for ( const file of files )
+                {
+                    await this.onLoadFile( file, innerCallback );
+                }
+                this.processData( allDataRows );
+            }, 100 );
         } );
 
         this.header = header;
@@ -366,7 +407,10 @@ const core = {
 
         this.tool = app.open( params );
 
-        localStorage.setItem( 'lastTool', this.tool );
+        if( this.tool !== 'settings' )
+        {
+            localStorage.setItem( 'jowy_lastTool', this.tool );
+        }
 
         this.currentApp = app;
     },
@@ -726,12 +770,15 @@ const core = {
                 if ( !files.length ) return;
                 const allDataRows = [];
                 const innerCallback = ( d ) => allDataRows.push( ...d );
-                for ( const file of files )
-                {
-                    await this.onLoadFile( file, innerCallback );
-                }
-                if ( callback ) callback( allDataRows );
-                fileInput.value = '';
+                window.dialog = Utils.makeLoadingDialog( `Cargando: ${ Array.from(files).map((f) => f.name).join(', ') }` );
+                setTimeout( async () => {
+                    for ( const file of files )
+                    {
+                        await this.onLoadFile( file, innerCallback );
+                    }
+                    if ( callback ) callback( allDataRows );
+                    fileInput.value = '';
+                }, 100 );
             } );
 
             dropZone.addEventListener( 'click', ( event ) => {
@@ -764,11 +811,14 @@ const core = {
 
             const allDataRows = [];
             const innerCallback = ( d ) => allDataRows.push( ...d );
-            for ( const file of files )
-            {
-                await this.onLoadFile( file, innerCallback );
-            }
-            if ( callback ) callback( allDataRows );
+            window.dialog = Utils.makeLoadingDialog( `Cargando: ${ Array.from(files).map((f) => f.name).join(', ') }` );
+            setTimeout( async () => {
+                for ( const file of files )
+                {
+                    await this.onLoadFile( file, innerCallback );
+                }
+                if ( callback ) callback( allDataRows );
+            }, 100 );
         } );
 
         return dropZone;
@@ -880,7 +930,8 @@ core.data['bathby'].template = ( id, url, transport ) => {
             ]
         },
         { name: 'Chill', callback: ( v, e ) => core.openApp( core.chillApp ) },
-        { name: 'Manual', float: 'right', callback: ( v, e ) => core.openApp( core.manualApp ) }
+        { name: 'Manual', callback: ( v, e ) => core.openApp( core.manualApp ) },
+        { name: 'Ajustes', float: 'right', callback: ( v, e ) => core.openApp( core.settingsApp ) }
     ] );
 
     {
@@ -930,43 +981,65 @@ core.data['bathby'].template = ( id, url, transport ) => {
     // Move Manual to right side
     {
         const entry = document.querySelector( '#Manual' );
-        entry.classList.add( 'mr-4' );
         const span = entry.querySelector( 'span' );
-        span.appendChild( LX.makeIcon( 'Info@solid' ) );
         LX.addClass( span, 'flex flex-row gap-2' );
         LX.insertChildAtIndex( menubar.root, entry );
     }
 
-    const dialog = Utils.makeLoadingDialog( "Cargando datos de productos... " );
+    {
+        const separator = LX.makeContainer( [ '1px', '100%' ], 'content-center ml-4 mr-2', '' );
+        LX.makeContainer( [ 'auto', '1.25rem' ], 'bg-muted', '', separator );
+        LX.insertChildAtIndex( menubar.root, separator );
+    }
 
-    const sidebar = menubar.siblingArea.addSidebar( m => {
-        m.add( "Shein", { callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' } );
-        m.add( "Decathlon", { callback: ( v, e ) => core.openApp( core.decathlonApp ), icon: 'Decathlon' } );
-        m.add( "TikTok", { callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' } );
-        m.add( "Miravia", { callback: ( v, e ) => core.openApp( core.miraviaApp ), icon: 'ShoppingBag' } );
-        m.separator();
-        m.add( "Carrefour", { callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' } );
-        m.add( "Leroy Merlin", { callback: ( v, e ) => core.openApp( core.leroyMerlinApp ), icon: 'LeroyMerlin' } );
-        m.add( "Sprinter", { callback: ( v, e ) => core.openApp( core.sprinterApp ), icon: 'Sprinter' } );
-        m.add( "Planeta Huerto", { callback: ( v, e ) => core.openApp( core.planetaHuertoApp ), icon: 'Globe' } );
-        m.add( "Worten", { callback: ( v, e ) => core.openApp( core.wortenApp ), icon: 'Worten' } );
-        m.add( "MediaMarkt", { callback: ( v, e ) => core.openApp( core.mediamarktApp ), icon: 'MediaMarkt' } );
-        m.separator();
-        m.add( "Transporte", { callback: ( v, e ) => core.openApp( core.transportCalculatorApp ), icon: 'Truck' } );
-        m.add( "Packer SEUR", { callback: ( v, e ) => core.openApp( core.seurPackerApp ), icon: 'Barcode' } );
-        m.add( "Mensajes AC", { callback: ( v, e ) => core.openApp( core.acMessagesApp ), icon: 'MessageSquare' } );
-    }, {
-        collapsable: false,
-        collapsed: true,
-        collapseToIcons: true,
-        skipFooter: true,
-        skipHeader: true,
-    });
+    // Move Settings to right side
+    {
+        const entry = document.querySelector( '#Ajustes' );
+        entry.classList.add( 'mr-4' );
+        const span = entry.querySelector( 'span' );
+        LX.addClass( span, 'flex flex-row gap-2' );
+        LX.insertChildAtIndex( menubar.root, entry );
+    }
+
+    let appArea = menubar.siblingArea;
+
+    if( JSON.parse( localStorage.getItem( 'jowy_showSidePanel' ) ) == true )
+    {
+        const sidebar = appArea.addSidebar( m => {
+            m.add( "Shein", { callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' } );
+            m.add( "Decathlon", { callback: ( v, e ) => core.openApp( core.decathlonApp ), icon: 'Decathlon' } );
+            m.add( "TikTok", { callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' } );
+            m.add( "Miravia", { callback: ( v, e ) => core.openApp( core.miraviaApp ), icon: 'ShoppingBag' } );
+            m.separator();
+            m.add( "Carrefour", { callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' } );
+            m.add( "Leroy Merlin", { callback: ( v, e ) => core.openApp( core.leroyMerlinApp ), icon: 'LeroyMerlin' } );
+            m.add( "Sprinter", { callback: ( v, e ) => core.openApp( core.sprinterApp ), icon: 'Sprinter' } );
+            m.add( "Planeta Huerto", { callback: ( v, e ) => core.openApp( core.planetaHuertoApp ), icon: 'Globe' } );
+            m.add( "Worten", { callback: ( v, e ) => core.openApp( core.wortenApp ), icon: 'Worten' } );
+            m.add( "MediaMarkt", { callback: ( v, e ) => core.openApp( core.mediamarktApp ), icon: 'MediaMarkt' } );
+            m.separator();
+            m.add( "Transporte", { callback: ( v, e ) => core.openApp( core.transportCalculatorApp ), icon: 'Truck' } );
+            m.add( "Packer SEUR", { callback: ( v, e ) => core.openApp( core.seurPackerApp ), icon: 'Barcode' } );
+            m.add( "Mensajes AC", { callback: ( v, e ) => core.openApp( core.acMessagesApp ), icon: 'MessageSquare' } );
+            m.separator();
+            m.add( "Ajustes", { callback: ( v, e ) => core.openApp( core.settingsApp ), icon: 'Cog' } );
+        }, {
+            collapsable: false,
+            collapsed: true,
+            collapseToIcons: true,
+            skipFooter: true,
+            skipHeader: true,
+        });
+
+        appArea = sidebar.siblingArea;
+    }
+
+    const dialog = Utils.makeLoadingDialog( "Cargando productos" );
 
     Data.load( () => {
         LX.doAsync( () => {
             dialog.destroy();
-            core.init( sidebar.siblingArea );
+            core.init( appArea );
         }, 10 );
     });
 }

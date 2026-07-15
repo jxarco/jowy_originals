@@ -203,11 +203,19 @@ export const request = ( request ) => {
     return xhr;
 };
 
-export const makeLoadingDialog = ( title ) => {
-    return new LX.Dialog( title ?? 'Acción en curso, espere...', ( p ) => {
+export const makeLoadingDialog = ( title, options = {} ) => {
+
+    title = title ?? 'Acción en curso';
+    if( title.length > 60 )
+    {
+        title = title.substring( 0, 60 ) + '...';
+    }
+
+    return new LX.Dialog( title, ( p ) => {
         const spinner = new LX.Spinner( { size: '2xl', icon: 'LoaderCircle', iconClass: 'p-2' } );
+        p.attach( LX.makeElement( 'span', 'flex justify-center items-center text-muted-foreground', 'Espere unos segundos...' ) );
         p.attach( spinner.root );
-    }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: false, draggable: false } );
+    }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], closable: false, draggable: false, ...options }, );
 };
 
 export const removeWhiteSpaces = ( str ) => {
