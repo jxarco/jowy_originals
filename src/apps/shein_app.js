@@ -281,11 +281,6 @@ export class SheinApp extends BaseApp
         this.core.exportXLSXData( data, filename );
     }
 
-    close()
-    {
-        this.clear();
-    }
-
     clear()
     {
         super.clear();

@@ -188,6 +188,7 @@ const core = {
                         - Carpetas ya no se generan con albaranes vacíos.<br>
                         - Arreglado PVP Albaranes en Mirakl (Carrefour, Worten, Sprinter, etc.).<br>
                         - Excel de productos actualizado.<br>
+                        - SHEIN ya no limpia los datos al cerrar.<br>
                         - Nueva aplicación de Ajustes.<br>
                         - Se ha añadido la opción de "Recordar última aplicación utilizada" en Ajustes.<br>
                         - Se ha añadido la opción de "Click en encabezados para cargar datos" en Ajustes.<br>
