@@ -180,6 +180,10 @@ export class MiraklTemplateApp extends BaseApp
 
             const qnt = parseInt( row[QNT_ATTR] ) * row[BaseApp.PACK_U_ATTR];
             row[BaseApp.TRANS_ATTR] = this.core.getTransportForItem( row[SKU_ATTR], qnt );
+
+            // In mirakl, we get the PVP as the order total, so we have to divide it by the quantity to get the unit price
+            const pvp = parseFloat( row[PVP_ATTR] );
+            row[PVP_ATTR] = pvp / parseInt( qnt );
         };
 
         this.clear();
