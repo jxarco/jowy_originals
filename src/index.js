@@ -964,9 +964,9 @@ if( localStorage.getItem( 'jowy_centerPage' ) === null ) localStorage.setItem( '
             callback: ( value, event ) => {
                 LX.switchMode();
                 const newMode = LX.getMode();
-                menubar.setButtonImage( 'bathby', `data/bathby_${newMode}.png` );
-                menubar.setButtonImage( 'hxg', `data/hxg_${newMode}.png` );
-                menubar.setButtonImage( 'jowy', `data/jowy_${newMode}.png` );
+                // menubar.setButtonImage( 'bathby', `data/bathby_${newMode}.png` );
+                // menubar.setButtonImage( 'hxg', `data/hxg_${newMode}.png` );
+                // menubar.setButtonImage( 'jowy', `data/jowy_${newMode}.png` );
                 core.header.style.background = `url('data/banner_${newMode}.png') no-repeat center center / cover`;
             }
         }

@@ -218,3 +218,10 @@
 .glowing-container:hover::after {
     animation: glowing-border 3.5s linear infinite;
 }
+
+/* Color the menubar logos with the theme color */
+.lexmenubar img[src*="bathby"],
+.lexmenubar img[src*="hxg"],
+.lexmenubar img[src*="jowy"] {
+    filter: url(#theme-tint) !important;
+}

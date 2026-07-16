@@ -824,6 +824,9 @@
 .glowing-container:hover::after {
   animation: glowing-border 3.5s linear infinite;
 }
+.lexmenubar img[src*="bathby"], .lexmenubar img[src*="hxg"], .lexmenubar img[src*="jowy"] {
+  filter: url(#theme-tint) !important;
+}
 @property --tw-scale-x {
   syntax: "*";
   inherits: false;
