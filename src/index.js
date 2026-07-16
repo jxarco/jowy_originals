@@ -184,6 +184,7 @@ const core = {
             setTimeout( () => {
                 return new LX.Dialog( `Cambios v${Constants.VERSION}`, ( p ) => {
                     p.attach( LX.makeElement( 'span', 'flex text-muted-foreground font-medium p-4 break-normal', `
+                        - Nuevo botón de Copiar Stock.<br>
                         - Excel de productos actualizado.<br>
                         - Arreglados ajustes por defecto.<br>
                     ` ) );

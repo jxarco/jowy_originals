@@ -63,10 +63,64 @@ export class BaseApp
         this._packUnits = {};
 
         delete this.lastOrdersData;
+        delete this.lastStockTableData;
+        this.currentTabName = 'Pedidos';
 
         if ( this.exportLabelsButton ) Utils.toggleButtonDisabled( this.exportLabelsButton, true );
         if ( this.exportTrackingsButton ) Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
         if ( this.exportButton ) Utils.toggleButtonDisabled( this.exportButton, true );
+        if ( this.copyStockButton ) Utils.toggleButtonDisabled( this.copyStockButton, true );
+    }
+
+    onTabSelect( tabName )
+    {
+        this.currentTabName = tabName;
+        if ( this.copyStockButton )
+        {
+            const enable = ( tabName === 'Listado Stock' && this.lastStockTableData && this.lastStockTableData.length );
+            Utils.toggleButtonDisabled( this.copyStockButton, !enable );
+        }
+    }
+
+    copyStockToClipboard()
+    {
+        if ( !this.lastStockTableData || !this.lastStockTableData.length )
+        {
+            LX.toast( 'Aviso', '⚠️ No hay datos de stock para copiar.', { position: 'top-center' } );
+            return;
+        }
+
+        // Format to TSV (Tab Separated Values)
+        const rows = this.lastStockTableData.map( ( row ) => {
+            const cleanRow = row.map( ( val ) => {
+                // If the value has html tags, strip them
+                if ( typeof val === 'string' && val.includes( '<' ) )
+                {
+                    return LX.stripTags( val );
+                }
+                return val;
+            } );
+
+            return [
+                cleanRow[0],          // 1. FECHA (already in column 0)
+                cleanRow[1],          // 2. REF (SKU, in column 1)
+                '?',                  // 3. DESCRIPCION
+                cleanRow[2],          // 4. UNIDADES (Units, in column 2)
+                cleanRow[3],          // 5. TRANSPORTE (Transport, in column 3)
+                cleanRow[4],          // 6. PLATAFORMA (Platform, in column 4)
+                cleanRow[5],          // 7. PAIS (Country, in column 5)
+                cleanRow[6]           // 8. OBSERVACIONES (Observations, in column 6)
+            ].join( '\t' );
+        } );
+
+        const tsv = rows.join( '\n' );
+
+        navigator.clipboard.writeText( tsv ).then( () => {
+            LX.toast( 'Hecho!', '✅ Listado de Stock copiado al portapapeles.', { timeout: 5000, position: 'top-center' } );
+        } ).catch( ( err ) => {
+            console.error( 'Error copying text: ', err );
+            LX.toast( 'Error', '❌ No se pudo copiar el listado.', { timeout: -1, position: 'top-center' } );
+        } );
     }
 
     getPackUnits( sku )
@@ -197,6 +251,18 @@ export class BaseApp
 
     getStockListTable( data, columnData, ORDER_ATTR )
     {
+        const d = new Date();
+        const day = String( d.getDate() ).padStart( 2, '0' );
+        const month = String( d.getMonth() + 1 ).padStart( 2, '0' );
+        const year = d.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+
+        // Prepend FECHA column
+        columnData = [
+            [ 'Fecha', 'FECHA', () => formattedDate ],
+            ...columnData
+        ];
+
         data = LX.deepCopy( data );
 
         const orderNumbers = new Map();
@@ -235,23 +301,26 @@ export class BaseApp
 
         const multipleItemsOrderNames = Array.from( orderNumbers.values() ).filter( ( v ) => v.length > 1 );
         const skuIdx = headData.indexOf( BaseApp.SKU_ATTR );
+        const unidadesIdx = headData.indexOf( 'Unidades' );
+        const paisIdx = headData.indexOf( BaseApp.PAIS_ATTR );
+        const observacionesIdx = headData.indexOf( 'Observaciones' );
 
         for ( const repeats of multipleItemsOrderNames )
         {
             const finalIndex = repeats[0];
             const finalRow = rows[finalIndex];
-            const finalQuantity = finalRow[1];
+            const finalQuantity = finalRow[unidadesIdx];
             const rest = repeats.slice( 1 );
             const trail = rest.reduce( ( p, c ) => {
-                const q = rows[c][1]; // Get quantity
+                const q = rows[c][unidadesIdx]; // Get quantity
                 return p + ` + ${rows[c][skuIdx]}${q > 1 ? ` x ${q}` : ''}`;
             }, finalQuantity > 1 ? ` x ${finalQuantity}` : '' );
             rest.forEach( ( r ) => {
                 rows[r] = undefined;
             } );
             finalRow[skuIdx] += trail;
-            finalRow[1] = 1; // Set always 1 UNIT for multiple item orders
-            finalRow[5] = 'Mismo pedido';
+            finalRow[unidadesIdx] = 1; // Set always 1 UNIT for multiple item orders
+            finalRow[observacionesIdx] = 'Mismo pedido';
         }
 
         const tableData = [];
@@ -261,20 +330,20 @@ export class BaseApp
         {
             if ( row === undefined ) continue;
 
-            let sku = `${row[skuIdx]}_${row[4]}`; // SKU _ País
+            let sku = `${row[skuIdx]}_${row[paisIdx]}`; // SKU _ País
 
             // if sku starts with 'JW-T60', never combine with others, so we must
             // add a unique identifier in the sku
             sku += sku.includes( 'JW-T60' ) ? `_${LX.guidGenerator()}` : '';
 
             // Delete order num
-            row.splice( 6, 1 );
+            row.splice( row.length - 1, 1 );
 
             // If same order or more than 1 unit, do not merge items
-            const q = row[1];
+            const q = row[unidadesIdx];
             if ( q > 1 )
             {
-                row[5] = 'Mismo pedido';
+                row[observacionesIdx] = 'Mismo pedido';
                 tableData.push( row );
                 continue;
             }
@@ -287,7 +356,7 @@ export class BaseApp
             else
             {
                 const idx = skus[sku][0]; // 0 here is to access the list index, not an attribute
-                tableData[idx][1] += row[1]; // Add quantity (ALREDY WITH PACK UNIT FACTOR)
+                tableData[idx][unidadesIdx] += row[unidadesIdx]; // Add quantity (ALREDY WITH PACK UNIT FACTOR)
             }
         }
 
@@ -323,6 +392,8 @@ export class BaseApp
                 { name: BaseApp.PAIS_ATTR, options: this.countries }
             ]
         } );
+
+        this.lastStockTableData = tableData;
 
         return tableWidget;
     }
