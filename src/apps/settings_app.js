@@ -31,11 +31,11 @@ export class SettingsApp extends BaseApp
             utilsPanel.addToggle( 'Click en encabezados para cargar datos', JSON.parse( localStorage.getItem( 'jowy_loadDataOnHeadersClick' ) ), ( v ) => {
                 localStorage.setItem( 'jowy_loadDataOnHeadersClick', v );
                 refreshFnToast();
-            }, { className: 'success', label: '', skipReset: true, nameWidth: '75%' } );
+            }, { className: 'primary', label: '', skipReset: true, nameWidth: '75%' } );
             utilsPanel.addToggle( 'Recordar última aplicación utilizada', JSON.parse( localStorage.getItem( 'jowy_rememberLastApp' ) ), ( v ) => {
                 localStorage.setItem( 'jowy_rememberLastApp', v );
                 refreshFnToast();
-            }, { className: 'success', label: '', skipReset: true, nameWidth: '75%' } );
+            }, { className: 'primary', label: '', skipReset: true, nameWidth: '75%' } );
             container.appendChild( utilsPanel.root );
         }
 
@@ -44,7 +44,15 @@ export class SettingsApp extends BaseApp
             utilsPanel.addToggle( 'Mostrar panel lateral de aplicaciones', JSON.parse( localStorage.getItem( 'jowy_showSidePanel' ) ), ( v ) => {
                 localStorage.setItem( 'jowy_showSidePanel', v );
                 refreshFnToast();
-            }, { className: 'success', label: '', skipReset: true, nameWidth: '75%' } );
+            }, { className: 'primary', label: '', skipReset: true, nameWidth: '75%' } );
+
+            const colors = [ 'amber', 'blue', 'green', 'neutral', 'orange', 'purple', 'red', 'rose', 'teal', 'violet', 'yellow' ];
+            const currentColor = localStorage.getItem( 'jowy_themeColor' ) ?? 'teal';
+            utilsPanel.addSelect( 'Color del tema', colors, currentColor, ( v ) => {
+                localStorage.setItem( 'jowy_themeColor', v );
+                LX.setThemeColor( v );
+            }, { nameWidth: '75%', skipReset: true, overflowContainerY: null } );
+
             container.appendChild( utilsPanel.root );
         }
 
