@@ -24,7 +24,9 @@ export class SettingsApp extends BaseApp
 
         const container = LX.makeElement( 'div', 'flex flex-row gap-2 p-2', '', this.area );
         const panelClass = Constants.UTILITY_BUTTONS_PANEL_CLASSNAME.replace('flex-row', 'flex-col') + ' rounded-lg border-color';
-        const refreshFnToast = () => LX.toast( `Atención ⚠️`, 'Recarga la página para aplicar los cambios.', { position: 'top-center', timeout: 5000 } );
+        const refreshFnToast = () => LX.toast( `Atención ⚠️`, 'Recarga la página para aplicar los cambios.', { position: 'top-center', timeout: 5000,
+            action: { name: "Recargar", callback: () => window.location.reload() }
+         } );
 
         {
             const utilsPanel = new LX.Panel( { height: 'auto', className: panelClass } );
@@ -43,6 +45,11 @@ export class SettingsApp extends BaseApp
             const utilsPanel = new LX.Panel( { height: 'auto', className: panelClass } );
             utilsPanel.addToggle( 'Mostrar panel lateral de aplicaciones', JSON.parse( localStorage.getItem( 'jowy_showSidePanel' ) ), ( v ) => {
                 localStorage.setItem( 'jowy_showSidePanel', v );
+                refreshFnToast();
+            }, { className: 'primary', label: '', skipReset: true, nameWidth: '75%' } );
+
+            utilsPanel.addToggle( 'Centrar contenido de la página', JSON.parse( localStorage.getItem( 'jowy_centerPage' ) ), ( v ) => {
+                localStorage.setItem( 'jowy_centerPage', v );
                 refreshFnToast();
             }, { className: 'primary', label: '', skipReset: true, nameWidth: '75%' } );
 

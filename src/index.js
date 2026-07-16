@@ -187,7 +187,9 @@ const core = {
                         - Nuevo botón de Copiar Stock.<br>
                         - Excel de productos actualizado.<br>
                         - Arreglados ajustes por defecto.<br>
+                        - Se ha añadido la opción de "Centrar contenido de la página" en Ajustes.<br>
                         - Se ha añadido la opción de "Color del tema" en Ajustes.<br>
+                        - Añadido botón de Recargar en la notificación de cambios en los ajustes.<br>
                     ` ) );
                 }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], draggable: false }, );
             }, 10);
@@ -864,12 +866,14 @@ if( localStorage.getItem( 'jowy_loadDataOnHeadersClick' ) === null ) localStorag
 if( localStorage.getItem( 'jowy_showSidePanel' ) === null ) localStorage.setItem( 'jowy_showSidePanel', true );
 if( localStorage.getItem( 'jowy_rememberLastApp' ) === null ) localStorage.setItem( 'jowy_rememberLastApp', true );
 if( localStorage.getItem( 'jowy_themeColor' ) === null ) localStorage.setItem( 'jowy_themeColor', 'neutral' );
+if( localStorage.getItem( 'jowy_centerPage' ) === null ) localStorage.setItem( 'jowy_centerPage', true );
 
 // Create common UI
 {
-    const parallax = LX.makeElement( 'div', 'parallax-bg', '', document.body );
+    LX.makeElement( 'div', 'parallax-bg', '', document.body );
 
-    const area = await LX.init( { layoutMode: 'document', rootClass: 'wrapper' } );
+    const centerPage = JSON.parse( localStorage.getItem( 'jowy_centerPage' ) ) == true;
+    const area = await LX.init( { layoutMode: 'document', rootClass: centerPage ? 'wrapper' : undefined } );
     const starterMode = LX.getMode();
 
     LX.setThemeColor( localStorage.getItem( 'jowy_themeColor' ) ?? 'neutral' );
