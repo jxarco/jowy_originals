@@ -25,10 +25,6 @@ export class SettingsApp extends BaseApp
         const container = LX.makeElement( 'div', 'flex flex-row gap-2 p-2', '', this.area );
         const panelClass = Constants.UTILITY_BUTTONS_PANEL_CLASSNAME.replace('flex-row', 'flex-col') + ' rounded-lg border-color';
         const refreshFnToast = () => LX.toast( `Atención ⚠️`, 'Recarga la página para aplicar los cambios.', { position: 'top-center', timeout: 5000 } );
-        
-        if( localStorage.getItem( 'jowy_loadDataOnHeadersClick' ) === null ) localStorage.setItem( 'jowy_loadDataOnHeadersClick', true );
-        if( localStorage.getItem( 'jowy_showSidePanel' ) === null ) localStorage.setItem( 'jowy_showSidePanel', true );
-        if( localStorage.getItem( 'jowy_rememberLastApp' ) === null ) localStorage.setItem( 'jowy_rememberLastApp', true );
 
         {
             const utilsPanel = new LX.Panel( { height: 'auto', className: panelClass } );

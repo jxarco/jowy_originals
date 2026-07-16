@@ -184,15 +184,8 @@ const core = {
             setTimeout( () => {
                 return new LX.Dialog( `Cambios v${Constants.VERSION}`, ( p ) => {
                     p.attach( LX.makeElement( 'span', 'flex text-muted-foreground font-medium p-4 break-normal', `
-                        - Arreglado País Shein.<br>
-                        - Carpetas ya no se generan con albaranes vacíos.<br>
-                        - Arreglado PVP Albaranes en Mirakl (Carrefour, Worten, Sprinter, etc.).<br>
                         - Excel de productos actualizado.<br>
-                        - SHEIN ya no limpia los datos al cerrar.<br>
-                        - Nueva aplicación de Ajustes.<br>
-                        - Se ha añadido la opción de "Recordar última aplicación utilizada" en Ajustes.<br>
-                        - Se ha añadido la opción de "Click en encabezados para cargar datos" en Ajustes.<br>
-                        - Se ha añadido la opción de "Mostrar panel lateral de aplicaciones" en Ajustes.<br>
+                        - Arreglados ajustes por defecto.<br>
                     ` ) );
                 }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], draggable: false }, );
             }, 10);
@@ -863,6 +856,11 @@ core.data['bathby'].template = ( id, url, transport ) => {
 <a href="https://bathby.com/" style="background: none;text-decoration: none;color: #83596bff;">bathby.com</a>
 </p>`;
 };
+
+// Default settings
+if( localStorage.getItem( 'jowy_loadDataOnHeadersClick' ) === null ) localStorage.setItem( 'jowy_loadDataOnHeadersClick', true );
+if( localStorage.getItem( 'jowy_showSidePanel' ) === null ) localStorage.setItem( 'jowy_showSidePanel', true );
+if( localStorage.getItem( 'jowy_rememberLastApp' ) === null ) localStorage.setItem( 'jowy_rememberLastApp', true );
 
 // Create common UI
 {
