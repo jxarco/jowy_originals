@@ -128,7 +128,5 @@ export class ACMessagesApp extends BaseApp
 
         delete this.lastData;
         this.showList( [] );
-
-        // Utils.toggleButtonDisabled( this.exportButton, true );
     }
 }

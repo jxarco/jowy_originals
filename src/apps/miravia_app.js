@@ -173,7 +173,6 @@ export class MiraviaApp extends BaseApp
     {
         super.clear();
 
-        delete this.lastOrdersData;
         this.showOrdersList( [] );
         this.showStockList( [] );
         this.showAlbaranRelatedInfo( [], ATTR_PARAMS );

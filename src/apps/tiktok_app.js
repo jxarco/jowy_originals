@@ -304,13 +304,9 @@ export class TikTokApp extends BaseApp
     {
         super.clear();
 
-        delete this.lastOrdersData;
         this.showOrdersList( [] );
         this.showStockList( [] );
         this.showTrackingList( [] );
         this.showAlbaranRelatedInfo( [], ATTR_PARAMS );
-
-        Utils.toggleButtonDisabled( this.exportLabelsButton, true );
-        Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
     }
 }

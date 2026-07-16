@@ -61,6 +61,12 @@ export class BaseApp
     {
         this._trackingSyncErrors = [];
         this._packUnits = {};
+
+        delete this.lastOrdersData;
+
+        if ( this.exportLabelsButton ) Utils.toggleButtonDisabled( this.exportLabelsButton, true );
+        if ( this.exportTrackingsButton ) Utils.toggleButtonDisabled( this.exportTrackingsButton, true );
+        if ( this.exportButton ) Utils.toggleButtonDisabled( this.exportButton, true );
     }
 
     getPackUnits( sku )
