@@ -297,7 +297,8 @@ const Data = {
                     this.ac_messages[title] = {
                         title,
                         message: p['message'],
-                        type: p['type'] ?? 'info'
+                        type: p['type'] ?? 'info',
+                        image: p['image'] ?? undefined,
                     };
                 }
 

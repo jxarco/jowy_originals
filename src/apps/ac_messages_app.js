@@ -29,7 +29,10 @@ const columnData = [
     // Add element with html title to show full message on hover
     [ 'message', 'Mensaje', (str) => {
         return `<span title="${str}">${str}</span>`;
-    } ]
+    } ],
+    [ 'image', 'Imagen', (str) => {
+        return str === '?' ? '' : `<img src="${str}" alt="${str}" style="max-width: 48px; max-height: 48px; object-fit: contain;" />`;
+    } ],
 ];
 
 export class ACMessagesApp extends BaseApp
@@ -87,7 +90,7 @@ export class ACMessagesApp extends BaseApp
             toggleColumns: false,
             // hiddenColumns: [],
             filter: 'Título',
-            centered: false,
+            centered: ['Imagen', 'Tipo'],
             customFilters: [
                 { name: 'Tipo', options: filterOptions },
             ],
