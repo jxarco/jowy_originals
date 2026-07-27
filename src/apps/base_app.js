@@ -169,9 +169,9 @@ export class BaseApp
                 r[PHONE_ATTR] = ogPhone.replace( /[()]/g, '' );
                 // Remove +34 spain prefix
                 r[PHONE_ATTR] = r[PHONE_ATTR].replace( /^\+34/, '' );
-                // Add +351 portugal prefix if country is Portugal and phone doesn't start with +351
-                if( r[PAIS_ATTR] === 'PORTUGAL' && !r[PHONE_ATTR].startsWith( '+351' ) )
-                    r[PHONE_ATTR] = `+351${r[PHONE_ATTR]}`;
+                // Add +351 portugal prefix if country is Portugal and phone doesn't start with 351 and is less than 12 characters (local number has 9 digits, so with +351 it will be 12)
+                if( r[PAIS_ATTR] === 'PORTUGAL' && !r[PHONE_ATTR].startsWith( '351' ) && r[PHONE_ATTR].length < 12 )
+                    r[PHONE_ATTR] = `351${r[PHONE_ATTR]}`;
             }
             const ogPVP = r[PVP_ATTR];
             if( ogPVP )
