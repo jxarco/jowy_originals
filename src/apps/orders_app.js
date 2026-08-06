@@ -135,7 +135,9 @@ export class OrdersApp extends BaseApp
             // [ "desc", "DESCRIPCIÓN", (r) => "" ],
             [ 'quantity', 'UNIDADES', ( r, i ) => i['quantity'] ],
             [ 'transport', 'TRANSPORTE', ( r, i ) => {
-                const shipping = ( r['shipping_lines'] ?? [] )[0];
+                const shippingLines = r['shipping_lines'] ?? [];
+                if ( shippingLines.length === 0 ) return 'ERROR_TRANSPORTE';
+                const shipping = shippingLines[0];
                 if ( shipping['method_id'] === 'local_pickup' )
                 {
                     return 'PENDIENTE DE RECOGIDA';
