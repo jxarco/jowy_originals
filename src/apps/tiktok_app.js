@@ -43,10 +43,9 @@ const ORDERS_DATA = [
 ];
 
 const LABEL_DATA = [
-    
-    ['Tipo de producto', null, (str, row) => "C48"],
-    [SKU_ATTR, BaseApp.SKU_ATTR],
-    ['Bultos', null, (str, row) => {
+    ['Tipo de producto  *', null, (str, row) => "C48"],
+    [SKU_ATTR, "Referencia Cliente "], //////////////////////////////////////////////////////////
+    ['Número bultos  *', null, (str, row) => {
         const sku = row[SKU_ATTR];
         const mSkus = Data.sku_map[sku];
         if (mSkus?.skus?.length > 1) return 1; // CUSTOM; DON'T DO ANYTHING SPECIFIC
@@ -55,32 +54,28 @@ const LABEL_DATA = [
         if (udsPerPackage === undefined) return 1;
         return Math.ceil(qnt / udsPerPackage);
     }],
-    ['Weight(kg)', 'Peso declarado'],
-    
-    ['Nombre Remitente', null, (str, row) => "INOUT ORIENT ATTRACTION S.L."],
-    ['Código del país del remitente', null, (str, row) => "ES"],
-    ['Código postal del Remitente', null, (str, row) => "08185"],
-    ['Dirección Remitente', null, (str, row) => "Carrer de la caseta, 10E"],
-    ['Población del remitente', null, (str, row) => "Barcelona"],
+    ['Weight(kg)', 'Peso declarado (kg) *'],
+    ['Nombre Remitente *', null, (str, row) => "INOUT ORIENT ATTRACTION S.L."],
+    ['Código del país del remitente  *', null, (str, row) => "ES"],
+    ['Código postal del Remitente *', null, (str, row) => "08185"],
+    ['Dirección Remitente  *', null, (str, row) => "Carrer de la caseta, 10E"],
+    ['Población del remitente  *', null, (str, row) => "Barcelona"],
     ['Email Remitente', null, (str, row) => ""],
-    ['Teléfono Remitente', null, (str, row) => "659829195"],
-
-    [CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR],
-    [PAIS_ATTR, BaseApp.PAIS_ATTR, (str, row, app) => {
+    ['Teléfono Remitente  *', null, (str, row) => "659829195"],
+    [CLIENT_NAME_ATTR, "Nombre Destinatario *"],
+    [PAIS_ATTR, "País Destino (ISO-2) *", (str, row, app) => {
         const country = app.core.mapCountry(str);
         return app.core.getCountryCode(country);
     }],
-    [CP_ATTR, BaseApp.CP_ATTR],
-    [STREET_ATTR, BaseApp.STREET_ATTR],
-    [CITY_ATTR, BaseApp.CITY_ATTR],
-    [EMAIL_ATTR, BaseApp.EMAIL_ATTR],
-    [PHONE_ATTR, BaseApp.PHONE_ATTR],
-
+    [CP_ATTR, "CP Destino *"],
+    [STREET_ATTR, "Dirección Postal Destino  *"],
+    [CITY_ATTR, "Población de destino  *"],
+    [EMAIL_ATTR, "Email Destinatario  *"],
+    [PHONE_ATTR, "Teléfono Destinatario  *"],
     ['Importe Reembolso', null, (str, row) => ""],
     ['Importe Valor Asegurado', null, (str, row) => ""],
     ['Escaneo Albarán', null, (str, row) => "NO"],
     ['Retorno', null, (str, row) => "NO"],
-
     // THIS ONE HAS TO BE DELETED
     [QNT_ATTR, null, (str, row, app) => {
         return parseInt(str) * app.getPackUnits(row[OLD_SKU_ATTR]);
@@ -269,7 +264,7 @@ export class TikTokApp extends BaseApp {
     }
 
     exportSEUR(ignoreErrors = false, rawData) {
-        const filename = `ETIQUETAS_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
+        const filename = `ETIQUETAS_CTT_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
         // Discard orders sent with CBL (Decathlon and TikTok only)
         const data = (rawData ?? this.lastOrdersData).filter(r => {
             return r[BaseApp.TRANS_ATTR] !== 'CBL';
