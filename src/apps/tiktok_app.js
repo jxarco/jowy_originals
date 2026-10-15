@@ -91,10 +91,10 @@ const TRACKING_DATA = [
     ['Nombre de producto', null, () => ''],
     ['Variantes', null, () => ''],
     ['Cantidad', null, () => ''],
-    ['Nombre del transportista', null, () => 'Seur'],
+    ['Nombre del transportista', null, () => 'CTT Express'],
     ['ID de seguimiento', null, (str, row, tdata, app) => {
         const name = row[CLIENT_NAME_ATTR].toUpperCase();
-        const tentry = tdata.find((d) => d['CLIENTE DESTINATARIO'] === name);
+        const tentry = tdata.find((d) => (d['Destinatario'] ?? "").toUpperCase() === name);
         if (!tentry) {
             app._trackingSyncErrors.push({ name, uid: `${row[ORDER_ATTR]}` });
             const status = core.trackStatusColors['Incidencia'];
@@ -104,7 +104,7 @@ const TRACKING_DATA = [
             })
                 }`;
         }
-        return tentry['LOCALIZADOR'];
+        return tentry['Nº de envío'];
     }],
     ['ID de recibo', null, () => '']
 ];
@@ -274,7 +274,7 @@ export class TikTokApp extends BaseApp {
     }
 
     exportSEURTrackings(fixedData, ignoreErrors) {
-        const filename = `NUMERODEGUIA_SEUR_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
+        const filename = `NUMERODEGUIA_CTT_${this.title}_${Utils.getTodayStringDate()}.xlsx`;
         const data = fixedData ?? [this.lastSeurTrackingsColumnData, ...this.lastShownSeurTrackingsData];
 
         if (!ignoreErrors && this._trackingSyncErrors.length) {
