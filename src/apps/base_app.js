@@ -951,7 +951,7 @@ export class BaseApp
         tmpArea.root.children[1].remove();
     }
 
-    getSEURLabelsData( ignoreErrors = false, currentData, columnData, ORDER_ATTR )
+    getSEURLabelsData( ignoreErrors = false, currentData, columnData, ORDER_ATTR, addSKUInOrderNumber = true )
     {
         // Process the xlsx first to detect empty fields
         if ( !ignoreErrors )
@@ -1132,12 +1132,8 @@ export class BaseApp
                 return r.slice( 0, -1 );
             } );
 
-        // Get param version from the query url
-        // const urlParams = new URLSearchParams( window.location.search );
-        // const version = urlParams.get( 'version' );
-
         // Modify 1st col to add sku info to the order number
-        // if( version !== 'v0' )
+        if( addSKUInOrderNumber )
         {
             rows = rows.map( r => {
                 const orderNumber = r[0];
@@ -1147,10 +1143,6 @@ export class BaseApp
                 return r;
             } );
         }
-        // else
-        // {
-        //     console.warn( 'Using old label format, consider updating the URL with ?version=v1 for better SKU info on labels.' );
-        // }
 
         return [ data, ...rows ];
     }

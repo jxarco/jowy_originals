@@ -541,7 +541,7 @@ const core = {
         return await zip.generateAsync( { type: 'blob' } );
     },
 
-    getTransportForItem( sku, quantity )
+    getTransportForItem( sku, quantity, defaultTransport = 'SEUR' )
     {
         sku = this.mapSku( sku ).sku; // .sku bc it also contains quantity (for packs)
 
@@ -558,7 +558,7 @@ const core = {
             }
         }
 
-        return 'SEUR';
+        return defaultTransport;
     },
 
     mapSku( sku )
@@ -576,6 +576,18 @@ const core = {
     mapCountry( country )
     {
         return this.countryFormat[country] ?? country;
+    },
+
+    getCountryCode( country )
+    {
+        const countryMap = {
+            'ESPAÑA': 'ES',
+            'PORTUGAL': 'PT',
+            'FRANCIA': 'FR',
+            'ITALIA': 'IT'
+        };
+
+        return countryMap[country] ?? country;
     },
 
     mapZipCode( zc )

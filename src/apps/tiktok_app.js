@@ -43,7 +43,9 @@ const ORDERS_DATA = [
 ];
 
 const LABEL_DATA = [
-    [ORDER_ATTR, BaseApp.ORDER_ATTR],
+    
+    ['Tipo de producto', null, (str, row) => "C48"],
+    [SKU_ATTR, BaseApp.SKU_ATTR],
     ['Bultos', null, (str, row) => {
         const sku = row[SKU_ATTR];
         const mSkus = Data.sku_map[sku];
@@ -53,15 +55,32 @@ const LABEL_DATA = [
         if (udsPerPackage === undefined) return 1;
         return Math.ceil(qnt / udsPerPackage);
     }],
-    [SKU_ATTR, BaseApp.SKU_ATTR],
-    [CP_ATTR, BaseApp.CP_ATTR],
-    [PAIS_ATTR, BaseApp.PAIS_ATTR],
-    ['Province', 'Provincia'],
-    [CITY_ATTR, BaseApp.CITY_ATTR],
-    [STREET_ATTR, BaseApp.STREET_ATTR],
+    ['Weight(kg)', 'Peso declarado'],
+    
+    ['Nombre Remitente', null, (str, row) => "INOUT ORIENT ATTRACTION S.L."],
+    ['Código del país del remitente', null, (str, row) => "ES"],
+    ['Código postal del Remitente', null, (str, row) => "08185"],
+    ['Dirección Remitente', null, (str, row) => "Carrer de la caseta, 10E"],
+    ['Población del remitente', null, (str, row) => "Barcelona"],
+    ['Email Remitente', null, (str, row) => ""],
+    ['Teléfono Remitente', null, (str, row) => "659829195"],
+
     [CLIENT_NAME_ATTR, BaseApp.CLIENT_NAME_ATTR],
-    [PHONE_ATTR, BaseApp.PHONE_ATTR],
+    [PAIS_ATTR, BaseApp.PAIS_ATTR, (str, row, app) => {
+        const country = app.core.mapCountry(str);
+        return app.core.getCountryCode(country);
+    }],
+    [CP_ATTR, BaseApp.CP_ATTR],
+    [STREET_ATTR, BaseApp.STREET_ATTR],
+    [CITY_ATTR, BaseApp.CITY_ATTR],
     [EMAIL_ATTR, BaseApp.EMAIL_ATTR],
+    [PHONE_ATTR, BaseApp.PHONE_ATTR],
+
+    ['Importe Reembolso', null, (str, row) => ""],
+    ['Importe Valor Asegurado', null, (str, row) => ""],
+    ['Escaneo Albarán', null, (str, row) => "NO"],
+    ['Retorno', null, (str, row) => "NO"],
+
     // THIS ONE HAS TO BE DELETED
     [QNT_ATTR, null, (str, row, app) => {
         return parseInt(str) * app.getPackUnits(row[OLD_SKU_ATTR]);
@@ -178,7 +197,7 @@ export class TikTokApp extends BaseApp {
             row[STREET_ATTR] = `${street1} ${street2.length ? `(${street2})` : ''}`.trim();
 
             const qnt = parseInt(row[QNT_ATTR]) * row[BaseApp.PACK_U_ATTR];
-            row[BaseApp.TRANS_ATTR] = this.core.getTransportForItem(row[SKU_ATTR], qnt);
+            row[BaseApp.TRANS_ATTR] = this.core.getTransportForItem(row[SKU_ATTR], qnt, 'CTT');
         };
 
         this.clear();
@@ -255,7 +274,7 @@ export class TikTokApp extends BaseApp {
         const data = (rawData ?? this.lastOrdersData).filter(r => {
             return r[BaseApp.TRANS_ATTR] !== 'CBL';
         });
-        const labelsData = this.getSEURLabelsData(ignoreErrors, data, LABEL_DATA, ORDER_ATTR);
+        const labelsData = this.getSEURLabelsData(ignoreErrors, data, LABEL_DATA, ORDER_ATTR, false);
         this.core.exportXLSXData(labelsData, filename, ignoreErrors);
     }
 
