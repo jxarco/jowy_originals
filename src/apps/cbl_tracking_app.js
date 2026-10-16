@@ -5,6 +5,7 @@ import { BaseApp } from './base_app.js';
 
 const cblTrackingUrl = `https://clientes.cbl-logistica.com/public/consultaenvio.aspx`;
 const seurTrackingUrl = `https://www.seur.com/miseur/mis-envios`;
+const cttTrackingUrl = `https://www.cttexpress.com/localizador-de-envios/`;
 const glsTrackingUrl = `https://gls-group.com/ES/es/seguimiento-envio/`;
 
 export class CblTrackingApp extends BaseApp
@@ -598,6 +599,9 @@ export class CblTrackingApp extends BaseApp
             case 'SEUR':
                 url = seurTrackingUrl;
                 break;
+            case 'CTT':
+                url = cttTrackingUrl;
+                break;
             case 'GLS':
                 url = glsTrackingUrl;
                 break;
@@ -1003,6 +1007,9 @@ export class CblTrackingApp extends BaseApp
                 {
                     case 'SEUR':
                         url = seurTrackingUrl;
+                        break;
+                    case 'CTT':
+                        url = cttTrackingUrl;
                         break;
                     case 'GLS':
                         url = glsTrackingUrl;

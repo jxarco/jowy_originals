@@ -47,7 +47,7 @@ class Company
 const core = {
     apps: {},
     transport: 'CBL', // Default transport
-    transportOptions: [ 'CBL', 'SEUR' ], // , "GLS"];
+    transportOptions: [ 'CBL', 'SEUR', 'CTT' ], // , "GLS"];
     sheetName: '',
     countryFormat: {
         'España': 'ESPAÑA',
@@ -184,12 +184,8 @@ const core = {
             setTimeout( () => {
                 return new LX.Dialog( `Cambios v${Constants.VERSION}`, ( p ) => {
                     p.attach( LX.makeElement( 'span', 'flex text-muted-foreground font-medium p-4 break-normal', `
-                        - Nuevo botón de Copiar Stock.<br>
-                        - Excel de productos actualizado.<br>
-                        - Arreglados ajustes por defecto.<br>
-                        - Se ha añadido la opción de "Centrar contenido de la página" en Ajustes.<br>
-                        - Se ha añadido la opción de "Color del tema" en Ajustes.<br>
-                        - Añadido botón de Recargar en la notificación de cambios en los ajustes.<br>
+                        - Soporte CTT en TikTok.<br>
+                        - Soporte CTT como transporte en Gestión Web.<br>
                     ` ) );
                 }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], draggable: false }, );
             }, 10);
