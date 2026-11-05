@@ -221,7 +221,7 @@ const core = {
         return sheet;
     },
 
-    readExcelFile: function( file, raw = false )
+    readExcelFile: function( file, raw = false, startRow = 0 )
     {
         return new Promise( ( resolve, reject ) => {
             const reader = new FileReader();
@@ -231,7 +231,6 @@ const core = {
                     const data = e.target.result;
                     const workbook = XLSX.read( data, { type: 'binary', WTF: true } );
                     const sheetName = workbook.SheetNames[0];
-                    const startRow = this.currentApp?.startRow ?? 0;
                     const sheet = this.fixSheetRef( workbook.Sheets[sheetName], startRow );
                     const rowsData = XLSX.utils.sheet_to_json( sheet, { raw } );
 
@@ -252,7 +251,7 @@ const core = {
         } );
     },
 
-    onLoadFile: async function( file, callback )
+    onLoadFile: async function( file, callback, startRow )
     {
         callback = callback ?? this.processData.bind( this );
 
@@ -260,7 +259,7 @@ const core = {
         {
             try
             {
-                const result = await this.readExcelFile( file, this.currentApp.loadRaw );
+                const result = await this.readExcelFile( file, this.currentApp.loadRaw, startRow );
                 window.dialog?.destroy();
                 if ( callback )
                 {
@@ -346,7 +345,7 @@ const core = {
                     setTimeout( async () => {
                         for ( const file of files )
                         {
-                            await this.onLoadFile( file, innerCallback );
+                            await this.onLoadFile( file, innerCallback, this.currentApp?.startRow );
                         }
                         this.processData( allDataRows );
                         fileInput.value = '';
@@ -388,7 +387,7 @@ const core = {
             setTimeout( async () => {
                 for ( const file of files )
                 {
-                    await this.onLoadFile( file, innerCallback );
+                    await this.onLoadFile( file, innerCallback, this.currentApp?.startRow );
                 }
                 this.processData( allDataRows );
             }, 100 );

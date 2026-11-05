@@ -84,15 +84,12 @@ const LABEL_DATA = [
 
 // (str, row, tracking_data, app)
 const TRACKING_DATA = [
-    [ORDER_ATTR, 'ID de pedido'],
-    ['Nombre del almacén', null, () => ''],
-    ['Destino', null, () => ''],
-    ['ID de SKU', null, () => ''],
-    ['Nombre de producto', null, () => ''],
-    ['Variantes', null, () => ''],
-    ['Cantidad', null, () => ''],
-    ['Nombre del transportista', null, () => 'CTT Express'],
-    ['ID de seguimiento', null, (str, row, tdata, app) => {
+    [ORDER_ATTR, 'id de pedido'],
+    [ART_ID_ATTR, 'id del artículo del pedido'],
+    [QNT_ATTR, 'cantidad'],
+    ['Enviar desde', null, () => 'Dirección envio(Cami de la Caseta 10E, SERRA, BARCELONA 08185, Spain)'],
+    ['repartidor', null, () => 'CTT Express'],
+    ['número de seguimiento', null, (str, row, tdata, app) => {
         const name = row[CLIENT_NAME_ATTR].toUpperCase();
         const tentry = tdata.find((d) => (d['Destinatario'] ?? "").toUpperCase() === name);
         if (!tentry) {
@@ -105,8 +102,7 @@ const TRACKING_DATA = [
                 }`;
         }
         return tentry['Nº de envío'];
-    }],
-    ['ID de recibo', null, () => '']
+    }]
 ];
 
 export class TemuApp extends BaseApp {
