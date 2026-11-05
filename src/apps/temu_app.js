@@ -54,7 +54,7 @@ const LABEL_DATA = [
         if (udsPerPackage === undefined) return 1;
         return Math.ceil(qnt / udsPerPackage);
     }],
-    ['Weight(kg)', null, (str, row) => "1"],
+    ['Peso declarado (kg) *', null, (str, row) => "1"],
     ['Nombre Remitente *', null, (str, row) => "INOUT ORIENT ATTRACTION S.L."],
     ['Código del país del remitente  *', null, (str, row) => "ES"],
     ['Código postal del Remitente *', null, (str, row) => "08185"],
