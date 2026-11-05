@@ -187,6 +187,7 @@ const core = {
                 return new LX.Dialog( `Cambios v${Constants.VERSION}`, ( p ) => {
                     p.attach( LX.makeElement( 'span', 'flex text-muted-foreground font-medium p-4 break-normal', `
                         - Nueva aplicación para TEMU.<br>
+                        - Nuevo botón para copiar listado de trackings (TikTok).<br>
                     ` ) );
                 }, { modal: true, position: [ 'calc(50% - 200px)', '250px' ], size: [ '400px', null ], draggable: false }, );
             }, 10);

@@ -124,6 +124,7 @@ export class TikTokApp extends BaseApp {
         this.copyStockButton = Utils.addUtilityButton(utilsPanel, 'CopyStockButton', 'ClipboardCopy', 'Copiar Listado Stock', () => this.copyStockToClipboard(), true);
         this.exportLabelsButton = Utils.addUtilityButton(utilsPanel, 'ExportLabelsButton', 'Download', 'Exportar Etiquetas', () => this.exportSEUR(false, this.lastOrdersData), true);
         this.exportTrackingsButton = Utils.addUtilityButton(utilsPanel, 'ExportTrackingsButton', 'FileDown', 'Exportar Seguimiento', () => this.exportSEURTrackings(), true);
+        this.copyTrackingsButton = Utils.addUtilityButton(utilsPanel, 'CopyTrackingsButton', 'ClipboardCopy', 'Copiar Seguimiento', () => this.copySEURTrackingsToClipboard(), true);
         utilsPanel.endLine();
         this.area.attach(utilsPanel.root);
 
@@ -261,6 +262,7 @@ export class TikTokApp extends BaseApp {
         this.trackingArea.attach(tableWidget);
 
         Utils.toggleButtonDisabled(this.exportTrackingsButton, false);
+        Utils.toggleButtonDisabled(this.copyTrackingsButton, false);
     }
 
     exportSEUR(ignoreErrors = false, rawData) {
@@ -271,6 +273,40 @@ export class TikTokApp extends BaseApp {
         });
         const labelsData = this.getSEURLabelsData(ignoreErrors, data, LABEL_DATA, ORDER_ATTR, false);
         this.core.exportXLSXData(labelsData, filename, ignoreErrors);
+    }
+
+    copySEURTrackingsToClipboard()
+    {
+        if (this._trackingSyncErrors.length) {
+            return;
+        }
+
+        const data = this.lastShownSeurTrackingsData;
+
+        // Format to TSV (Tab Separated Values)
+        const rows = data.map( ( row ) => {
+            const cleanRow = row.map( ( val ) => {
+                // If the value has html tags, strip them
+                if ( typeof val === 'string' && val.includes( '<' ) )
+                {
+                    return LX.stripTags( val );
+                }
+                return String(val);
+            } );
+
+            return cleanRow.join( '\t' );
+        } );
+        
+        // const rows = this.lastShownSeurTrackingsData.join('\t');
+
+        const tsv = rows.join( '\n' );
+
+        navigator.clipboard.writeText( tsv ).then( () => {
+            LX.toast( 'Hecho!', '✅ Listado de Seguimiento copiado al portapapeles.', { timeout: 5000, position: 'top-center' } );
+        } ).catch( ( err ) => {
+            console.error( 'Error copying text: ', err );
+            LX.toast( 'Error', '❌ No se pudo copiar el listado.', { timeout: -1, position: 'top-center' } );
+        } );
     }
 
     exportSEURTrackings(fixedData, ignoreErrors) {
