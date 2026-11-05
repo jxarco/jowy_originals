@@ -84,7 +84,7 @@ const LABEL_DATA = [
 
 // (str, row, tracking_data, app)
 const TRACKING_DATA = [
-    [ORDER_ATTR, 'id de pedido'],
+    [ORDER_ATTR, 'id del pedido'],
     [ART_ID_ATTR, 'id del artículo del pedido'],
     [QNT_ATTR, 'cantidad'],
     ['Enviar desde', null, () => 'Dirección envio(Cami de la Caseta 10E, SERRA, BARCELONA 08185, Spain)'],
