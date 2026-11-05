@@ -7,7 +7,7 @@ import { BaseApp } from './base_app.js';
 const SKU_ATTR = 'sku de contribución';
 const OLD_SKU_ATTR = `${SKU_ATTR}_OLD`;
 const ORDER_ATTR = 'ID del pedido';
-const ART_ID_ATTR = 'SKU ID';
+const ART_ID_ATTR = 'ID del artículo del pedido';
 const ART_NAME_ATTR = 'nombre del producto';
 const CLIENT_NAME_ATTR = 'nombre del destinatario';
 const PAIS_ATTR = 'país de envío';
