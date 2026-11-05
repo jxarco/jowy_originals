@@ -947,10 +947,11 @@ if( localStorage.getItem( 'jowy_centerPage' ) === null ) localStorage.setItem( '
             name: 'Plataformas',
             submenu: [
                 { name: 'Shein', callback: ( v, e ) => core.openApp( core.sheinApp ), icon: 'Shein' },
-                { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp ), icon: 'Decathlon' },
                 { name: 'TikTok', callback: ( v, e ) => core.openApp( core.tikTokApp ), icon: 'TikTok' },
                 { name: 'Miravia', callback: ( v, e ) => core.openApp( core.miraviaApp ), icon: 'ShoppingBag' },
+                { name: 'Temu', callback: ( v, e ) => core.openApp( core.temuApp ), icon: 'Temu' },
                 { name: 'Mirakl', submenu: [
+                    { name: 'Decathlon', callback: ( v, e ) => core.openApp( core.decathlonApp ), icon: 'Decathlon' },
                     { name: 'Carrefour', callback: ( v, e ) => core.openApp( core.carrefourApp, v ), icon: 'Carrefour' },
                     { name: 'Leroy Merlin', callback: ( v, e ) => core.openApp( core.leroyMerlinApp ), icon: 'LeroyMerlin' },
                     { name: 'Sprinter', callback: ( v, e ) => core.openApp( core.sprinterApp ), icon: 'Sprinter' },
